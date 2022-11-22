@@ -100,7 +100,47 @@ function onClick(event){
                 // get new xyz for target and set new target for orbitcamera.
                 const location = item.object.position;
                 planetLocation = new Vector3(location.x, location.y, location.z);                
-                controls.target = planetLocation;   
+                
+                //Disabled Orbit Controls.
+                controls.enabled = false;
+                controls.autoRotate = false;
+
+                const startOrientation = camera.quaternion.clone();
+                const targetOrientation = camera.quaternion.clone(camera.lookAt(planetLocation)).normalize();
+                
+                let direction = new THREE.Vector3();
+                direction.subVectors( item.object.position, camera.position).normalize();
+                console.log(direction);
+                
+                const distance = item.distance - 5;
+                console.log("distance: " + distance);
+                
+                let targetLocation = new THREE.Vector3();
+                targetLocation.addVectors(camera.position, direction.multiplyScalar(distance)) ;
+            
+                console.log(targetLocation);
+
+                gsap.to({}, {
+                    duration: 1,
+                    onUpdate: function(){
+                        camera.quaternion.copy(startOrientation).slerp(targetOrientation, this.progress());
+                    }
+                })
+
+                //camera.lookAt(planetLocation);
+                
+                gsap.to(camera.position, {
+                    duration: 2,
+                    x: targetLocation.x,
+                    y: targetLocation.y,
+                    z: targetLocation.z,
+      
+                })
+
+                // Re-enable Orbit Controls
+                controls.target = planetLocation; 
+                controls.enabled = true;
+                controls.autoRotate = true; 
     
             }
                 
