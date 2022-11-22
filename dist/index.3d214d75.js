@@ -610,41 +610,43 @@ function onClick(event) {
     // Create Raycast
     raycaster.setFromCamera(pointer, camera);
     const castRay = raycaster.intersectObjects(scene.children, true);
+    // Process the Raycast.
     if (castRay.length > 0) castRay.forEach((item)=>{
         if (item.object.name == "journey") {
             // get new xyz for target and set new target for orbitcamera.
             const location = item.object.position;
             planetLocation = new (0, _three.Vector3)(location.x, location.y, location.z);
-            //Disabled Orbit Controls.
-            controls.enabled = false;
-            controls.autoRotate = false;
+            // Prepare rotation of camera animation.
             const startOrientation = camera.quaternion.clone();
             const targetOrientation = camera.quaternion.clone(camera.lookAt(planetLocation)).normalize();
+            // Get the direction for the new location.
             let direction = new _three.Vector3();
             direction.subVectors(item.object.position, camera.position).normalize();
-            console.log(direction);
+            // Get distance from raycast minus minimal distance orbit control
             const distance = item.distance - 5;
-            console.log("distance: " + distance);
+            // Create new target location for Camera.
             let targetLocation = new _three.Vector3();
             targetLocation.addVectors(camera.position, direction.multiplyScalar(distance));
-            console.log(targetLocation);
-            (0, _gsapDefault.default).to({}, {
-                duration: 1,
-                onUpdate: function() {
-                    camera.quaternion.copy(startOrientation).slerp(targetOrientation, this.progress());
-                }
-            });
-            //camera.lookAt(planetLocation);
+            // Animate using gsap module.
             (0, _gsapDefault.default).to(camera.position, {
-                duration: 2,
+                duration: 1.5,
                 x: targetLocation.x,
                 y: targetLocation.y,
-                z: targetLocation.z
+                z: targetLocation.z,
+                onStart: function() {
+                    controls.enabled = false;
+                    controls.autoRotate = false;
+                },
+                onUpdate: function() {
+                    camera.quaternion.copy(startOrientation).slerp(targetOrientation, this.progress());
+                    controls.update;
+                },
+                onComplete: function() {
+                    controls.enabled = true;
+                    controls.autoRotate = true;
+                    controls.target = planetLocation;
+                }
             });
-            // Re-enable Orbit Controls
-            controls.target = planetLocation;
-            controls.enabled = true;
-            controls.autoRotate = true;
         }
     });
 }
