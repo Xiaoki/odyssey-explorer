@@ -12,6 +12,7 @@ import gsap from "gsap";
 import * as THREE from "three";
 import { CameraHelper, FrontSide, MeshStandardMaterial, Object3D, Raycaster, SphereGeometry, TextureLoader, Vector3 } from "three";
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
+import * as dat from 'dat.gui';
 
 class Odyssey {
     constructor(id, name, wallet, url, texture){
@@ -52,6 +53,7 @@ let scene, canvas, renderer, controls;
 
 const raycaster = new THREE.Raycaster();
 const pointer = new THREE.Vector2;
+const gui = new dat.GUI();
 
 let meshArray = [];
   
@@ -77,43 +79,151 @@ renderer.setClearColor(0x222222);
 renderer.setSize(window.innerWidth, window.innerHeight);
 renderer.setPixelRatio(window.devicePixelRatio);
 
+
 // Orbit Controls setup
 controls = new OrbitControls(camera, renderer.domElement);
 controls.autoRotate = true;
-controls.autoRotateSpeed = 0.1;
+controls.autoRotateSpeed = 0.3;
 controls.enableDamping = true;
 controls.enablePan = true;
 controls.maxDistance = 500;
 controls.minDistance = 5; 
 controls.zoomSpeed = 1;
 
-// Create Skybox image paths
-const skyboxUrls = [
-     "./images/corona_ft.png",
-     "./images/corona_bk.png",
-     "./images/corona_up.png",
-     "./images/corona_dn.png",
-      "./images/corona_rt.png",
-      "./images/corona_lf.png",
-    ];
 
-// Skybox material
-function createSkyboxMaterialArray() {
-    const materialArray = skyboxUrls.map(image => {
-        let texture = new THREE.TextureLoader().load(image);            
+/**
+ * Old skybox, now using happyship Skybox.
+ */
+
+// // Create Skybox image paths
+// const skyboxUrls = [
+//      "./images/corona_ft.png",
+//      "./images/corona_bk.png",
+//      "./images/corona_up.png",
+//      "./images/corona_dn.png",
+//       "./images/corona_rt.png",
+//       "./images/corona_lf.png",
+//     ];
+
+// // Skybox material
+// function createSkyboxMaterialArray() {
+//     const materialArray = skyboxUrls.map(image => {
+//         let texture = new THREE.TextureLoader().load(image);            
             
-        return new THREE.MeshBasicMaterial({ map: texture, side: THREE.BackSide });
-    });
+//         return new THREE.MeshBasicMaterial({ map: texture, side: THREE.BackSide });
+//     });
         
-    return materialArray;
+//     return materialArray;
+// };
+
+
+// // // Old skybox
+// // const skyboxMaterialArray = createSkyboxMaterialArray();
+// // const skyboxGeometry = new THREE.BoxGeometry(10000,10000,10000);
+// // const skybox = new THREE.Mesh(skyboxGeometry, skyboxMaterialArray);
+// // //scene.add(skybox); 
+
+/**
+ * Happy shit skybox
+ */
+const backgroundImage = new THREE.TextureLoader().load('./images/BasicSkyboxHD.png');
+backgroundImage.mapping = THREE.EquirectangularReflectionMapping;
+scene.background = backgroundImage;
+
+// Create sun at the Center
+const sun = new THREE.Mesh( new THREE.SphereGeometry(4,16, 16), new THREE.MeshStandardMaterial({
+    map: new THREE.TextureLoader().load('./images/honey01HD.png'),
+}))
+//scene.add(sun);
+
+/**
+ * Build Galaxy
+ */
+const parameters = {};
+parameters.count = 100000;
+parameters.size = 0.001;
+parameters.radius = 35;
+parameters.branches = 3;
+parameters.spin = 1.3;
+parameters.randomnes = 0.2;
+parameters.randomnesPower = 3;
+
+let pointsGeometry = null;
+let pointsMaterial = null;
+let points = null;
+
+const generateGalaxy = () => {
+
+    /**
+     * Clean previous renders of galaxy.
+     */
+    if(points !== null){
+        pointsGeometry.dispose();
+        pointsMaterial.dispose();
+        scene.remove(points);
+    };
+
+    /**
+     * Geometry
+     */
+    pointsGeometry = new THREE.BufferGeometry();
+    const position = new Float32Array(parameters.count * 3);
+
+    for(let i = 0; i < parameters.count; i++ ){
+
+        const i3 = i * 3;
+
+        const radius = Math.random() * parameters.radius;
+        const spinAngle = radius * parameters.spin;
+        const branchAngle = (i % parameters.branches) / parameters.branches * Math.PI * 2;
+
+        const randomX = Math.pow(Math.random(), parameters.randomnesPower) * (Math.random() < 0.5 ? 1 : -1);
+        const randomY = Math.pow(Math.random(), parameters.randomnesPower) * (Math.random() < 0.5 ? 1 : -1);
+        const randomZ = Math.pow(Math.random(), parameters.randomnesPower) * (Math.random() < 0.5 ? 1 : -1);
+
+        // const randomX = (Math.random() - 0.5) * parameters.randomnes
+        // const randomY = (Math.random() - 0.5) * parameters.randomnes
+        // const randomZ = (Math.random() - 0.5) * parameters.randomnes
+
+        position[i3 + 0] = Math.cos(branchAngle + spinAngle) * radius + randomX; //(Math.random() - 0.5) * 5;
+        position[i3 + 1] = randomY;
+        position[i3 + 2] = Math.sin(branchAngle + spinAngle) * radius + randomZ;; //(Math.random() - 0.5) * 5;
+    }
+
+    pointsGeometry.setAttribute(
+        'position',
+        new THREE.BufferAttribute(position, 3)
+    );
+
+    /**
+     * Material
+     */
+    pointsMaterial = new THREE.PointsMaterial({
+        size: parameters.size,
+        sizeAttenuation: true,
+        depthWrite: false,
+        blending: THREE.AdditiveBlending,
+        color: 0xFF5588,
+    });
+
+    /**
+     * Create stars in the universe.
+     */
+    points = new THREE.Points(pointsGeometry, pointsMaterial);
+    scene.add(points);
+
+
 };
 
+generateGalaxy();
 
-// TEMP: Build skybox Mesh
-const skyboxMaterialArray = createSkyboxMaterialArray();
-const skyboxGeometry = new THREE.BoxGeometry(10000,10000,10000);
-const skybox = new THREE.Mesh(skyboxGeometry, skyboxMaterialArray);
-scene.add(skybox); 
+gui.add(parameters, "count").min(100).max(1000000).step(100).onFinishChange(generateGalaxy);
+gui.add(parameters, "size").min(0.001).max(0.1).step(0.001).onFinishChange(generateGalaxy);
+gui.add(parameters, "radius").min(1).max(500).step(1).onFinishChange(generateGalaxy);
+gui.add(parameters, "branches").min(2).max(10).step(1).onFinishChange(generateGalaxy);
+gui.add(parameters, "spin").min(-3).max(3).step(0.1).onFinishChange(generateGalaxy);
+gui.add(parameters, "randomnes").min(0).max(2).step(0.001).onFinishChange(generateGalaxy);
+gui.add(parameters, "randomnesPower").min(1).max(10).step(0.001).onFinishChange(generateGalaxy);
 
 // update mouse location on screen
 function onPointerMove(event){
@@ -202,9 +312,9 @@ function buildRandomUniverse(){
     };
 
     meshArray.forEach((planet) => {     
-        planet.position.x = Math.random() * 35 - 20;
-        planet.position.y = Math.random() * 35 - 20;
-        planet.position.z = Math.random() * 35 - 20;
+        planet.position.x = Math.random() * 45  - 20 ;
+        planet.position.y = Math.random() * 3;
+        planet.position.z = Math.random() * 45  - 20 ;
     
         planet.rotation.x = Math.random() * 2 * Math.PI;
         planet.rotation.y = Math.random() * 2 * Math.PI;
@@ -216,6 +326,7 @@ function buildRandomUniverse(){
     
     } );
 }
+
 
 buildRandomUniverse();
 
