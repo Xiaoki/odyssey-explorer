@@ -579,6 +579,8 @@ let scene, canvas, renderer, controls;
 const raycaster = new _three.Raycaster();
 const pointer = new _three.Vector2;
 const gui = new _datGui.GUI();
+// Temporally hidden for show and tell
+gui.hide();
 let meshArray = [];
 // Scene setup
 canvas = document.querySelector(".webgl");
@@ -609,30 +611,6 @@ controls.enablePan = true;
 controls.maxDistance = 500;
 controls.minDistance = 5;
 controls.zoomSpeed = 1;
-/**
- * Old skybox, now using happyship Skybox.
- */ // // Create Skybox image paths
-// const skyboxUrls = [
-//      "./images/corona_ft.png",
-//      "./images/corona_bk.png",
-//      "./images/corona_up.png",
-//      "./images/corona_dn.png",
-//       "./images/corona_rt.png",
-//       "./images/corona_lf.png",
-//     ];
-// // Skybox material
-// function createSkyboxMaterialArray() {
-//     const materialArray = skyboxUrls.map(image => {
-//         let texture = new THREE.TextureLoader().load(image);            
-//         return new THREE.MeshBasicMaterial({ map: texture, side: THREE.BackSide });
-//     });
-//     return materialArray;
-// };
-// // // Old skybox
-// // const skyboxMaterialArray = createSkyboxMaterialArray();
-// // const skyboxGeometry = new THREE.BoxGeometry(10000,10000,10000);
-// // const skybox = new THREE.Mesh(skyboxGeometry, skyboxMaterialArray);
-// // //scene.add(skybox); 
 /**
  * Happyship skybox
  */ const backgroundImage = new _three.TextureLoader().load("./images/BasicSkyboxHD.png");
