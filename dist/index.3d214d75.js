@@ -634,7 +634,7 @@ controls.zoomSpeed = 1;
 // // const skybox = new THREE.Mesh(skyboxGeometry, skyboxMaterialArray);
 // // //scene.add(skybox); 
 /**
- * Happy shit skybox
+ * Happyship skybox
  */ const backgroundImage = new _three.TextureLoader().load("./images/BasicSkyboxHD.png");
 backgroundImage.mapping = _three.EquirectangularReflectionMapping;
 scene.background = backgroundImage;
