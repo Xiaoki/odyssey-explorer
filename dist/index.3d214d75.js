@@ -544,6 +544,36 @@ var _gsap = require("gsap");
 var _gsapDefault = parcelHelpers.interopDefault(_gsap);
 var _three = require("three");
 var _orbitControls = require("three/examples/jsm/controls/OrbitControls");
+class Odyssey {
+    constructor(id, name, wallet, url, texture){
+        this.id = id;
+        this.name = name;
+        this.wallet = wallet;
+        this.url = url;
+        this.texture = texture;
+        // Set a base of random textures.
+        const standardTextures = [
+            "./images/baseAtmos.png",
+            "./images/temptations.png",
+            "./images/showTime.png",
+            "./images/honey01.png",
+            "./images/iceland01.png"
+        ];
+        // if no texture specified. Choose random texture.
+        if (texture == null) {
+            const randNum = Math.floor(Math.random() * standardTextures.length);
+            this.texture = standardTextures[randNum];
+        }
+        // Build the sphere mesh.
+        const geometry = new _three.SphereGeometry(1, 20, 16);
+        const material = new _three.MeshStandardMaterial({
+            map: new _three.TextureLoader().load(this.texture)
+        });
+        const Odyssey = new _three.Mesh(geometry, material);
+        Odyssey.name = "journey";
+        return Odyssey;
+    }
+}
 let scene, canvas, renderer, controls;
 const raycaster = new _three.Raycaster();
 const pointer = new _three.Vector2;
@@ -576,6 +606,7 @@ controls.enableDamping = true;
 controls.enablePan = true;
 controls.maxDistance = 500;
 controls.minDistance = 5;
+controls.zoomSpeed = 1;
 // Create Skybox image paths
 const skyboxUrls = [
     "./images/corona_ft.png",
@@ -585,6 +616,7 @@ const skyboxUrls = [
     "./images/corona_rt.png",
     "./images/corona_lf.png"
 ];
+// Skybox material
 function createSkyboxMaterialArray() {
     const materialArray = skyboxUrls.map((image)=>{
         let texture = new _three.TextureLoader().load(image);
@@ -652,29 +684,25 @@ function onClick(event) {
 }
 window.addEventListener("pointermove", onPointerMove);
 window.addEventListener("click", onClick);
-// Environment properties
-const amountOfPlanets = 12;
-//const planetGeometry = new THREE.BoxGeometry(1,1,1);
-const planetGeometry = new _three.SphereGeometry(1, 32, 16);
-const planetMaterial = new _three.MeshStandardMaterial({
-    map: new _three.TextureLoader().load("./images/honey01.png")
-});
-// TEMP: Build mesh array.
-for(let i = 0; i < amountOfPlanets; i++){
-    const planetMesh = new _three.Mesh(planetGeometry, planetMaterial);
-    meshArray.push(planetMesh);
+// TEMP: SETUP DEV PLANETS>
+function buildRandomUniverse() {
+    const amountOfPlanets = 24;
+    for(let i = 0; i < amountOfPlanets; i++){
+        const planetMesh = new Odyssey(0, "Frank's World", "WALLET_ADDRESS", "https://odyssey.org", null);
+        meshArray.push(planetMesh);
+    }
+    meshArray.forEach((planet)=>{
+        planet.position.x = Math.random() * 35 - 20;
+        planet.position.y = Math.random() * 35 - 20;
+        planet.position.z = Math.random() * 35 - 20;
+        planet.rotation.x = Math.random() * 2 * Math.PI;
+        planet.rotation.y = Math.random() * 2 * Math.PI;
+        planet.rotation.z = Math.random() * 2 * Math.PI;
+        planet.name = "journey";
+        scene.add(planet);
+    });
 }
-// TEMP: Place meshes from array in world.
-meshArray.forEach((planet)=>{
-    planet.position.x = Math.random() * 25 - 10;
-    planet.position.y = Math.random() * 25 - 10;
-    planet.position.z = Math.random() * 25 - 10;
-    planet.rotation.x = Math.random() * 2 * Math.PI;
-    planet.rotation.y = Math.random() * 2 * Math.PI;
-    planet.rotation.z = Math.random() * 2 * Math.PI;
-    planet.name = "journey";
-    scene.add(planet);
-});
+buildRandomUniverse();
 // Animation
 function animate() {
     // Render the scene
