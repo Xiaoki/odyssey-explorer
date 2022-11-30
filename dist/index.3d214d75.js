@@ -545,42 +545,59 @@ var _gsapDefault = parcelHelpers.interopDefault(_gsap);
 var _three = require("three");
 var _orbitControls = require("three/examples/jsm/controls/OrbitControls");
 var _datGui = require("dat.gui");
-class Odyssey {
-    constructor(id, name, wallet, url, texture){
-        this.id = id;
-        this.name = name;
+/**
+ * For Dev Only
+ */ let AmountOfGalaxyToGenereate = 200;
+class Odyssey extends _three.Mesh {
+    constructor(geometry, material, number, wallet, name, url){
+        super(geometry, material);
+        this.material = material;
+        this.geometry = geometry;
+        this.number = number;
         this.wallet = wallet;
+        this.name = name;
         this.url = url;
-        this.texture = texture;
-        // Set a base of random textures.
-        const standardTextures = [
-            "./images/baseAtmos.png",
-            "./images/temptations.png",
-            "./images/showTime.png",
-            "./images/honey01.png",
-            "./images/iceland01.png"
-        ];
-        // if no texture specified. Choose random texture.
-        if (texture == null) {
-            const randNum = Math.floor(Math.random() * standardTextures.length);
-            this.texture = standardTextures[randNum];
-        }
-        // Build the sphere mesh.
-        const geometry = new _three.SphereGeometry(1, 20, 16);
-        const material = new _three.MeshStandardMaterial({
-            map: new _three.TextureLoader().load(this.texture)
-        });
-        const Odyssey = new _three.Mesh(geometry, material);
-        Odyssey.name = "journey";
-        return Odyssey;
+        this.isOdyssey = true;
     }
+    connectedOdysseys = [];
+    /**
+     * Generating random Connection for vizualisation of connections.
+     * DELETE THIS LATER.
+     */ randomConnection = (maxAmount)=>{
+        let amountToGenerate = Math.random() * 3;
+        for(let i = 0; i < amountToGenerate; i++){
+            let object = {
+                id: Math.floor(Math.random() * maxAmount)
+            };
+            this.connectedOdysseys.push(object);
+        }
+    };
+    log = ()=>{
+        console.log("ID:" + this.number + " Wallet:" + this.wallet + " Webaddress:" + this.url + " Connected: " + this.connectedOdysseys);
+    };
 }
+const createNewOdyssey = (id, wallet, name, url)=>{
+    const standardTextures = [
+        "./images/baseAtmos.png",
+        "./images/temptations.png",
+        "./images/showTime.png",
+        "./images/honey01.png",
+        "./images/iceland01.png"
+    ];
+    const randNum = Math.floor(Math.random() * standardTextures.length);
+    const texture = standardTextures[randNum];
+    const geometry = new (0, _three.SphereGeometry)(1, 16, 16);
+    const material = new (0, _three.MeshStandardMaterial)({
+        map: new _three.TextureLoader().load(texture)
+    });
+    const odyssey = new Odyssey(geometry, material, id, wallet, name, url);
+    return odyssey;
+};
 let scene, canvas, renderer, controls;
 const raycaster = new _three.Raycaster();
 const pointer = new _three.Vector2;
 const gui = new _datGui.GUI();
-// Temporally hidden for show and tell
-gui.hide();
+gui.close();
 let meshArray = [];
 // Scene setup
 canvas = document.querySelector(".webgl");
@@ -616,21 +633,17 @@ controls.zoomSpeed = 1;
  */ const backgroundImage = new _three.TextureLoader().load("./images/BasicSkyboxHD.png");
 backgroundImage.mapping = _three.EquirectangularReflectionMapping;
 scene.background = backgroundImage;
-// Create sun at the Center
-const sun = new _three.Mesh(new _three.SphereGeometry(4, 16, 16), new _three.MeshStandardMaterial({
-    map: new _three.TextureLoader().load("./images/honey01HD.png")
-}));
-//scene.add(sun);
 /**
  * Build Galaxy
  */ const parameters = {};
 parameters.count = 100000;
 parameters.size = 0.001;
-parameters.radius = 35;
+parameters.radius = 100;
 parameters.branches = 3;
 parameters.spin = 1.3;
 parameters.randomnes = 0.2;
 parameters.randomnesPower = 3;
+parameters.YHeight = 5;
 let pointsGeometry = null;
 let pointsMaterial = null;
 let points = null;
@@ -652,12 +665,9 @@ const generateGalaxy = ()=>{
         const spinAngle = radius * parameters.spin;
         const branchAngle = i % parameters.branches / parameters.branches * Math.PI * 2;
         const randomX = Math.pow(Math.random(), parameters.randomnesPower) * (Math.random() < 0.5 ? 1 : -1);
-        const randomY = Math.pow(Math.random(), parameters.randomnesPower) * (Math.random() < 0.5 ? 1 : -1);
+        const randomY = Math.pow(Math.random(), parameters.randomnesPower) * (Math.random() < 0.5 ? parameters.YHeight : -parameters.YHeight);
         const randomZ = Math.pow(Math.random(), parameters.randomnesPower) * (Math.random() < 0.5 ? 1 : -1);
-        // const randomX = (Math.random() - 0.5) * parameters.randomnes
-        // const randomY = (Math.random() - 0.5) * parameters.randomnes
-        // const randomZ = (Math.random() - 0.5) * parameters.randomnes
-        position[i3 + 0] = Math.cos(branchAngle + spinAngle) * radius + randomX; //(Math.random() - 0.5) * 5;
+        position[i3 + 0] = Math.cos(branchAngle + spinAngle) * radius + randomX;
         position[i3 + 1] = randomY;
         position[i3 + 2] = Math.sin(branchAngle + spinAngle) * radius + randomZ;
     }
@@ -669,7 +679,9 @@ const generateGalaxy = ()=>{
         sizeAttenuation: true,
         depthWrite: false,
         blending: _three.AdditiveBlending,
-        color: 0xFF5588
+        color: 0xFF5588,
+        transparent: true,
+        opacity: 0.5
     });
     /**
      * Create stars in the universe.
@@ -684,77 +696,154 @@ gui.add(parameters, "branches").min(2).max(10).step(1).onFinishChange(generateGa
 gui.add(parameters, "spin").min(-3).max(3).step(0.1).onFinishChange(generateGalaxy);
 gui.add(parameters, "randomnes").min(0).max(2).step(0.001).onFinishChange(generateGalaxy);
 gui.add(parameters, "randomnesPower").min(1).max(10).step(0.001).onFinishChange(generateGalaxy);
+gui.add(parameters, "YHeight").min(1).max(150).step(1).onFinishChange(generateGalaxy);
 // update mouse location on screen
 function onPointerMove(event) {
     pointer.x = event.clientX / window.innerWidth * 2 - 1;
     pointer.y = -(event.clientY / window.innerHeight) * 2 + 1;
 }
 // Onclick event 
-function onClick(event) {
+function onMouseDown(event) {
+    if (event.button != 0) return;
     // Create Raycast
     raycaster.setFromCamera(pointer, camera);
     const castRay = raycaster.intersectObjects(scene.children, true);
     // Process the Raycast.
-    if (castRay.length > 0) castRay.forEach((item)=>{
-        if (item.object.name == "journey") {
-            // get new xyz for target and set new target for orbitcamera.
-            const location = item.object.position;
-            planetLocation = new (0, _three.Vector3)(location.x, location.y, location.z);
-            // Prepare rotation of camera animation.
-            const startOrientation = camera.quaternion.clone();
-            const targetOrientation = camera.quaternion.clone(camera.lookAt(planetLocation)).normalize();
-            // Get the direction for the new location.
-            let direction = new _three.Vector3();
-            direction.subVectors(item.object.position, camera.position).normalize();
-            // Get distance from raycast minus minimal distance orbit control
-            const distance = item.distance - 5;
-            // Create new target location for Camera.
-            let targetLocation = new _three.Vector3();
-            targetLocation.addVectors(camera.position, direction.multiplyScalar(distance));
-            // Animate using gsap module.
-            (0, _gsapDefault.default).to(camera.position, {
-                duration: 1.5,
-                x: targetLocation.x,
-                y: targetLocation.y,
-                z: targetLocation.z,
-                onStart: function() {
-                    controls.enabled = false;
-                    controls.autoRotate = false;
-                },
-                onUpdate: function() {
-                    camera.quaternion.copy(startOrientation).slerp(targetOrientation, this.progress());
-                    controls.update;
-                },
-                onComplete: function() {
-                    controls.enabled = true;
-                    controls.autoRotate = true;
-                    controls.target = planetLocation;
-                }
-            });
-        }
-    });
-}
-window.addEventListener("pointermove", onPointerMove);
-window.addEventListener("click", onClick);
-// TEMP: SETUP DEV PLANETS>
-function buildRandomUniverse() {
-    const amountOfPlanets = 24;
-    for(let i = 0; i < amountOfPlanets; i++){
-        const planetMesh = new Odyssey(0, "Frank's World", "WALLET_ADDRESS", "https://odyssey.org", null);
-        meshArray.push(planetMesh);
+    if (castRay.length > 0) {
+        let planetArray = [];
+        // filter all planets from raycast.
+        castRay.forEach((item)=>{
+            if (item.object.isOdyssey) planetArray.push(item);
+        });
+        // If the raycast holds zero planets. Exit method
+        if (planetArray <= 0) return;
+        // Only react to first raycast hit
+        const targetPlanet = planetArray[0];
+        // Long information about selected Odyssey
+        targetPlanet.object.log();
+        console.log(targetPlanet);
+        // Prepare fly to planets.
+        const targetPlanetLocation = new (0, _three.Vector3)(targetPlanet.object.position.x, targetPlanet.object.position.y, targetPlanet.object.position.z);
+        // Prepare rotation of camera animation.
+        const startOrientation = camera.quaternion.clone();
+        const targetOrientation = camera.quaternion.clone(camera.lookAt(targetPlanetLocation)).normalize();
+        // Get the direction for the new location.
+        let direction = new _three.Vector3();
+        direction.subVectors(targetPlanet.object.position, camera.position).normalize();
+        // Get distance from raycast minus minimal distance orbit control
+        const distance = targetPlanet.distance - 5;
+        // Create new target for the camera.
+        let targetLocation = new _three.Vector3();
+        targetLocation.addVectors(camera.position, direction.multiplyScalar(distance));
+        // Animate using gsap module.
+        (0, _gsapDefault.default).to(camera.position, {
+            duration: 1.5,
+            x: targetLocation.x,
+            y: targetLocation.y,
+            z: targetLocation.z,
+            onStart: function() {
+                controls.enabled = false;
+                controls.autoRotate = false;
+            },
+            onUpdate: function() {
+                camera.quaternion.copy(startOrientation).slerp(targetOrientation, this.progress());
+                controls.update;
+            },
+            onComplete: function() {
+                controls.enabled = true;
+                controls.autoRotate = true;
+                controls.target = targetPlanetLocation;
+            }
+        });
     }
-    meshArray.forEach((planet)=>{
-        planet.position.x = Math.random() * 45 - 20;
-        planet.position.y = Math.random() * 3;
-        planet.position.z = Math.random() * 45 - 20;
-        planet.rotation.x = Math.random() * 2 * Math.PI;
-        planet.rotation.y = Math.random() * 2 * Math.PI;
-        planet.rotation.z = Math.random() * 2 * Math.PI;
-        planet.name = "journey";
-        scene.add(planet);
-    });
 }
-buildRandomUniverse();
+const testOdyssey = createNewOdyssey(122, "Wallet Address", "Frenkie world", "test.com");
+scene.add(testOdyssey);
+window.addEventListener("pointermove", onPointerMove);
+window.addEventListener("mousedown", onMouseDown);
+/**
+* Create test array for odyssey
+*/ let listOfOddyseys = [];
+let referenceListOfOdysseys = [];
+const ProcessOdyssey = ()=>{
+    const numberOfPlanets = AmountOfGalaxyToGenereate;
+    //Build an odyssey for all given entries.
+    for(let i = 0; i < numberOfPlanets; i++){
+        const odyssey = createNewOdyssey(i, "Wallet Address", "Frenkie world", "test.com");
+        listOfOddyseys.push(odyssey);
+    }
+    referenceListOfOdysseys = [
+        ...listOfOddyseys
+    ];
+};
+ProcessOdyssey();
+/**
+  * Create Circular Universe of Odysseys
+  */ const buildUniverse = ()=>{
+    let radius = 10;
+    const radiusIncreaseValue = 15;
+    let AmountOfOdysseyInNextRing = 10;
+    let ringCount = 1;
+    let odysseyGroups = [];
+    // Build circles in groups.
+    function createRing() {
+        // if amount to be spawned bigger than available odyssey
+        if (listOfOddyseys.length < AmountOfOdysseyInNextRing) AmountOfOdysseyInNextRing = listOfOddyseys.length;
+        let degreeBetweenOdyssey = 360 / AmountOfOdysseyInNextRing;
+        let offset = 0;
+        let currentOdyssey;
+        const odysseyCircle = new _three.Group();
+        odysseyCircle.name = "circle" + ringCount;
+        // Fill circle with odysseys.
+        for(let i = 0; i < AmountOfOdysseyInNextRing; i++){
+            currentOdyssey = listOfOddyseys[i];
+            const radian = offset * (Math.PI / 180);
+            offset += degreeBetweenOdyssey;
+            const newX = Math.cos(radian) * radius;
+            const newY = 0 //(Math.random() * 20) - 10;
+            ;
+            const newZ = Math.sin(radian) * radius;
+            currentOdyssey.position.set(newX, newY, newZ);
+            currentOdyssey.randomConnection(AmountOfGalaxyToGenereate); // TEMP: Generate Random Connection in Class.
+            odysseyCircle.add(currentOdyssey);
+        }
+        listOfOddyseys.splice(0, AmountOfOdysseyInNextRing);
+        radius += radiusIncreaseValue;
+        AmountOfOdysseyInNextRing = AmountOfOdysseyInNextRing * 1.5;
+        ringCount++;
+        // Add newly created ring of odysseys to the array.
+        odysseyGroups.push(odysseyCircle);
+    }
+    /** Trigger While loop posting all odyssey. */ while(listOfOddyseys.length > 0)createRing();
+    // Add all odyssey rings to the scene.
+    odysseyGroups.forEach((circle)=>{
+        scene.add(circle);
+    });
+    /**
+     * Draw lines between staked Odysseys.
+     */ // setup reusable variables and material
+    let vectorsForLine = [];
+    const lineMat = new _three.LineBasicMaterial({
+        color: 0xFFFFFF,
+        transparent: true,
+        opacity: 0.15
+    });
+    referenceListOfOdysseys.forEach((odyssey)=>{
+        odyssey.connectedOdysseys.forEach((obj)=>{
+            vectorsForLine = [] //clean for next line.
+            ;
+            // Get positions from connected odyssey and draw line.
+            const foundOdyssey = referenceListOfOdysseys.filter((planet)=>planet.number === obj.id)[0];
+            if (foundOdyssey) {
+                vectorsForLine.push(odyssey.position, foundOdyssey.position);
+                const lineGeo = new _three.BufferGeometry().setFromPoints(vectorsForLine);
+                const line = new _three.Line(lineGeo, lineMat);
+                scene.add(line);
+            }
+        });
+    });
+};
+buildUniverse();
 // Animation
 function animate() {
     // Render the scene
@@ -774,7 +863,7 @@ function onWindowResize() {
 window.addEventListener("resize", onWindowResize, false);
 animate();
 
-},{"gsap":"fPSuC","three":"ktPTu","three/examples/jsm/controls/OrbitControls":"7mqRv","@parcel/transformer-js/src/esmodule-helpers.js":"8Rz06","dat.gui":"k3xQk"}],"fPSuC":[function(require,module,exports) {
+},{"gsap":"fPSuC","three":"ktPTu","three/examples/jsm/controls/OrbitControls":"7mqRv","dat.gui":"k3xQk","@parcel/transformer-js/src/esmodule-helpers.js":"8Rz06"}],"fPSuC":[function(require,module,exports) {
 var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
 parcelHelpers.defineInteropFlag(exports);
 parcelHelpers.export(exports, "gsap", ()=>gsapWithCSS);
