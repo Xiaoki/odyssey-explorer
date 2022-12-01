@@ -688,6 +688,8 @@ const generateGalaxy = ()=>{
      */ points = new _three.Points(pointsGeometry, pointsMaterial);
     scene.add(points);
 };
+//const axesHelper = new THREE.AxesHelper( 5 );
+//scene.add( axesHelper );
 generateGalaxy();
 gui.add(parameters, "count").min(100).max(1000000).step(100).onFinishChange(generateGalaxy);
 gui.add(parameters, "size").min(0.001).max(0.1).step(0.001).onFinishChange(generateGalaxy);
@@ -826,7 +828,7 @@ ProcessOdyssey();
     const lineMat = new _three.LineBasicMaterial({
         color: 0xFFFFFF,
         transparent: true,
-        opacity: 0.15
+        opacity: 0.2
     });
     referenceListOfOdysseys.forEach((odyssey)=>{
         odyssey.connectedOdysseys.forEach((obj)=>{
@@ -835,15 +837,33 @@ ProcessOdyssey();
             // Get positions from connected odyssey and draw line.
             const foundOdyssey = referenceListOfOdysseys.filter((planet)=>planet.number === obj.id)[0];
             if (foundOdyssey) {
-                vectorsForLine.push(odyssey.position, foundOdyssey.position);
-                const lineGeo = new _three.BufferGeometry().setFromPoints(vectorsForLine);
-                const line = new _three.Line(lineGeo, lineMat);
-                scene.add(line);
+                const randomLineHeight = Math.random() * 20 * (Math.random() > 0.5 ? 1 : -1);
+                let middlePosition = new (0, _three.Vector3)((odyssey.position.x + foundOdyssey.position.x) / 2, randomLineHeight, (odyssey.position.z + foundOdyssey.position.z) / 2);
+                const curve = new _three.QuadraticBezierCurve3(odyssey.position, middlePosition, foundOdyssey.position);
+                const curvePoints = curve.getSpacedPoints(20);
+                const curveGeometry = new _three.BufferGeometry().setFromPoints(curvePoints);
+                const curveMesh = new _three.Line(curveGeometry, lineMat);
+                scene.add(curveMesh);
             }
         });
     });
 };
-buildUniverse();
+/**
+ * Create the curved line representing a connection.
+ */ /*
+const curve = new THREE.QuadraticBezierCurve3(
+    new Vector3(2,0,0),
+    new Vector3(2, 10,15),
+    new Vector3(2,0,30)
+);
+
+const curvePoints = curve.getSpacedPoints(20);
+const curveGeometry = new THREE.BufferGeometry().setFromPoints(curvePoints);
+const curveMaterial = new THREE.LineBasicMaterial({color: 0xFF0000});
+const curveMesh = new THREE.Line(curveGeometry, curveMaterial);
+scene.add(curveMesh);
+\
+*/ buildUniverse();
 // Animation
 function animate() {
     // Render the scene

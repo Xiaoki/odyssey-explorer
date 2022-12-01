@@ -10,7 +10,7 @@ Author:  Frank Bloemendal
 
 import gsap, { normalize } from "gsap";
 import * as THREE from "three";
-import { CameraHelper, CompressedPixelFormat, FrontSide, GeometryUtils, Group, LineCurve, MeshBasicMaterial, MeshStandardMaterial, Object3D, Raycaster, SphereGeometry, TetrahedronGeometry, TextureLoader, Triangle, Vector3, _SRGBAFormat } from "three";
+import { CameraHelper, CompressedPixelFormat, CurvePath, FrontSide, GeometryUtils, Group, LineCurve, MeshBasicMaterial, MeshStandardMaterial, Object3D, Raycaster, SphereGeometry, TetrahedronGeometry, TextureLoader, Triangle, Vector3, _SRGBAFormat } from "three";
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
 import * as dat from 'dat.gui';
 
@@ -217,6 +217,9 @@ const generateGalaxy = () => {
 
 };
 
+//const axesHelper = new THREE.AxesHelper( 5 );
+//scene.add( axesHelper );
+
 generateGalaxy();
 
 gui.add(parameters, "count").min(100).max(1000000).step(100).onFinishChange(generateGalaxy);
@@ -416,7 +419,7 @@ const buildUniverse = () => {
 
     // setup reusable variables and material
     let vectorsForLine = []
-    const lineMat = new THREE.LineBasicMaterial({color: 0xFFFFFF, transparent: true, opacity: 0.15});
+    const lineMat = new THREE.LineBasicMaterial({color: 0xFFFFFF, transparent: true, opacity: 0.2});
 
     referenceListOfOdysseys.forEach( odyssey => {
         
@@ -428,10 +431,21 @@ const buildUniverse = () => {
             const foundOdyssey = referenceListOfOdysseys.filter( planet => planet.number === obj.id)[0];
 
             if(foundOdyssey){
-                vectorsForLine.push(odyssey.position, foundOdyssey.position)
-                const lineGeo = new THREE.BufferGeometry().setFromPoints(vectorsForLine);
-                const line = new THREE.Line(lineGeo, lineMat);
-                scene.add(line);
+                const randomLineHeight = (Math.random() * 20 ) * (Math.random() > 0.5 ? 1 : -1 );
+                let middlePosition = new Vector3((odyssey.position.x + foundOdyssey.position.x) /2, randomLineHeight, (odyssey.position.z + foundOdyssey.position.z) /2);
+
+                
+                const curve = new THREE.QuadraticBezierCurve3(
+                    odyssey.position,
+                    middlePosition,
+                    foundOdyssey.position,
+                )
+                
+                const curvePoints = curve.getSpacedPoints(20);
+                const curveGeometry = new THREE.BufferGeometry().setFromPoints(curvePoints);;
+                const curveMesh = new THREE.Line(curveGeometry, lineMat);
+                scene.add(curveMesh);
+
             }
         });
 
@@ -441,6 +455,25 @@ const buildUniverse = () => {
 
 
  }
+
+/**
+ * Create the curved line representing a connection.
+ */
+
+/*
+const curve = new THREE.QuadraticBezierCurve3(
+    new Vector3(2,0,0),
+    new Vector3(2, 10,15),
+    new Vector3(2,0,30)
+);
+
+const curvePoints = curve.getSpacedPoints(20);
+const curveGeometry = new THREE.BufferGeometry().setFromPoints(curvePoints);
+const curveMaterial = new THREE.LineBasicMaterial({color: 0xFF0000});
+const curveMesh = new THREE.Line(curveGeometry, curveMaterial);
+scene.add(curveMesh);
+\
+*/
 
  buildUniverse();
 
