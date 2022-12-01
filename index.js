@@ -21,6 +21,8 @@ import * as dat from 'dat.gui';
  */
 
 let AmountOfGalaxyToGenereate = 200;
+let maxOdysseyConnectionLineHeight = 20;
+let MaxOrbitCameraDistance = 50;
 
 class Odyssey extends THREE.Mesh {
 
@@ -92,7 +94,7 @@ let scene, canvas, renderer, controls;
 const raycaster = new THREE.Raycaster();
 const pointer = new THREE.Vector2;
 const gui = new dat.GUI();
-gui.close();
+gui.hide();
 
 let meshArray = [];
   
@@ -125,7 +127,7 @@ controls.autoRotate = true;
 controls.autoRotateSpeed = 0.3;
 controls.enableDamping = true;
 controls.enablePan = true;
-controls.maxDistance = 500;
+controls.maxDistance = MaxOrbitCameraDistance;
 controls.minDistance = 5; 
 controls.zoomSpeed = 1;
 
@@ -419,7 +421,7 @@ const buildUniverse = () => {
 
     // setup reusable variables and material
     let vectorsForLine = []
-    const lineMat = new THREE.LineBasicMaterial({color: 0xFFFFFF, transparent: true, opacity: 0.2});
+    const lineMat = new THREE.LineBasicMaterial({color: 0xFFFFFF, transparent: true, opacity: 0.15});
 
     referenceListOfOdysseys.forEach( odyssey => {
         
@@ -431,7 +433,7 @@ const buildUniverse = () => {
             const foundOdyssey = referenceListOfOdysseys.filter( planet => planet.number === obj.id)[0];
 
             if(foundOdyssey){
-                const randomLineHeight = (Math.random() * 20 ) * (Math.random() > 0.5 ? 1 : -1 );
+                const randomLineHeight = (Math.random() * maxOdysseyConnectionLineHeight ) * (Math.random() > 0.5 ? 1 : -1 );
                 let middlePosition = new Vector3((odyssey.position.x + foundOdyssey.position.x) /2, randomLineHeight, (odyssey.position.z + foundOdyssey.position.z) /2);
 
                 

@@ -548,6 +548,8 @@ var _datGui = require("dat.gui");
 /**
  * For Dev Only
  */ let AmountOfGalaxyToGenereate = 200;
+let maxOdysseyConnectionLineHeight = 20;
+let MaxOrbitCameraDistance = 50;
 class Odyssey extends _three.Mesh {
     constructor(geometry, material, number, wallet, name, url){
         super(geometry, material);
@@ -597,7 +599,7 @@ let scene, canvas, renderer, controls;
 const raycaster = new _three.Raycaster();
 const pointer = new _three.Vector2;
 const gui = new _datGui.GUI();
-gui.close();
+gui.hide();
 let meshArray = [];
 // Scene setup
 canvas = document.querySelector(".webgl");
@@ -625,7 +627,7 @@ controls.autoRotate = true;
 controls.autoRotateSpeed = 0.3;
 controls.enableDamping = true;
 controls.enablePan = true;
-controls.maxDistance = 500;
+controls.maxDistance = MaxOrbitCameraDistance;
 controls.minDistance = 5;
 controls.zoomSpeed = 1;
 /**
@@ -828,7 +830,7 @@ ProcessOdyssey();
     const lineMat = new _three.LineBasicMaterial({
         color: 0xFFFFFF,
         transparent: true,
-        opacity: 0.2
+        opacity: 0.15
     });
     referenceListOfOdysseys.forEach((odyssey)=>{
         odyssey.connectedOdysseys.forEach((obj)=>{
@@ -837,7 +839,7 @@ ProcessOdyssey();
             // Get positions from connected odyssey and draw line.
             const foundOdyssey = referenceListOfOdysseys.filter((planet)=>planet.number === obj.id)[0];
             if (foundOdyssey) {
-                const randomLineHeight = Math.random() * 20 * (Math.random() > 0.5 ? 1 : -1);
+                const randomLineHeight = Math.random() * maxOdysseyConnectionLineHeight * (Math.random() > 0.5 ? 1 : -1);
                 let middlePosition = new (0, _three.Vector3)((odyssey.position.x + foundOdyssey.position.x) / 2, randomLineHeight, (odyssey.position.z + foundOdyssey.position.z) / 2);
                 const curve = new _three.QuadraticBezierCurve3(odyssey.position, middlePosition, foundOdyssey.position);
                 const curvePoints = curve.getSpacedPoints(20);
