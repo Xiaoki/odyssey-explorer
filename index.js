@@ -22,7 +22,9 @@ import * as dat from 'dat.gui';
 
 let AmountOfGalaxyToGenereate = 200;
 let maxOdysseyConnectionLineHeight = 20;
-let MaxOrbitCameraDistance = 50;
+let MaxOrbitCameraDistance = 200;
+let planetAreSpawnedHorizontal = false;
+let planetsMaxVerticalSpawnHeight = 100;
 
 class Odyssey extends THREE.Mesh {
 
@@ -48,7 +50,7 @@ class Odyssey extends THREE.Mesh {
      * DELETE THIS LATER.
      */
     randomConnection = (maxAmount) => {
-        let amountToGenerate = Math.random() * 3;
+        let amountToGenerate = 1 //Math.floor(Math.random() * 1);
         for (let i = 0; i < amountToGenerate; i++ ){
             let object = {
                 id: Math.floor(Math.random() * maxAmount),
@@ -68,11 +70,11 @@ class Odyssey extends THREE.Mesh {
 const createNewOdyssey = (id, wallet, name, url) => {
 
     const standardTextures = [
-        "./images/baseAtmos.png", 
-        "./images/temptations.png", 
-        "./images/showTime.png", 
-        "./images/honey01.png",
-        "./images/iceland01.png", 
+        "./images/small/baseAtmos.jpg", 
+        "./images/small/temptations.jpg", 
+        "./images/small/showTime.jpg", 
+        "./images/small/honey01.jpg",
+        "./images/small/iceland01.jpg", 
     ];   
 
     const randNum = Math.floor(Math.random() * (standardTextures.length));
@@ -136,7 +138,7 @@ controls.zoomSpeed = 1;
 /**
  * Happyship skybox
  */
-const backgroundImage = new THREE.TextureLoader().load('./images/BasicSkyboxHD.png');
+const backgroundImage = new THREE.TextureLoader().load('./images/small/BasicSkyboxHD.jpg');
 backgroundImage.mapping = THREE.EquirectangularReflectionMapping;
 scene.background = backgroundImage;
 
@@ -151,7 +153,7 @@ parameters.branches = 3;
 parameters.spin = 1.3;
 parameters.randomnes = 0.2;
 parameters.randomnesPower = 3;
-parameters.YHeight= 5;
+parameters.YHeight= 100;
 
 let pointsGeometry = null;
 let pointsMaterial = null;
@@ -300,6 +302,7 @@ function onMouseDown(event){
             onStart: function(){
                 controls.enabled = false;
                 controls.autoRotate = false;
+                controls.enablePan = false;
             },
             onUpdate: function(){
                 camera.quaternion.copy(startOrientation).slerp(targetOrientation, this.progress());
@@ -307,6 +310,7 @@ function onMouseDown(event){
             },
             onComplete: function(){ 
                 controls.enabled = true;
+                controls.enablePan = true;
                 controls.autoRotate = true; 
                 controls.target = targetPlanetLocation;
             }
@@ -316,8 +320,8 @@ function onMouseDown(event){
 
 }
 
-const testOdyssey = createNewOdyssey(122, "Wallet Address", "Frenkie world", "test.com");
-scene.add(testOdyssey);
+const centerOdyssey = createNewOdyssey(122, "Wallet Address", "Frenkie world", "test.com");
+scene.add(centerOdyssey);
 
 window.addEventListener( 'pointermove', onPointerMove);
 window.addEventListener('mousedown', onMouseDown);
@@ -382,7 +386,12 @@ const buildUniverse = () => {
             offset += degreeBetweenOdyssey;
 
             const newX = Math.cos(radian) * radius;
-            const newY =  0 //(Math.random() * 20) - 10;
+            let newY
+            if (planetAreSpawnedHorizontal){
+                newY = 0;
+            }else{
+                newY =  (Math.random() * planetsMaxVerticalSpawnHeight) - (planetsMaxVerticalSpawnHeight /2);
+            }
             const newZ = Math.sin(radian) * radius;
 
             currentOdyssey.position.set(newX, newY, newZ);
@@ -395,7 +404,7 @@ const buildUniverse = () => {
 
        listOfOddyseys.splice(0, AmountOfOdysseyInNextRing);
        
-       radius += radiusIncreaseValue;
+       radius += radiusIncreaseValue * (ringCount / 2);
        AmountOfOdysseyInNextRing = AmountOfOdysseyInNextRing * 1.5;
        ringCount++;
        
@@ -458,29 +467,7 @@ const buildUniverse = () => {
 
  }
 
-/**
- * Create the curved line representing a connection.
- */
-
-/*
-const curve = new THREE.QuadraticBezierCurve3(
-    new Vector3(2,0,0),
-    new Vector3(2, 10,15),
-    new Vector3(2,0,30)
-);
-
-const curvePoints = curve.getSpacedPoints(20);
-const curveGeometry = new THREE.BufferGeometry().setFromPoints(curvePoints);
-const curveMaterial = new THREE.LineBasicMaterial({color: 0xFF0000});
-const curveMesh = new THREE.Line(curveGeometry, curveMaterial);
-scene.add(curveMesh);
-\
-*/
-
  buildUniverse();
-
-
-
 
 // Animation
 function animate(){
