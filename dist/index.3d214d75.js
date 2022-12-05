@@ -552,6 +552,7 @@ let maxOdysseyConnectionLineHeight = 20;
 let MaxOrbitCameraDistance = 200;
 let planetAreSpawnedHorizontal = false;
 let planetsMaxVerticalSpawnHeight = 100;
+const minimalDistanceToPlanetForCamera = 5;
 class Odyssey extends _three.Mesh {
     constructor(geometry, material, number, wallet, name, url){
         super(geometry, material);
@@ -584,16 +585,22 @@ class Odyssey extends _three.Mesh {
 const createNewOdyssey = (id, wallet, name, url)=>{
     const standardTextures = [
         "./images/small/baseAtmos.jpg",
-        "./images/small/temptations.jpg",
-        "./images/small/showTime.jpg",
+        "./images/small/odyssey.jpg",
+        "./images/small/ghost.jpg",
         "./images/small/honey01.jpg",
         "./images/small/iceland01.jpg"
     ];
     const randNum = Math.floor(Math.random() * standardTextures.length);
-    const texture = standardTextures[randNum];
+    const randTexture = standardTextures[randNum];
     const geometry = new (0, _three.SphereGeometry)(1, 16, 16);
-    const material = new (0, _three.MeshStandardMaterial)({
-        map: new _three.TextureLoader().load(texture)
+    const texture = new _three.TextureLoader().load(randTexture);
+    // Flip textures horizontally so text is readable.
+    texture.wrapS = _three.RepeatWrapping;
+    texture.repeat.x = -1;
+    const material = new (0, _three.MeshBasicMaterial)({
+        map: texture,
+        side: _three.BackSide,
+        color: 0xffffff
     });
     const odyssey = new Odyssey(geometry, material, id, wallet, name, url);
     return odyssey;
@@ -631,7 +638,7 @@ controls.autoRotateSpeed = 0.3;
 controls.enableDamping = true;
 controls.enablePan = true;
 controls.maxDistance = MaxOrbitCameraDistance;
-controls.minDistance = 5;
+controls.minDistance = minimalDistanceToPlanetForCamera;
 controls.zoomSpeed = 1;
 /**
  * Happyship skybox
@@ -738,7 +745,10 @@ function onMouseDown(event) {
         let direction = new _three.Vector3();
         direction.subVectors(targetPlanet.object.position, camera.position).normalize();
         // Get distance from raycast minus minimal distance orbit control
-        const distance = targetPlanet.distance - 5;
+        // const distance = targetPlanet.distance - minimalDistanceToPlanetForCamera;
+        let targetVectorForDistance = new (0, _three.Vector3)(targetPlanet.object.position.x, targetPlanet.object.position.y, targetPlanet.object.position.z);
+        const distance = targetVectorForDistance.distanceTo(camera.position) - minimalDistanceToPlanetForCamera;
+        //console.log(test.distanceTo(camera.position));
         // Create new target for the camera.
         let targetLocation = new _three.Vector3();
         targetLocation.addVectors(camera.position, direction.multiplyScalar(distance));

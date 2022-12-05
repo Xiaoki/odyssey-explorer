@@ -10,7 +10,7 @@ Author:  Frank Bloemendal
 
 import gsap, { normalize } from "gsap";
 import * as THREE from "three";
-import { CameraHelper, CompressedPixelFormat, CurvePath, FrontSide, GeometryUtils, Group, LineCurve, MeshBasicMaterial, MeshStandardMaterial, Object3D, Raycaster, SphereGeometry, TetrahedronGeometry, TextureLoader, Triangle, Vector3, _SRGBAFormat } from "three";
+import { BlendingEquation, CameraHelper, CompressedPixelFormat, CurvePath, FrontSide, GeometryUtils, Group, LineCurve, MeshBasicMaterial, MeshPhysicalMaterial, MeshStandardMaterial, Object3D, Raycaster, SphereGeometry, TetrahedronGeometry, TextureLoader, Triangle, Vector3, _SRGBAFormat } from "three";
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
 import * as dat from 'dat.gui';
 
@@ -25,6 +25,7 @@ let maxOdysseyConnectionLineHeight = 20;
 let MaxOrbitCameraDistance = 200;
 let planetAreSpawnedHorizontal = false;
 let planetsMaxVerticalSpawnHeight = 100;
+const minimalDistanceToPlanetForCamera = 5;
 
 class Odyssey extends THREE.Mesh {
 
@@ -71,20 +72,32 @@ const createNewOdyssey = (id, wallet, name, url) => {
 
     const standardTextures = [
         "./images/small/baseAtmos.jpg", 
-        "./images/small/temptations.jpg", 
-        "./images/small/showTime.jpg", 
+        "./images/small/odyssey.jpg", 
+        "./images/small/ghost.jpg", 
         "./images/small/honey01.jpg",
         "./images/small/iceland01.jpg", 
     ];   
 
     const randNum = Math.floor(Math.random() * (standardTextures.length));
-    const texture = standardTextures[randNum]
+    const randTexture = standardTextures[randNum]
 
     const geometry = new SphereGeometry(1, 16,16);
-    const material = new MeshStandardMaterial({
-        map: new THREE.TextureLoader().load(texture)
+    const texture = new THREE.TextureLoader().load(randTexture);
+    
+
+    // Flip textures horizontally so text is readable.
+    texture.wrapS = THREE.RepeatWrapping;
+    texture.repeat.x = - 1;
+
+    const material = new MeshBasicMaterial({
+        map: texture,
+        side: THREE.BackSide,
+        color: 0xffffff,
+        
+        
     });
 
+    
     const odyssey = new Odyssey(geometry, material, id, wallet, name, url);
 
     return odyssey;
@@ -130,7 +143,7 @@ controls.autoRotateSpeed = 0.3;
 controls.enableDamping = true;
 controls.enablePan = true;
 controls.maxDistance = MaxOrbitCameraDistance;
-controls.minDistance = 5; 
+controls.minDistance = minimalDistanceToPlanetForCamera; 
 controls.zoomSpeed = 1;
 
 
@@ -287,7 +300,11 @@ function onMouseDown(event){
         direction.subVectors(targetPlanet.object.position, camera.position).normalize();
 
         // Get distance from raycast minus minimal distance orbit control
-        const distance = targetPlanet.distance - 5;
+        // const distance = targetPlanet.distance - minimalDistanceToPlanetForCamera;
+        let targetVectorForDistance = new Vector3(targetPlanet.object.position.x,targetPlanet.object.position.y,targetPlanet.object.position.z);
+        const distance = targetVectorForDistance.distanceTo(camera.position) - minimalDistanceToPlanetForCamera;
+        
+        //console.log(test.distanceTo(camera.position));
 
         // Create new target for the camera.
         let targetLocation = new THREE.Vector3();
