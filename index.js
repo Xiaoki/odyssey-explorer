@@ -104,7 +104,7 @@ const createNewOdyssey = (id, wallet, name, url) => {
 }
 
 
-let scene, canvas, renderer, controls;
+let scene, canvas, renderer, controls, selectedOdyssey;
 
 const raycaster = new THREE.Raycaster();
 const pointer = new THREE.Vector2;
@@ -284,9 +284,16 @@ function onMouseDown(event){
         // Only react to first raycast hit
         const targetPlanet = planetArray[0];
 
+        // If clicked planet is same as current selected one return
+        if(targetPlanet.object === selectedOdyssey){
+            return;
+        }
+
         // Long information about selected Odyssey
         targetPlanet.object.log();
-        console.log(targetPlanet);
+        console.log(targetPlanet.object);
+        selectedOdyssey = targetPlanet.object;
+
         
         // Prepare fly to planets.
         const targetPlanetLocation = new Vector3(targetPlanet.object.position.x, targetPlanet.object.position.y, targetPlanet.object.position.z);;
@@ -320,6 +327,7 @@ function onMouseDown(event){
                 controls.enabled = false;
                 controls.autoRotate = false;
                 controls.enablePan = false;
+                highlightMesh.position.set(0,0,0); // remove the highlight
             },
             onUpdate: function(){
                 camera.quaternion.copy(startOrientation).slerp(targetOrientation, this.progress());
@@ -329,11 +337,12 @@ function onMouseDown(event){
                 controls.enabled = true;
                 controls.enablePan = true;
                 controls.autoRotate = true; 
-                controls.target = targetPlanetLocation;
+                controls.target = targetPlanetLocation;            
             }
         });
     }
     
+
 
 }
 
@@ -431,6 +440,7 @@ const buildUniverse = () => {
 
     }
 
+
     /** Trigger While loop posting all odyssey. */
     while(listOfOddyseys.length > 0){
         createRing();
@@ -484,10 +494,42 @@ const buildUniverse = () => {
 
  }
 
- buildUniverse();
+
+buildUniverse();
+
+/**
+* Highlight Mesh
+*/
+const highlightGeometry = new THREE.PlaneGeometry(3,3);
+const highlightMateiral = new THREE.MeshBasicMaterial({color: 0xFFFFFF, transparent: true, opacity: 0.2});
+const highlightMesh = new THREE.Mesh(highlightGeometry, highlightMateiral)
+highlightMesh.lookAt(camera.position);
+scene.add(highlightMesh);
+
+function highlightObjects(){
+    
+    raycaster.setFromCamera(pointer, camera);
+
+    const objectToHighlight = raycaster.intersectObjects(scene.children, true);
+    
+    if(objectToHighlight.length > 0){
+
+        objectToHighlight.forEach( item => {
+            if(item.object.isOdyssey && item.object !== selectedOdyssey){
+                highlightMesh.position .set(item.object.position.x, item.object.position.y, item.object.position.z)
+            }
+        })
+
+     }
+     // Update rotation of highlight plane to face camera.
+     highlightMesh.lookAt(camera.position);
+}
 
 // Animation
 function animate(){
+
+    // Update Highlight  
+    highlightObjects();
 
     // Render the scene
     renderer.render(scene, camera);

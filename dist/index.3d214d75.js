@@ -605,7 +605,7 @@ const createNewOdyssey = (id, wallet, name, url)=>{
     const odyssey = new Odyssey(geometry, material, id, wallet, name, url);
     return odyssey;
 };
-let scene, canvas, renderer, controls;
+let scene, canvas, renderer, controls, selectedOdyssey;
 const raycaster = new _three.Raycaster();
 const pointer = new _three.Vector2;
 const gui = new _datGui.GUI();
@@ -733,9 +733,12 @@ function onMouseDown(event) {
         if (planetArray <= 0) return;
         // Only react to first raycast hit
         const targetPlanet = planetArray[0];
+        // If clicked planet is same as current selected one return
+        if (targetPlanet.object === selectedOdyssey) return;
         // Long information about selected Odyssey
         targetPlanet.object.log();
-        console.log(targetPlanet);
+        console.log(targetPlanet.object);
+        selectedOdyssey = targetPlanet.object;
         // Prepare fly to planets.
         const targetPlanetLocation = new (0, _three.Vector3)(targetPlanet.object.position.x, targetPlanet.object.position.y, targetPlanet.object.position.z);
         // Prepare rotation of camera animation.
@@ -762,6 +765,7 @@ function onMouseDown(event) {
                 controls.enabled = false;
                 controls.autoRotate = false;
                 controls.enablePan = false;
+                highlightMesh.position.set(0, 0, 0); // remove the highlight
             },
             onUpdate: function() {
                 camera.quaternion.copy(startOrientation).slerp(targetOrientation, this.progress());
@@ -867,8 +871,30 @@ ProcessOdyssey();
     });
 };
 buildUniverse();
+/**
+* Highlight Mesh
+*/ const highlightGeometry = new _three.PlaneGeometry(3, 3);
+const highlightMateiral = new _three.MeshBasicMaterial({
+    color: 0xFFFFFF,
+    transparent: true,
+    opacity: 0.2
+});
+const highlightMesh = new _three.Mesh(highlightGeometry, highlightMateiral);
+highlightMesh.lookAt(camera.position);
+scene.add(highlightMesh);
+function highlightObjects() {
+    raycaster.setFromCamera(pointer, camera);
+    const objectToHighlight = raycaster.intersectObjects(scene.children, true);
+    if (objectToHighlight.length > 0) objectToHighlight.forEach((item)=>{
+        if (item.object.isOdyssey && item.object !== selectedOdyssey) highlightMesh.position.set(item.object.position.x, item.object.position.y, item.object.position.z);
+    });
+    // Update rotation of highlight plane to face camera.
+    highlightMesh.lookAt(camera.position);
+}
 // Animation
 function animate() {
+    // Update Highlight  
+    highlightObjects();
     // Render the scene
     renderer.render(scene, camera);
     // Update controls for auto-rotate.
