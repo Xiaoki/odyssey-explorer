@@ -112,6 +112,7 @@ const gui = new dat.GUI();
 let updateCameraRotation = false;
 gui.hide();
 
+
 let meshArray = [];
   
 // Scene setup
@@ -270,8 +271,6 @@ function onMouseDown(event){
     // Process the Raycast.
     if(castRay.length > 0){
         
-        updateCameraRotation = true;
-
         
         // Only react to first raycast hit
         const targetPlanet = castRay[0];
@@ -308,13 +307,14 @@ function onMouseDown(event){
         targetLocation.addVectors(camera.position, direction.multiplyScalar(distance));
 
          //Animate using gsap module.
-       gsap.to(camera.position, {
+        gsap.to(camera.position, {
            duration: 1.5,
            x: targetLocation.x,
            y: targetLocation.y,
            z: targetLocation.z,
+
            onStart: function(){
-                //updateCameraRotation = true;
+                updateCameraRotation = true;
                 controls.enabled = false;
                 controls.autoRotate = false; 
                 controls.enablePan = false;                
@@ -330,8 +330,7 @@ function onMouseDown(event){
                 controls.enabled = true;
                 controls.enablePan = true;
                 controls.autoRotate = true; 
-                controls.target = targetPlanetLocation; 
-                controls.update;           
+                controls.target = targetPlanetLocation;          
            }
        });
     
@@ -527,13 +526,15 @@ function animate(){
     // Update Highlight  
     highlightObjects();
 
-    // Render the scene
-    renderer.render(scene, camera);
+
 
     // Update controls for auto-rotate.
     if (!updateCameraRotation) {
         controls.update();
     }
+
+    // Render the scene
+    renderer.render(scene, camera);
 
     // Re-call Animation
     window.requestAnimationFrame(animate);

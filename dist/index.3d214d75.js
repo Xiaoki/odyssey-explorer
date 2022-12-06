@@ -725,7 +725,6 @@ function onMouseDown(event) {
     const castRay = raycaster.intersectObjects(referenceListOfOdysseys, true);
     // Process the Raycast.
     if (castRay.length > 0) {
-        updateCameraRotation = true;
         // Only react to first raycast hit
         const targetPlanet = castRay[0];
         // If clicked planet is same as current selected one return
@@ -756,7 +755,7 @@ function onMouseDown(event) {
             y: targetLocation.y,
             z: targetLocation.z,
             onStart: function() {
-                //updateCameraRotation = true;
+                updateCameraRotation = true;
                 controls.enabled = false;
                 controls.autoRotate = false;
                 controls.enablePan = false;
@@ -771,7 +770,6 @@ function onMouseDown(event) {
                 controls.enablePan = true;
                 controls.autoRotate = true;
                 controls.target = targetPlanetLocation;
-                controls.update;
             }
         });
     }
@@ -891,10 +889,10 @@ function highlightObjects() {
 function animate() {
     // Update Highlight  
     highlightObjects();
-    // Render the scene
-    renderer.render(scene, camera);
     // Update controls for auto-rotate.
     if (!updateCameraRotation) controls.update();
+    // Render the scene
+    renderer.render(scene, camera);
     // Re-call Animation
     window.requestAnimationFrame(animate);
 }
