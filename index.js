@@ -10,7 +10,7 @@ Author:  Frank Bloemendal
 
 import gsap, { normalize } from "gsap";
 import * as THREE from "three";
-import { BlendingEquation, CameraHelper, Clock, CompressedPixelFormat, CurvePath, FrontSide, GeometryUtils, Group, LineCurve, MeshBasicMaterial, MeshPhysicalMaterial, MeshStandardMaterial, Object3D, Raycaster, SphereGeometry, TetrahedronGeometry, TextureLoader, Triangle, Vector3, _SRGBAFormat } from "three";
+import { BlendingEquation, BooleanKeyframeTrack, CameraHelper, Clock, CompressedPixelFormat, CurvePath, FrontSide, GeometryUtils, Group, LineCurve, MeshBasicMaterial, MeshPhysicalMaterial, MeshStandardMaterial, Object3D, Raycaster, SphereGeometry, TetrahedronGeometry, TextureLoader, Triangle, Vector3, _SRGBAFormat } from "three";
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
 import * as dat from 'dat.gui';
 
@@ -111,7 +111,7 @@ const pointer = new THREE.Vector2;
 const gui = new dat.GUI();
 let updateCameraRotation = false;
 gui.hide();
-
+let transitionToPlanetFinished = true;
 
 let meshArray = [];
   
@@ -132,7 +132,7 @@ scene.add(ambient);
 
 
 // Renderer Setup
-renderer = new THREE.WebGLRenderer({canvas, antialias: true});
+renderer = new THREE.WebGLRenderer({canvas, antialias: true, powerPreference: "high-performance"});
 renderer.setClearColor(0x222222);
 renderer.setSize(window.innerWidth, window.innerHeight);
 renderer.setPixelRatio(window.devicePixelRatio);
@@ -271,7 +271,10 @@ function onMouseDown(event){
     // Process the Raycast.
     if(castRay.length > 0){
         
-        
+        // Make sure transition to the newly clicked planet has finished.
+        if (!transitionToPlanetFinished){
+            return
+        }
         // Only react to first raycast hit
         const targetPlanet = castRay[0];
 
@@ -314,6 +317,7 @@ function onMouseDown(event){
            z: targetLocation.z,
 
            onStart: function(){
+                transitionToPlanetFinished = false;
                 updateCameraRotation = true;
                 controls.enabled = false;
                 controls.autoRotate = false; 
@@ -330,7 +334,8 @@ function onMouseDown(event){
                 controls.enabled = true;
                 controls.enablePan = true;
                 controls.autoRotate = true; 
-                controls.target = targetPlanetLocation;          
+                controls.target = targetPlanetLocation; 
+                transitionToPlanetFinished = true;         
            }
        });
     
@@ -340,11 +345,11 @@ function onMouseDown(event){
 
 }
 
-const centerOdyssey = createNewOdyssey(122, "Wallet Address", "Frenkie world", "test.com");
-scene.add(centerOdyssey);
+
 
 window.addEventListener( 'pointermove', onPointerMove);
 window.addEventListener('mousedown', onMouseDown);
+
 
 
 
@@ -518,6 +523,57 @@ function highlightObjects(){
      // Update rotation of highlight plane to face camera.
      highlightMesh.lookAt(camera.position);
 }
+
+/**
+ * Handle fade out
+ */
+
+// TEMPORAL TRIGGER FOR FADE OUT: SPACEBAR
+
+ window.addEventListener('keyup', event => {
+    if(event.code === 'Space'){
+        fadeOutScene();
+    }
+});
+
+/**
+ *   Scene fade out. Ads DIV to body and sets its opacity.
+ */
+
+function fadeOutScene(){
+
+    // Add new DIV to the HTML for fadeOut
+    
+    const fadeOutDiv = document.createElement('div');
+    fadeOutDiv.classList.add("fadeDiv"); 
+
+    // Setup elemt style.
+    fadeOutDiv.style.backgroundColor = 'black';
+    fadeOutDiv.style.opacity = 0;
+    fadeOutDiv.style.position = 'absolute';
+    fadeOutDiv.style.width = '100vw';
+    fadeOutDiv.style.height = '100vh';
+    document.body.appendChild(fadeOutDiv);
+
+
+    //Fade out  with interval
+    const divToFade = document.querySelector('.fadeDiv');
+    let fadeTimer = 0;
+
+    // Setup interval
+    const fadeOutTimer = setInterval( () => {
+
+        // Check if timer is finished.
+        if(fadeTimer >= 1){
+            clearInterval(fadeOutTimer);
+        }
+        
+        fadeTimer += 0.01;
+        divToFade.style.opacity = fadeTimer;
+    }, 10);
+
+}
+
 
 // Animation
 function animate(){

@@ -142,13 +142,13 @@
       this[globalName] = mainExports;
     }
   }
-})({"jaQsw":[function(require,module,exports) {
+})({"esoTI":[function(require,module,exports) {
 var global = arguments[3];
 var HMR_HOST = null;
 var HMR_PORT = null;
 var HMR_SECURE = false;
 var HMR_ENV_HASH = "d6ea1d42532a7575";
-module.bundle.HMR_BUNDLE_ID = "0a8ecb283d214d75";
+module.bundle.HMR_BUNDLE_ID = "ee62429a5d9dacde";
 "use strict";
 /* global HMR_HOST, HMR_PORT, HMR_ENV_HASH, HMR_SECURE, chrome, browser, globalThis, __parcel__import__, __parcel__importScripts__, ServiceWorkerGlobalScope */ /*::
 import type {
@@ -531,7 +531,7 @@ function hmrAcceptRun(bundle, id) {
     acceptedAssets[id] = true;
 }
 
-},{}],"bB7Pu":[function(require,module,exports) {
+},{}],"1Z4Rq":[function(require,module,exports) {
 /*
 
 Project: Odyssey Explorer
@@ -611,7 +611,6 @@ const pointer = new _three.Vector2;
 const gui = new _datGui.GUI();
 let updateCameraRotation = false;
 gui.hide();
-let transitionToPlanetFinished = true;
 let meshArray = [];
 // Scene setup
 canvas = document.querySelector(".webgl");
@@ -628,8 +627,7 @@ scene.add(ambient);
 // Renderer Setup
 renderer = new _three.WebGLRenderer({
     canvas,
-    antialias: true,
-    powerPreference: "high-performance"
+    antialias: true
 });
 renderer.setClearColor(0x222222);
 renderer.setSize(window.innerWidth, window.innerHeight);
@@ -727,8 +725,6 @@ function onMouseDown(event) {
     const castRay = raycaster.intersectObjects(referenceListOfOdysseys, true);
     // Process the Raycast.
     if (castRay.length > 0) {
-        // Make sure transition to the newly clicked planet has finished.
-        if (!transitionToPlanetFinished) return;
         // Only react to first raycast hit
         const targetPlanet = castRay[0];
         // If clicked planet is same as current selected one return
@@ -759,7 +755,6 @@ function onMouseDown(event) {
             y: targetLocation.y,
             z: targetLocation.z,
             onStart: function() {
-                transitionToPlanetFinished = false;
                 updateCameraRotation = true;
                 controls.enabled = false;
                 controls.autoRotate = false;
@@ -775,7 +770,6 @@ function onMouseDown(event) {
                 controls.enablePan = true;
                 controls.autoRotate = true;
                 controls.target = targetPlanetLocation;
-                transitionToPlanetFinished = true;
             }
         });
     }
@@ -888,36 +882,6 @@ function highlightObjects() {
     });
     // Update rotation of highlight plane to face camera.
     highlightMesh.lookAt(camera.position);
-}
-/**
- * Handle fade out
- */ // TEMPORAL TRIGGER FOR FADE OUT: SPACEBAR
-window.addEventListener("keyup", (event)=>{
-    if (event.code === "Space") fadeOutScene();
-});
-/**
- *   Scene fade out. Ads DIV to body and sets its opacity.
- */ function fadeOutScene() {
-    // Add new DIV to the HTML for fadeOut
-    const fadeOutDiv = document.createElement("div");
-    fadeOutDiv.classList.add("fadeDiv");
-    // Setup elemt style.
-    fadeOutDiv.style.backgroundColor = "black";
-    fadeOutDiv.style.opacity = 0;
-    fadeOutDiv.style.position = "absolute";
-    fadeOutDiv.style.width = "100vw";
-    fadeOutDiv.style.height = "100vh";
-    document.body.appendChild(fadeOutDiv);
-    //Fade out  with interval
-    const divToFade = document.querySelector(".fadeDiv");
-    let fadeTimer = 0;
-    // Setup interval
-    const fadeOutTimer = setInterval(()=>{
-        // Check if timer is finished.
-        if (fadeTimer >= 1) clearInterval(fadeOutTimer);
-        fadeTimer += 0.01;
-        divToFade.style.opacity = fadeTimer;
-    }, 10);
 }
 // Animation
 function animate() {
@@ -37089,6 +37053,6 @@ var index = {
 };
 exports.default = index;
 
-},{"@parcel/transformer-js/src/esmodule-helpers.js":"8Rz06"}]},["jaQsw","bB7Pu"], "bB7Pu", "parcelRequire94c2")
+},{"@parcel/transformer-js/src/esmodule-helpers.js":"8Rz06"}]},["esoTI","1Z4Rq"], "1Z4Rq", "parcelRequire94c2")
 
-//# sourceMappingURL=index.3d214d75.js.map
+//# sourceMappingURL=index.5d9dacde.js.map
