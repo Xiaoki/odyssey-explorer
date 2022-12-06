@@ -10,7 +10,7 @@ Author:  Frank Bloemendal
 
 import gsap, { normalize } from "gsap";
 import * as THREE from "three";
-import { BlendingEquation, CameraHelper, CompressedPixelFormat, CurvePath, FrontSide, GeometryUtils, Group, LineCurve, MeshBasicMaterial, MeshPhysicalMaterial, MeshStandardMaterial, Object3D, Raycaster, SphereGeometry, TetrahedronGeometry, TextureLoader, Triangle, Vector3, _SRGBAFormat } from "three";
+import { BlendingEquation, CameraHelper, Clock, CompressedPixelFormat, CurvePath, FrontSide, GeometryUtils, Group, LineCurve, MeshBasicMaterial, MeshPhysicalMaterial, MeshStandardMaterial, Object3D, Raycaster, SphereGeometry, TetrahedronGeometry, TextureLoader, Triangle, Vector3, _SRGBAFormat } from "three";
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
 import * as dat from 'dat.gui';
 
@@ -109,6 +109,7 @@ let scene, canvas, renderer, controls, selectedOdyssey;
 const raycaster = new THREE.Raycaster();
 const pointer = new THREE.Vector2;
 const gui = new dat.GUI();
+let updateCameraRotation = false;
 gui.hide();
 
 let meshArray = [];
@@ -256,41 +257,31 @@ function onPointerMove(event){
 
 
 // Onclick event 
+
 function onMouseDown(event){
+
     if(event.button != 0) {
         return;
     }
     // Create Raycast
     raycaster.setFromCamera(pointer, camera);
-    const castRay = raycaster.intersectObjects(scene.children, true);
+    const castRay = raycaster.intersectObjects(referenceListOfOdysseys, true);
 
     // Process the Raycast.
     if(castRay.length > 0){
+        
+        updateCameraRotation = true;
 
-        let planetArray = [];
-        // filter all planets from raycast.
-        castRay.forEach( item => {
-            if(item.object.isOdyssey) {
-                planetArray.push(item);
-            }
-        });
-       
-
-        // If the raycast holds zero planets. Exit method
-        if (planetArray <= 0){
-            return 
-        };
-
+        
         // Only react to first raycast hit
-        const targetPlanet = planetArray[0];
+        const targetPlanet = castRay[0];
 
         // If clicked planet is same as current selected one return
         if(targetPlanet.object === selectedOdyssey){
             return;
         }
 
-        // Long information about selected Odyssey
-        targetPlanet.object.log();
+        // Log information about selected Odyssey
         console.log(targetPlanet.object);
         selectedOdyssey = targetPlanet.object;
 
@@ -300,7 +291,8 @@ function onMouseDown(event){
         
         // Prepare rotation of camera animation.
         const startOrientation = camera.quaternion.clone();
-        const targetOrientation =  camera.quaternion.clone(camera.lookAt(targetPlanetLocation )).normalize();
+        const targetOrientation = camera.quaternion.clone(camera.lookAt(targetPlanetLocation )).normalize();
+        targetQuaternion = targetOrientation;
 
         // Get the direction for the new location.
         let direction = new THREE.Vector3();
@@ -310,36 +302,39 @@ function onMouseDown(event){
         // const distance = targetPlanet.distance - minimalDistanceToPlanetForCamera;
         let targetVectorForDistance = new Vector3(targetPlanet.object.position.x,targetPlanet.object.position.y,targetPlanet.object.position.z);
         const distance = targetVectorForDistance.distanceTo(camera.position) - minimalDistanceToPlanetForCamera;
-        
-        //console.log(test.distanceTo(camera.position));
 
         // Create new target for the camera.
         let targetLocation = new THREE.Vector3();
         targetLocation.addVectors(camera.position, direction.multiplyScalar(distance));
 
-        // Animate using gsap module.
-        gsap.to(camera.position, {
-            duration: 1.5,
-            x: targetLocation.x,
-            y: targetLocation.y,
-            z: targetLocation.z,
-            onStart: function(){
+         //Animate using gsap module.
+       gsap.to(camera.position, {
+           duration: 1.5,
+           x: targetLocation.x,
+           y: targetLocation.y,
+           z: targetLocation.z,
+           onStart: function(){
+                //updateCameraRotation = true;
                 controls.enabled = false;
-                controls.autoRotate = false;
-                controls.enablePan = false;
+                controls.autoRotate = false; 
+                controls.enablePan = false;                
                 highlightMesh.position.set(0,0,0); // remove the highlight
-            },
-            onUpdate: function(){
-                camera.quaternion.copy(startOrientation).slerp(targetOrientation, this.progress());
-                controls.update;
-            },
-            onComplete: function(){ 
+           },
+           onUpdate: function(){
+               
+               camera.quaternion.copy(startOrientation).slerp(targetOrientation, this.progress());
+
+           },
+           onComplete: function(){ 
+                updateCameraRotation = false;
                 controls.enabled = true;
                 controls.enablePan = true;
                 controls.autoRotate = true; 
-                controls.target = targetPlanetLocation;            
-            }
-        });
+                controls.target = targetPlanetLocation; 
+                controls.update;           
+           }
+       });
+    
     }
     
 
@@ -528,6 +523,7 @@ function highlightObjects(){
 // Animation
 function animate(){
 
+
     // Update Highlight  
     highlightObjects();
 
@@ -535,7 +531,9 @@ function animate(){
     renderer.render(scene, camera);
 
     // Update controls for auto-rotate.
-    controls.update();
+    if (!updateCameraRotation) {
+        controls.update();
+    }
 
     // Re-call Animation
     window.requestAnimationFrame(animate);

@@ -609,6 +609,7 @@ let scene, canvas, renderer, controls, selectedOdyssey;
 const raycaster = new _three.Raycaster();
 const pointer = new _three.Vector2;
 const gui = new _datGui.GUI();
+let updateCameraRotation = false;
 gui.hide();
 let meshArray = [];
 // Scene setup
@@ -721,22 +722,15 @@ function onMouseDown(event) {
     if (event.button != 0) return;
     // Create Raycast
     raycaster.setFromCamera(pointer, camera);
-    const castRay = raycaster.intersectObjects(scene.children, true);
+    const castRay = raycaster.intersectObjects(referenceListOfOdysseys, true);
     // Process the Raycast.
     if (castRay.length > 0) {
-        let planetArray = [];
-        // filter all planets from raycast.
-        castRay.forEach((item)=>{
-            if (item.object.isOdyssey) planetArray.push(item);
-        });
-        // If the raycast holds zero planets. Exit method
-        if (planetArray <= 0) return;
+        updateCameraRotation = true;
         // Only react to first raycast hit
-        const targetPlanet = planetArray[0];
+        const targetPlanet = castRay[0];
         // If clicked planet is same as current selected one return
         if (targetPlanet.object === selectedOdyssey) return;
-        // Long information about selected Odyssey
-        targetPlanet.object.log();
+        // Log information about selected Odyssey
         console.log(targetPlanet.object);
         selectedOdyssey = targetPlanet.object;
         // Prepare fly to planets.
@@ -744,6 +738,7 @@ function onMouseDown(event) {
         // Prepare rotation of camera animation.
         const startOrientation = camera.quaternion.clone();
         const targetOrientation = camera.quaternion.clone(camera.lookAt(targetPlanetLocation)).normalize();
+        targetQuaternion = targetOrientation;
         // Get the direction for the new location.
         let direction = new _three.Vector3();
         direction.subVectors(targetPlanet.object.position, camera.position).normalize();
@@ -751,17 +746,17 @@ function onMouseDown(event) {
         // const distance = targetPlanet.distance - minimalDistanceToPlanetForCamera;
         let targetVectorForDistance = new (0, _three.Vector3)(targetPlanet.object.position.x, targetPlanet.object.position.y, targetPlanet.object.position.z);
         const distance = targetVectorForDistance.distanceTo(camera.position) - minimalDistanceToPlanetForCamera;
-        //console.log(test.distanceTo(camera.position));
         // Create new target for the camera.
         let targetLocation = new _three.Vector3();
         targetLocation.addVectors(camera.position, direction.multiplyScalar(distance));
-        // Animate using gsap module.
+        //Animate using gsap module.
         (0, _gsapDefault.default).to(camera.position, {
             duration: 1.5,
             x: targetLocation.x,
             y: targetLocation.y,
             z: targetLocation.z,
             onStart: function() {
+                //updateCameraRotation = true;
                 controls.enabled = false;
                 controls.autoRotate = false;
                 controls.enablePan = false;
@@ -769,13 +764,14 @@ function onMouseDown(event) {
             },
             onUpdate: function() {
                 camera.quaternion.copy(startOrientation).slerp(targetOrientation, this.progress());
-                controls.update;
             },
             onComplete: function() {
+                updateCameraRotation = false;
                 controls.enabled = true;
                 controls.enablePan = true;
                 controls.autoRotate = true;
                 controls.target = targetPlanetLocation;
+                controls.update;
             }
         });
     }
@@ -898,7 +894,7 @@ function animate() {
     // Render the scene
     renderer.render(scene, camera);
     // Update controls for auto-rotate.
-    controls.update();
+    if (!updateCameraRotation) controls.update();
     // Re-call Animation
     window.requestAnimationFrame(animate);
 }
