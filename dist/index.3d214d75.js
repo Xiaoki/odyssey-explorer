@@ -554,7 +554,7 @@ let planetAreSpawnedHorizontal = false;
 let planetsMaxVerticalSpawnHeight = 100;
 const minimalDistanceToPlanetForCamera = 5;
 class Odyssey extends _three.Mesh {
-    constructor(geometry, material, number, wallet, name, url){
+    constructor(geometry, material, number, wallet, name, url, texture){
         super(geometry, material);
         this.material = material;
         this.geometry = geometry;
@@ -582,27 +582,37 @@ class Odyssey extends _three.Mesh {
         console.log("ID:" + this.number + " Wallet:" + this.wallet + " Webaddress:" + this.url + " Connected: " + this.connectedOdysseys);
     };
 }
+// Setup all base materials and geometries.
+const odysseyBaseSphereGeometry = new _three.SphereGeometry(1, 16, 16);
+const odysseyBaseSphereMaterial = new _three.MeshBasicMaterial({
+    color: 0xFFFFFF,
+    transparent: true,
+    opacity: 0.3,
+    side: _three.BackSide
+});
+const odysseyAvatarGeometry = new _three.CircleGeometry(0.8, 16);
 const createNewOdyssey = (id, wallet, name, url)=>{
     const standardTextures = [
-        "./images/small/baseAtmos.jpg",
-        "./images/small/odyssey.jpg",
-        "./images/small/ghost.jpg",
-        "./images/small/honey01.jpg",
-        "./images/small/iceland01.jpg"
+        "./images/small/temp1.jpg",
+        "./images/small/temp2.jpg",
+        "./images/small/temp3.jpg",
+        "./images/small/temp4.jpg",
+        "./images/small/temp5.jpg",
+        "./images/small/avatarTest.jpg"
     ];
     const randNum = Math.floor(Math.random() * standardTextures.length);
     const randTexture = standardTextures[randNum];
-    const geometry = new (0, _three.SphereGeometry)(1, 16, 16);
     const texture = new _three.TextureLoader().load(randTexture);
+    let odysseyAvatarMaterial = new _three.MeshBasicMaterial({
+        side: _three.DoubleSide,
+        map: texture
+    });
     // Flip textures horizontally so text is readable.
     texture.wrapS = _three.RepeatWrapping;
     texture.repeat.x = -1;
-    const material = new (0, _three.MeshBasicMaterial)({
-        map: texture,
-        side: _three.BackSide,
-        color: 0xffffff
-    });
-    const odyssey = new Odyssey(geometry, material, id, wallet, name, url);
+    const avatarMesh = new _three.Mesh(odysseyAvatarGeometry, odysseyAvatarMaterial);
+    const odyssey = new Odyssey(odysseyBaseSphereGeometry, odysseyBaseSphereMaterial, id, wallet, name, url);
+    odyssey.add(avatarMesh);
     return odyssey;
 };
 let scene, canvas, renderer, controls, selectedOdyssey;
@@ -724,7 +734,7 @@ function onMouseDown(event) {
     if (event.button != 0) return;
     // Create Raycast
     raycaster.setFromCamera(pointer, camera);
-    const castRay = raycaster.intersectObjects(referenceListOfOdysseys, true);
+    const castRay = raycaster.intersectObjects(referenceListOfOdysseys, false);
     // Process the Raycast.
     if (castRay.length > 0) {
         // Make sure transition to the newly clicked planet has finished.
@@ -736,18 +746,20 @@ function onMouseDown(event) {
         // Log information about selected Odyssey
         console.log(targetPlanet.object);
         selectedOdyssey = targetPlanet.object;
+        let targetVector = new _three.Vector3();
+        targetPlanet.object.getWorldPosition(targetVector);
         // Prepare fly to planets.
-        const targetPlanetLocation = new (0, _three.Vector3)(targetPlanet.object.position.x, targetPlanet.object.position.y, targetPlanet.object.position.z);
+        const targetPlanetLocation = new (0, _three.Vector3)(targetVector.x, targetVector.y, targetVector.z);
         // Prepare rotation of camera animation.
         const startOrientation = camera.quaternion.clone();
-        const targetOrientation = camera.quaternion.clone(camera.lookAt(targetPlanetLocation)).normalize();
+        const targetOrientation = camera.quaternion.clone(camera.lookAt(targetVector)).normalize();
         targetQuaternion = targetOrientation;
         // Get the direction for the new location.
         let direction = new _three.Vector3();
-        direction.subVectors(targetPlanet.object.position, camera.position).normalize();
+        direction.subVectors(targetVector, camera.position).normalize();
         // Get distance from raycast minus minimal distance orbit control
         // const distance = targetPlanet.distance - minimalDistanceToPlanetForCamera;
-        let targetVectorForDistance = new (0, _three.Vector3)(targetPlanet.object.position.x, targetPlanet.object.position.y, targetPlanet.object.position.z);
+        let targetVectorForDistance = new (0, _three.Vector3)(targetVector.x, targetVector.y, targetVector.z);
         const distance = targetVectorForDistance.distanceTo(camera.position) - minimalDistanceToPlanetForCamera;
         // Create new target for the camera.
         let targetLocation = new _three.Vector3();
@@ -764,7 +776,6 @@ function onMouseDown(event) {
                 controls.enabled = false;
                 controls.autoRotate = false;
                 controls.enablePan = false;
-                highlightMesh.position.set(0, 0, 0); // remove the highlight
             },
             onUpdate: function() {
                 camera.quaternion.copy(startOrientation).slerp(targetOrientation, this.progress());
@@ -798,6 +809,13 @@ const ProcessOdyssey = ()=>{
     ];
 };
 ProcessOdyssey();
+/**
+ * Create USER OWN odyssey at the center.
+ */ const userCenterOdyssey = createNewOdyssey(999, "Wallet Address", "Frenkie world", "test.com");
+if (userCenterOdyssey) {
+    scene.add(userCenterOdyssey);
+    referenceListOfOdysseys.push(userCenterOdyssey);
+}
 /**
   * Create Circular Universe of Odysseys
   */ const buildUniverse = ()=>{
@@ -871,33 +889,40 @@ ProcessOdyssey();
 buildUniverse();
 /**
 * Highlight Mesh
-*/ const highlightGeometry = new _three.PlaneGeometry(3, 3);
-const highlightMateiral = new _three.MeshBasicMaterial({
-    color: 0xFFFFFF,
-    transparent: true,
-    opacity: 0.2
-});
-const highlightMesh = new _three.Mesh(highlightGeometry, highlightMateiral);
+*/ /*
+const highlightGeometry = new THREE.PlaneGeometry(3,3);
+const highlightMateiral = new THREE.MeshBasicMaterial({color: 0xFFFFFF, transparent: true, opacity: 0.2});
+const highlightMesh = new THREE.Mesh(highlightGeometry, highlightMateiral)
 highlightMesh.lookAt(camera.position);
 scene.add(highlightMesh);
-function highlightObjects() {
+*/ /*
+function highlightObjects(){
+    
     raycaster.setFromCamera(pointer, camera);
+
     const objectToHighlight = raycaster.intersectObjects(scene.children, true);
-    if (objectToHighlight.length > 0) objectToHighlight.forEach((item)=>{
-        if (item.object.isOdyssey && item.object !== selectedOdyssey) highlightMesh.position.set(item.object.position.x, item.object.position.y, item.object.position.z);
-    });
-    // Update rotation of highlight plane to face camera.
-    highlightMesh.lookAt(camera.position);
+    
+    if(objectToHighlight.length > 0){
+
+        objectToHighlight.forEach( item => {
+            if(item.object.isOdyssey && item.object !== selectedOdyssey){
+                highlightMesh.position .set(item.object.position.x, item.object.position.y, item.object.position.z)
+            }
+        })
+
+     }
+     // Update rotation of highlight plane to face camera.
+     highlightMesh.lookAt(camera.position);
 }
-/**
+*/ /**
  * Handle fade out
  */ // TEMPORAL TRIGGER FOR FADE OUT: SPACEBAR
-window.addEventListener("keyup", (event)=>{
-    if (event.code === "Space") fadeOutScene();
-});
-/**
- *   Scene fade out. Ads DIV to body and sets its opacity.
- */ function fadeOutScene() {
+//window.addEventListener('keyup', event => {
+//    if(event.code === 'Space'){
+//        fadeOutScene();
+//    }
+//});
+function fadeOutScene() {
     // Add new DIV to the HTML for fadeOut
     const fadeOutDiv = document.createElement("div");
     fadeOutDiv.classList.add("fadeDiv");
@@ -922,7 +947,7 @@ window.addEventListener("keyup", (event)=>{
 // Animation
 function animate() {
     // Update Highlight  
-    highlightObjects();
+    //highlightObjects();
     // Update controls for auto-rotate.
     if (!updateCameraRotation) controls.update();
     // Render the scene

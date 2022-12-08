@@ -10,7 +10,7 @@ Author:  Frank Bloemendal
 
 import gsap, { normalize } from "gsap";
 import * as THREE from "three";
-import { BlendingEquation, BooleanKeyframeTrack, CameraHelper, Clock, CompressedPixelFormat, CurvePath, FrontSide, GeometryUtils, Group, LineCurve, MeshBasicMaterial, MeshPhysicalMaterial, MeshStandardMaterial, Object3D, Raycaster, SphereGeometry, TetrahedronGeometry, TextureLoader, Triangle, Vector3, _SRGBAFormat } from "three";
+import { BlendingEquation, BooleanKeyframeTrack, CameraHelper, Clock, CompressedPixelFormat, CurvePath, DoubleSide, FrontSide, GeometryUtils, Group, LineCurve, MeshBasicMaterial, MeshPhysicalMaterial, MeshStandardMaterial, Object3D, Raycaster, RectAreaLight, SphereGeometry, TetrahedronGeometry, TextureLoader, Triangle, Vector3, _SRGBAFormat } from "three";
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
 import * as dat from 'dat.gui';
 
@@ -29,7 +29,7 @@ const minimalDistanceToPlanetForCamera = 5;
 
 class Odyssey extends THREE.Mesh {
 
-    constructor(geometry, material, number, wallet, name, url){
+    constructor(geometry, material, number, wallet, name, url, texture){
 
         super(geometry, material)
 
@@ -68,37 +68,48 @@ class Odyssey extends THREE.Mesh {
 
 }
 
+// Setup all base materials and geometries.
+
+const odysseyBaseSphereGeometry = new THREE.SphereGeometry(1,16,16);
+const odysseyBaseSphereMaterial = new THREE.MeshBasicMaterial({
+    color: 0xFFFFFF,
+    transparent: true,
+    opacity: 0.3,
+    side: THREE.BackSide
+});
+const odysseyAvatarGeometry = new THREE.CircleGeometry(0.8, 16);
+
+
 const createNewOdyssey = (id, wallet, name, url) => {
 
     const standardTextures = [
-        "./images/small/baseAtmos.jpg", 
-        "./images/small/odyssey.jpg", 
-        "./images/small/ghost.jpg", 
-        "./images/small/honey01.jpg",
-        "./images/small/iceland01.jpg", 
+        "./images/small/temp1.jpg", 
+        "./images/small/temp2.jpg", 
+        "./images/small/temp3.jpg", 
+        "./images/small/temp4.jpg",
+        "./images/small/temp5.jpg",
+        "./images/small/avatarTest.jpg", 
     ];   
 
     const randNum = Math.floor(Math.random() * (standardTextures.length));
     const randTexture = standardTextures[randNum]
 
-    const geometry = new SphereGeometry(1, 16,16);
     const texture = new THREE.TextureLoader().load(randTexture);
-    
 
+    let odysseyAvatarMaterial = new THREE.MeshBasicMaterial({
+        side: THREE.DoubleSide,
+        map: texture,
+    });    
+    
     // Flip textures horizontally so text is readable.
     texture.wrapS = THREE.RepeatWrapping;
     texture.repeat.x = - 1;
 
-    const material = new MeshBasicMaterial({
-        map: texture,
-        side: THREE.BackSide,
-        color: 0xffffff,
-        
-        
-    });
-
+    const avatarMesh = new THREE.Mesh(odysseyAvatarGeometry, odysseyAvatarMaterial);
     
-    const odyssey = new Odyssey(geometry, material, id, wallet, name, url);
+    const odyssey = new Odyssey(odysseyBaseSphereGeometry, odysseyBaseSphereMaterial, id, wallet, name, url);
+
+    odyssey.add(avatarMesh);
 
     return odyssey;
 }
@@ -266,7 +277,7 @@ function onMouseDown(event){
     }
     // Create Raycast
     raycaster.setFromCamera(pointer, camera);
-    const castRay = raycaster.intersectObjects(referenceListOfOdysseys, true);
+    const castRay = raycaster.intersectObjects(referenceListOfOdysseys, false);
 
     // Process the Raycast.
     if(castRay.length > 0){
@@ -275,7 +286,9 @@ function onMouseDown(event){
         if (!transitionToPlanetFinished){
             return
         }
+
         // Only react to first raycast hit
+        
         const targetPlanet = castRay[0];
 
         // If clicked planet is same as current selected one return
@@ -283,26 +296,33 @@ function onMouseDown(event){
             return;
         }
 
+
         // Log information about selected Odyssey
         console.log(targetPlanet.object);
+        
+
         selectedOdyssey = targetPlanet.object;
+      
+
+        let targetVector = new THREE.Vector3();
+        targetPlanet.object.getWorldPosition(targetVector);
 
         
         // Prepare fly to planets.
-        const targetPlanetLocation = new Vector3(targetPlanet.object.position.x, targetPlanet.object.position.y, targetPlanet.object.position.z);;
+        const targetPlanetLocation = new Vector3(targetVector.x, targetVector.y, targetVector.z);;
         
         // Prepare rotation of camera animation.
         const startOrientation = camera.quaternion.clone();
-        const targetOrientation = camera.quaternion.clone(camera.lookAt(targetPlanetLocation )).normalize();
+        const targetOrientation = camera.quaternion.clone(camera.lookAt(targetVector)).normalize();
         targetQuaternion = targetOrientation;
 
         // Get the direction for the new location.
         let direction = new THREE.Vector3();
-        direction.subVectors(targetPlanet.object.position, camera.position).normalize();
+        direction.subVectors(targetVector, camera.position).normalize();
 
         // Get distance from raycast minus minimal distance orbit control
         // const distance = targetPlanet.distance - minimalDistanceToPlanetForCamera;
-        let targetVectorForDistance = new Vector3(targetPlanet.object.position.x,targetPlanet.object.position.y,targetPlanet.object.position.z);
+        let targetVectorForDistance = new Vector3(targetVector.x,targetVector.y,targetVector.z);
         const distance = targetVectorForDistance.distanceTo(camera.position) - minimalDistanceToPlanetForCamera;
 
         // Create new target for the camera.
@@ -322,7 +342,6 @@ function onMouseDown(event){
                 controls.enabled = false;
                 controls.autoRotate = false; 
                 controls.enablePan = false;                
-                highlightMesh.position.set(0,0,0); // remove the highlight
            },
            onUpdate: function(){
                
@@ -375,6 +394,15 @@ window.addEventListener('mousedown', onMouseDown);
 
  ProcessOdyssey();
 
+/**
+ * Create USER OWN odyssey at the center.
+ */
+
+const userCenterOdyssey = createNewOdyssey(999, "Wallet Address", "Frenkie world", "test.com");
+if (userCenterOdyssey) {
+    scene.add(userCenterOdyssey);
+    referenceListOfOdysseys.push(userCenterOdyssey);
+};
 
  /**
   * Create Circular Universe of Odysseys
@@ -499,12 +527,16 @@ buildUniverse();
 /**
 * Highlight Mesh
 */
+
+/*
 const highlightGeometry = new THREE.PlaneGeometry(3,3);
 const highlightMateiral = new THREE.MeshBasicMaterial({color: 0xFFFFFF, transparent: true, opacity: 0.2});
 const highlightMesh = new THREE.Mesh(highlightGeometry, highlightMateiral)
 highlightMesh.lookAt(camera.position);
 scene.add(highlightMesh);
+*/
 
+/*
 function highlightObjects(){
     
     raycaster.setFromCamera(pointer, camera);
@@ -523,6 +555,8 @@ function highlightObjects(){
      // Update rotation of highlight plane to face camera.
      highlightMesh.lookAt(camera.position);
 }
+*/
+
 
 /**
  * Handle fade out
@@ -530,15 +564,11 @@ function highlightObjects(){
 
 // TEMPORAL TRIGGER FOR FADE OUT: SPACEBAR
 
- window.addEventListener('keyup', event => {
-    if(event.code === 'Space'){
-        fadeOutScene();
-    }
-});
-
-/**
- *   Scene fade out. Ads DIV to body and sets its opacity.
- */
+//window.addEventListener('keyup', event => {
+//    if(event.code === 'Space'){
+//        fadeOutScene();
+//    }
+//});
 
 function fadeOutScene(){
 
@@ -580,9 +610,7 @@ function animate(){
 
 
     // Update Highlight  
-    highlightObjects();
-
-
+    //highlightObjects();
 
     // Update controls for auto-rotate.
     if (!updateCameraRotation) {
