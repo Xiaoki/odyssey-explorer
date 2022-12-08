@@ -68,15 +68,17 @@ class Odyssey extends THREE.Mesh {
 
 }
 
-// Setup all base materials and geometries.
 
-const odysseyBaseSphereGeometry = new THREE.SphereGeometry(1,16,16);
+
+/*
 const odysseyBaseSphereMaterial = new THREE.MeshBasicMaterial({
     color: 0xFFFFFF,
     transparent: true,
     opacity: 0.3,
     side: THREE.BackSide
 });
+
+*/
 const odysseyAvatarGeometry = new THREE.CircleGeometry(0.8, 16);
 
 
@@ -167,6 +169,23 @@ controls.zoomSpeed = 1;
 const backgroundImage = new THREE.TextureLoader().load('./images/small/BasicSkyboxHD.jpg');
 backgroundImage.mapping = THREE.EquirectangularReflectionMapping;
 scene.background = backgroundImage;
+
+// Setup all base materials and geometries.
+
+const odysseyBaseSphereGeometry = new THREE.SphereGeometry(1,16,16);
+
+const odysseyBaseSphereMaterial = new THREE.MeshPhysicalMaterial({
+    color: 0xFFFFFF,
+    envMap: backgroundImage,
+    transmission: 1,
+    opacity: 0.3,
+    side: THREE.BackSide,
+    ior: 1.5,
+    metalness: 0.3,
+    roughness: 0,
+    specularIntensity: 1,
+    transparentA: true,
+});
 
 /**
  * Build Galaxy
