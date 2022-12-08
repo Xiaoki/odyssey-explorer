@@ -609,7 +609,7 @@ const createNewOdyssey = (id, wallet, name, url)=>{
     });
     // Flip textures horizontally so text is readable.
     texture.wrapS = _three.RepeatWrapping;
-    texture.repeat.x = -1;
+    //texture.repeat.x = - 1;
     const avatarMesh = new _three.Mesh(odysseyAvatarGeometry, odysseyAvatarMaterial);
     const odyssey = new Odyssey(odysseyBaseSphereGeometry, odysseyBaseSphereMaterial, id, wallet, name, url);
     odyssey.add(avatarMesh);
