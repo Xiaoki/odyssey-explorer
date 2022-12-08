@@ -617,6 +617,12 @@ function animate(){
         controls.update();
     }
 
+    // Make all avatars face the camera.
+    for(  let i = 0; i < referenceListOfOdysseys.length; i++){
+        const odyssey = referenceListOfOdysseys[i].children;
+        odyssey[0].lookAt(camera.position);
+    };
+
     // Render the scene
     renderer.render(scene, camera);
 
