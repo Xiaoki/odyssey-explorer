@@ -590,7 +590,7 @@ const odysseyBaseSphereMaterial = new THREE.MeshBasicMaterial({
     side: THREE.BackSide
 });
 
-*/ const odysseyAvatarGeometry = new _three.CircleGeometry(0.8, 16);
+*/ const odysseyAvatarGeometry = new _three.CircleGeometry(0.8, 26);
 const createNewOdyssey = (id, wallet, name, url)=>{
     const standardTextures = [
         "./images/small/temp1.jpg",

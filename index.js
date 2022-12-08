@@ -79,7 +79,7 @@ const odysseyBaseSphereMaterial = new THREE.MeshBasicMaterial({
 });
 
 */
-const odysseyAvatarGeometry = new THREE.CircleGeometry(0.8, 16);
+const odysseyAvatarGeometry = new THREE.CircleGeometry(0.8, 26);
 
 
 const createNewOdyssey = (id, wallet, name, url) => {
