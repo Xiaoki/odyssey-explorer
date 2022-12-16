@@ -550,6 +550,8 @@ var _odysseyJs = require("./odyssey.js");
 var _line2Js = require("three/examples/jsm/lines/Line2.js");
 var _lineMaterialJs = require("three/examples/jsm/lines/LineMaterial.js");
 var _lineGeometryJs = require("three/examples/jsm/lines/LineGeometry.js");
+var _firstpersonlogicJs = require("./firstpersonlogic.js");
+(0, _firstpersonlogicJs.ActivateFirstPerson)();
 /**
  * For Dev Only
  */ let AmountOfGalaxyToGenereate = 200;
@@ -824,6 +826,8 @@ window.addEventListener('keyup', event =>
 let nameRingOffset = 0;
 // Animation
 function animate() {
+    // Time reference.
+    const time = performance.now();
     // Rotate the texture on the namering
     //nameRingMaterial.map.offset.x += Math.sin(0.001);
     // Animate the textures of all ringNameMaterials.
@@ -849,9 +853,11 @@ function onWindowResize() {
 }
 // EventListeners.
 window.addEventListener("resize", onWindowResize, false);
+document.addEventListener("keydown", (0, _firstpersonlogicJs.OnKeyDown));
+document.addEventListener("keyup", (0, _firstpersonlogicJs.OnKeyUp));
 animate();
 
-},{"gsap":"fPSuC","three":"ktPTu","three/examples/jsm/controls/OrbitControls":"7mqRv","dat.gui":"k3xQk","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3","./odyssey.js":"uTahW","./transitions.js":"93XyA","three/examples/jsm/lines/Line2.js":"kgvYG","three/examples/jsm/lines/LineMaterial.js":"insFK","three/examples/jsm/lines/LineGeometry.js":"5c0fE"}],"fPSuC":[function(require,module,exports) {
+},{"gsap":"fPSuC","three":"ktPTu","three/examples/jsm/controls/OrbitControls":"7mqRv","dat.gui":"k3xQk","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3","./odyssey.js":"uTahW","./transitions.js":"93XyA","three/examples/jsm/lines/Line2.js":"kgvYG","three/examples/jsm/lines/LineMaterial.js":"insFK","three/examples/jsm/lines/LineGeometry.js":"5c0fE","./firstpersonlogic.js":"bYvHP"}],"fPSuC":[function(require,module,exports) {
 var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
 parcelHelpers.defineInteropFlag(exports);
 parcelHelpers.export(exports, "gsap", ()=>gsapWithCSS);
@@ -38653,6 +38659,69 @@ function fadeOutScene() {
         divToFade.style.opacity = fadeTimer;
     }, 10);
 }
+
+},{"@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"bYvHP":[function(require,module,exports) {
+var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
+parcelHelpers.defineInteropFlag(exports);
+parcelHelpers.export(exports, "ActivateFirstPerson", ()=>ActivateFirstPerson);
+parcelHelpers.export(exports, "OnKeyDown", ()=>OnKeyDown);
+parcelHelpers.export(exports, "OnKeyUp", ()=>OnKeyUp);
+const ActivateFirstPerson = ()=>{
+    console.log("First Person is activated.");
+};
+const OnKeyDown = (event)=>{
+    // Check input codes.
+    //console.log("Pressed: " + event.code);
+    switch(event.code){
+        case "ArrowUp":
+        case "KeyW":
+            console.log("forward");
+            break;
+        case "ArrowDown":
+        case "KeyS":
+            console.log("backwards");
+            break;
+        case "ArrowLeft":
+        case "KeyA":
+            console.log("left");
+            break;
+        case "ArrowRight":
+        case "KeyD":
+            console.log("Right.");
+            break;
+        case "KeyE":
+            console.log("Upwards");
+            break;
+        case "KeyQ":
+            console.log("Downwards.");
+            break;
+    }
+};
+const OnKeyUp = (event)=>{
+    switch(event.code){
+        case "ArrowUp":
+        case "KeyW":
+            console.log("Stopped moving forward.");
+            break;
+        case "ArrowDown":
+        case "KeyS":
+            console.log("Stopped moving backwards.");
+            break;
+        case "ArrowLeft":
+        case "KeyA":
+            console.log("Stopped moving left.");
+            break;
+        case "ArrowRight":
+        case "KeyD":
+            console.log("Stopped moving right.");
+            break;
+        case "KeyE":
+            console.log("Stopped moving upwards.");
+            break;
+        case "KeyQ":
+            console.log("Stopped moving downwards.");
+    }
+};
 
 },{"@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}]},["cVgJb","ebWYT"], "ebWYT", "parcelRequire839b")
 

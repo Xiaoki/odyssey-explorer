@@ -18,8 +18,9 @@ import { Line2 } from 'three/examples/jsm/lines/Line2.js';
 import { LineMaterial } from 'three/examples/jsm/lines/LineMaterial.js';
 import { LineGeometry } from 'three/examples/jsm/lines/LineGeometry.js';
 import { Line } from "three";
+import { ActivateFirstPerson, OnKeyDown, OnKeyUp } from './firstpersonlogic.js';
 
-
+ActivateFirstPerson();
 
 /**
  * For Dev Only
@@ -442,6 +443,8 @@ let nameRingOffset = 0;
 // Animation
 function animate(){
 
+    // Time reference.
+    const time = performance.now();
     
     // Rotate the texture on the namering
     //nameRingMaterial.map.offset.x += Math.sin(0.001);
@@ -483,5 +486,7 @@ function onWindowResize(){
 
 // EventListeners.
 window.addEventListener('resize', onWindowResize, false); 
+document.addEventListener('keydown', OnKeyDown);
+document.addEventListener('keyup', OnKeyUp);
 
 animate();
