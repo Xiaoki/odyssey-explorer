@@ -99,19 +99,9 @@ class Odyssey extends THREE.Mesh {
                 startVector.y = newY;
                 const secondVector = new THREE.Vector3(startVector.x, newY - 1, startVector.z);
                 
-                
-                //console.log(beginVector);
 
-                // Create the curve
 
-                /* REMOVED VOR TESTING
-                const curve = new THREE.QuadraticBezierCurve3(
-                    startVector,
-                    //beginVector,
-                    middlePosition,
-                    foundOdyssey.position,
-                ); */
-                
+                // Create the curve                
                 const curve = new THREE.CubicBezierCurve3(
                     startVector,
                     secondVector,
@@ -235,16 +225,16 @@ const createOdyssey = (id, wallet, name, url) =>
     const drawContent = drawCanvas.getContext('2d');
     drawCanvas.width = 1000;
     drawCanvas.height = 100;
-    drawContent.font = "Bold 40px Arial";
+    drawContent.font = "Bold 40px Trebuchet MS";
     
     
     drawContent.fillStyle = "rgba(0, 0, 0, 0.1)";
     drawContent.fillRect(0, 0, drawCanvas.width, drawCanvas.height);
 
    
-    drawContent.fillStyle = 'white';
+    drawContent.fillStyle = "rgba(238, 181, 245, 1";
     drawContent.fillText(name, 0, 60);
-    drawContent.strokeStyle = 'black';
+    drawContent.strokeStyle = "rgba(103, 31, 112)";
     drawContent.strokeText(name, 0, 60);
 
     /*
