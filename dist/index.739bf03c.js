@@ -747,7 +747,7 @@ const ProcessOdyssey = ()=>{
     const numberOfPlanets = AmountOfGalaxyToGenereate;
     //Build an odyssey for all given entries.
     for(let i = 0; i < numberOfPlanets; i++){
-        const odyssey = (0, _odysseyJs.createOdyssey)(i, "Wallet Address", "Custom Odyssey: " + i, "test.com");
+        const odyssey = (0, _odysseyJs.createOdyssey)(i, "Wallet Address", "VISIT ODYSSEY " + i, "test.com");
         listOfOddyseys.push(odyssey);
     }
     referenceListOfOdysseys = [
@@ -800,7 +800,7 @@ ProcessOdyssey();
     });
     /**
      * ADD CENTER USER ODYSSEY. AFTER GENERATING UNIVERSE.
-     */ const userCenterOdyssey = (0, _odysseyJs.createOdyssey)(999, "Wallet Address", "Frank", "test.com");
+     */ const userCenterOdyssey = (0, _odysseyJs.createOdyssey)(999, "Wallet Address", " Visit Frank", "test.com");
     if (userCenterOdyssey) {
         scene.add(userCenterOdyssey);
         referenceListOfOdysseys.push(userCenterOdyssey);
@@ -37071,16 +37071,20 @@ var _lineGeometryJs = require("three/examples/jsm/lines/LineGeometry.js");
                 const direction = new _three.Vector3();
                 direction.subVectors(this.position, foundOdyssey.position).normalize();
                 const startVector = new _three.Vector3();
-                //startVector.addVectors(this.position, direction.multiplyScalar(-1));
+                startVector.addVectors(this.position, direction.multiplyScalar(-0.7));
                 const newY = this.position.y - 0.8;
-                const beginVector = new _three.Vector3(this.position.x, newY, this.position.z);
+                //const beginVector = new THREE.Vector3(this.position.x, newY, this.position.z)
+                startVector.y = newY;
+                const secondVector = new _three.Vector3(startVector.x, newY - 1, startVector.z);
                 //console.log(beginVector);
-                console.log(startVector);
-                // find look at direction.
-                // add 1 into that direction.
-                // get vector3
                 // Create the curve
-                const curve = new _three.QuadraticBezierCurve3(beginVector, middlePosition, foundOdyssey.position);
+                /* REMOVED VOR TESTING
+                const curve = new THREE.QuadraticBezierCurve3(
+                    startVector,
+                    //beginVector,
+                    middlePosition,
+                    foundOdyssey.position,
+                ); */ const curve = new _three.CubicBezierCurve3(startVector, secondVector, middlePosition, foundOdyssey.position);
                 // Get XYZ along the curve.
                 const curvePoints = curve.getSpacedPoints(50);
                 // Prepare array of numbers for line geometry ( doesnt accept vectors)
@@ -37167,11 +37171,15 @@ const createOdyssey = (id, wallet, name, url)=>{
     drawContent.fillText(name, 0, 60);
     drawContent.strokeStyle = "black";
     drawContent.strokeText(name, 0, 60);
-    drawContent.fillStyle = "white";
+    /*
+        Draw title twice.
+
+    drawContent.fillStyle = 'white';
     drawContent.fillText(name, 500, 60);
-    drawContent.strokeStyle = "black";
+    drawContent.strokeStyle = 'black';
     drawContent.strokeText(name, 500, 60);
-    const nameTexture = new _three.Texture(drawCanvas);
+
+    */ const nameTexture = new _three.Texture(drawCanvas);
     nameTexture.needsUpdate = true;
     nameRingMesh.material.map = nameTexture;
     nameRingMesh.material.map.wrapS = (0, _three.RepeatWrapping);

@@ -308,7 +308,7 @@ window.addEventListener('mousedown', onMouseDown);
 
      //Build an odyssey for all given entries.
      for(let i = 0; i < numberOfPlanets; i++){
-        const odyssey = createOdyssey(i, "Wallet Address", "Custom Odyssey: " + i , "test.com");
+        const odyssey = createOdyssey(i, "Wallet Address", "VISIT " + "ODYSSEY " + i , "test.com");
         listOfOddyseys.push(odyssey);
      }
 
@@ -398,7 +398,7 @@ const buildUniverse = () => {
     /**
      * ADD CENTER USER ODYSSEY. AFTER GENERATING UNIVERSE.
      */
-    const userCenterOdyssey = createOdyssey(999, "Wallet Address", "Frank", "test.com");
+    const userCenterOdyssey = createOdyssey(999, "Wallet Address", " Visit Frank", "test.com");
     if (userCenterOdyssey) {
         scene.add(userCenterOdyssey);
         referenceListOfOdysseys.push(userCenterOdyssey);

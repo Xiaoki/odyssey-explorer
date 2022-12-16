@@ -92,25 +92,33 @@ class Odyssey extends THREE.Mesh {
                 const direction = new THREE.Vector3();
                 direction.subVectors(this.position, foundOdyssey.position ).normalize();
                 const startVector = new THREE.Vector3();
-                //startVector.addVectors(this.position, direction.multiplyScalar(-1));
+                startVector.addVectors(this.position, direction.multiplyScalar(-0.7));
 
                 const newY = this.position.y - 0.8;
-                const beginVector = new THREE.Vector3(this.position.x, newY, this.position.z)
+                //const beginVector = new THREE.Vector3(this.position.x, newY, this.position.z)
+                startVector.y = newY;
+                const secondVector = new THREE.Vector3(startVector.x, newY - 1, startVector.z);
+                
                 
                 //console.log(beginVector);
 
-                console.log(startVector);
-                // find look at direction.
-                // add 1 into that direction.
-                // get vector3
-
                 // Create the curve
+
+                /* REMOVED VOR TESTING
                 const curve = new THREE.QuadraticBezierCurve3(
-                    beginVector,
+                    startVector,
+                    //beginVector,
                     middlePosition,
                     foundOdyssey.position,
-                );
+                ); */
                 
+                const curve = new THREE.CubicBezierCurve3(
+                    startVector,
+                    secondVector,
+                    middlePosition,
+                    foundOdyssey.position,
+                );    
+
                 // Get XYZ along the curve.
                 const curvePoints = curve.getSpacedPoints(50);
         
@@ -239,10 +247,15 @@ const createOdyssey = (id, wallet, name, url) =>
     drawContent.strokeStyle = 'black';
     drawContent.strokeText(name, 0, 60);
 
+    /*
+        Draw title twice.
+
     drawContent.fillStyle = 'white';
     drawContent.fillText(name, 500, 60);
     drawContent.strokeStyle = 'black';
     drawContent.strokeText(name, 500, 60);
+
+    */
 
 
 
