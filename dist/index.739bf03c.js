@@ -37160,9 +37160,9 @@ const createOdyssey = (id, wallet, name, url)=>{
     drawContent.font = "Bold 40px Trebuchet MS";
     drawContent.fillStyle = "rgba(0, 0, 0, 0.1)";
     drawContent.fillRect(0, 0, drawCanvas.width, drawCanvas.height);
-    drawContent.fillStyle = "rgba(238, 181, 245, 1";
+    drawContent.fillStyle = "rgba(245, 199, 255, 0.9";
     drawContent.fillText(name, 0, 60);
-    drawContent.strokeStyle = "rgba(103, 31, 112)";
+    drawContent.strokeStyle = "rgba(124, 86, 133)";
     drawContent.strokeText(name, 0, 60);
     /*
         Draw title twice.
