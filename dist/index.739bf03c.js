@@ -142,13 +142,13 @@
       this[globalName] = mainExports;
     }
   }
-})({"jaQsw":[function(require,module,exports) {
+})({"cVgJb":[function(require,module,exports) {
 var global = arguments[3];
 var HMR_HOST = null;
 var HMR_PORT = null;
 var HMR_SECURE = false;
 var HMR_ENV_HASH = "d6ea1d42532a7575";
-module.bundle.HMR_BUNDLE_ID = "0a8ecb283d214d75";
+module.bundle.HMR_BUNDLE_ID = "ba60c367739bf03c";
 "use strict";
 /* global HMR_HOST, HMR_PORT, HMR_ENV_HASH, HMR_SECURE, chrome, browser, globalThis, __parcel__import__, __parcel__importScripts__, ServiceWorkerGlobalScope */ /*::
 import type {
@@ -531,7 +531,7 @@ function hmrAcceptRun(bundle, id) {
     acceptedAssets[id] = true;
 }
 
-},{}],"bB7Pu":[function(require,module,exports) {
+},{}],"ebWYT":[function(require,module,exports) {
 /*
 
 Project: Odyssey Explorer
@@ -545,9 +545,11 @@ var _gsapDefault = parcelHelpers.interopDefault(_gsap);
 var _three = require("three");
 var _orbitControls = require("three/examples/jsm/controls/OrbitControls");
 var _datGui = require("dat.gui");
-var _fontLoaderJs = require("three/examples/jsm/loaders/FontLoader.js");
-var _textGeometryJs = require("three/examples/jsm/geometries/TextGeometry.js");
-var _curveModifierJs = require("three/examples/jsm/modifiers/CurveModifier.js");
+var _transitionsJs = require("./transitions.js");
+var _odysseyJs = require("./odyssey.js");
+var _line2Js = require("three/examples/jsm/lines/Line2.js");
+var _lineMaterialJs = require("three/examples/jsm/lines/LineMaterial.js");
+var _lineGeometryJs = require("three/examples/jsm/lines/LineGeometry.js");
 /**
  * For Dev Only
  */ let AmountOfGalaxyToGenereate = 200;
@@ -556,75 +558,16 @@ let MaxOrbitCameraDistance = 200;
 let planetAreSpawnedHorizontal = false;
 let planetsMaxVerticalSpawnHeight = 100;
 const minimalDistanceToPlanetForCamera = 5;
-class Odyssey extends _three.Mesh {
-    constructor(geometry, material, number, wallet, name, url, texture){
-        super(geometry, material);
-        this.material = material;
-        this.geometry = geometry;
-        this.number = number;
-        this.wallet = wallet;
-        this.name = name;
-        this.url = url;
-        this.isOdyssey = true;
-    }
-    connectedOdysseys = [];
-    /**
-     * Generating random Connection for vizualisation of connections.
-     * DELETE THIS LATER.
-     */ randomConnection = (maxAmount)=>{
-        let amountToGenerate = 1 //Math.floor(Math.random() * 1);
-        ;
-        for(let i = 0; i < amountToGenerate; i++){
-            let object = {
-                id: Math.floor(Math.random() * maxAmount)
-            };
-            this.connectedOdysseys.push(object);
-        }
-    };
-    log = ()=>{
-        console.log("ID:" + this.number + " Wallet:" + this.wallet + " Webaddress:" + this.url + " Connected: " + this.connectedOdysseys);
-    };
-}
-/*
-const odysseyBaseSphereMaterial = new THREE.MeshBasicMaterial({
-    color: 0xFFFFFF,
-    transparent: true,
-    opacity: 0.3,
-    side: THREE.BackSide
-});
-
-*/ const odysseyAvatarGeometry = new _three.CircleGeometry(0.8, 26);
-const createNewOdyssey = (id, wallet, name, url)=>{
-    const standardTextures = [
-        "./images/small/temp1.jpg",
-        "./images/small/temp2.jpg",
-        "./images/small/temp3.jpg",
-        "./images/small/temp4.jpg",
-        "./images/small/temp5.jpg",
-        "./images/small/avatarTest.jpg"
-    ];
-    const randNum = Math.floor(Math.random() * standardTextures.length);
-    const randTexture = standardTextures[randNum];
-    const texture = new _three.TextureLoader().load(randTexture);
-    let odysseyAvatarMaterial = new _three.MeshBasicMaterial({
-        side: _three.DoubleSide,
-        map: texture
-    });
-    // Flip textures horizontally so text is readable.
-    texture.wrapS = _three.RepeatWrapping;
-    //texture.repeat.x = - 1;
-    const avatarMesh = new _three.Mesh(odysseyAvatarGeometry, odysseyAvatarMaterial);
-    const odyssey = new Odyssey(odysseyBaseSphereGeometry, odysseyBaseSphereMaterial, id, wallet, name, url);
-    odyssey.add(avatarMesh);
-    return odyssey;
-};
-let scene, canvas, renderer, controls, selectedOdyssey;
+/**
+ * Setup the scene.
+ */ let scene, canvas, renderer, controls, selectedOdyssey;
 const raycaster = new _three.Raycaster();
 const pointer = new _three.Vector2;
 const gui = new _datGui.GUI();
 let updateCameraRotation = false;
 gui.hide();
 let transitionToPlanetFinished = true;
+let activeLinesArray = [];
 let meshArray = [];
 // Scene setup
 canvas = document.querySelector(".webgl");
@@ -661,20 +604,6 @@ controls.zoomSpeed = 1;
  */ const backgroundImage = new _three.TextureLoader().load("./images/small/BasicSkyboxHD.jpg");
 backgroundImage.mapping = _three.EquirectangularReflectionMapping;
 scene.background = backgroundImage;
-// Setup all base materials and geometries.
-const odysseyBaseSphereGeometry = new _three.SphereGeometry(1, 16, 16);
-const odysseyBaseSphereMaterial = new _three.MeshPhysicalMaterial({
-    color: 0xFFFFFF,
-    envMap: backgroundImage,
-    transmission: 1,
-    opacity: 0.3,
-    side: _three.BackSide,
-    ior: 1.5,
-    metalness: 0.3,
-    roughness: 0,
-    specularIntensity: 1,
-    transparent: true
-});
 /**
  * Build Galaxy
  */ const parameters = {};
@@ -766,7 +695,7 @@ function onMouseDown(event) {
         let targetVector = new _three.Vector3();
         targetPlanet.object.getWorldPosition(targetVector);
         // Prepare fly to planets.
-        const targetPlanetLocation = new (0, _three.Vector3)(targetVector.x, targetVector.y, targetVector.z);
+        const targetPlanetLocation = new _three.Vector3(targetVector.x, targetVector.y, targetVector.z);
         // Prepare rotation of camera animation.
         const startOrientation = camera.quaternion.clone();
         const targetOrientation = camera.quaternion.clone(camera.lookAt(targetVector)).normalize();
@@ -775,7 +704,7 @@ function onMouseDown(event) {
         direction.subVectors(targetVector, camera.position).normalize();
         // Get distance from raycast minus minimal distance orbit control
         // const distance = targetPlanet.distance - minimalDistanceToPlanetForCamera;
-        let targetVectorForDistance = new (0, _three.Vector3)(targetVector.x, targetVector.y, targetVector.z);
+        let targetVectorForDistance = new _three.Vector3(targetVector.x, targetVector.y, targetVector.z);
         const distance = targetVectorForDistance.distanceTo(camera.position) - minimalDistanceToPlanetForCamera;
         // Create new target for the camera.
         let targetLocation = new _three.Vector3();
@@ -792,6 +721,7 @@ function onMouseDown(event) {
                 controls.enabled = false;
                 controls.autoRotate = false;
                 controls.enablePan = false;
+                activeLinesArray = selectedOdyssey.buildConnectionLines(referenceListOfOdysseys, scene, activeLinesArray);
             },
             onUpdate: function() {
                 camera.quaternion.copy(startOrientation).slerp(targetOrientation, this.progress());
@@ -817,7 +747,7 @@ const ProcessOdyssey = ()=>{
     const numberOfPlanets = AmountOfGalaxyToGenereate;
     //Build an odyssey for all given entries.
     for(let i = 0; i < numberOfPlanets; i++){
-        const odyssey = createNewOdyssey(i, "Wallet Address", "Frenkie world", "test.com");
+        const odyssey = (0, _odysseyJs.createOdyssey)(i, "Wallet Address", "Custom Odyssey: " + i, "test.com");
         listOfOddyseys.push(odyssey);
     }
     referenceListOfOdysseys = [
@@ -825,13 +755,6 @@ const ProcessOdyssey = ()=>{
     ];
 };
 ProcessOdyssey();
-/**
- * Create USER OWN odyssey at the center.
- */ const userCenterOdyssey = createNewOdyssey(999, "Wallet Address", "Frenkie world", "test.com");
-if (userCenterOdyssey) {
-    scene.add(userCenterOdyssey);
-    referenceListOfOdysseys.push(userCenterOdyssey);
-}
 /**
   * Create Circular Universe of Odysseys
   */ const buildUniverse = ()=>{
@@ -854,12 +777,12 @@ if (userCenterOdyssey) {
             currentOdyssey = listOfOddyseys[i];
             const radian = offset * (Math.PI / 180);
             offset += degreeBetweenOdyssey;
-            const newX1 = Math.cos(radian) * radius;
-            let newY1;
-            if (planetAreSpawnedHorizontal) newY1 = 0;
-            else newY1 = Math.random() * planetsMaxVerticalSpawnHeight - planetsMaxVerticalSpawnHeight / 2;
-            const newZ1 = Math.sin(radian) * radius;
-            currentOdyssey.position.set(newX1, newY1, newZ1);
+            const newX = Math.cos(radian) * radius;
+            let newY;
+            if (planetAreSpawnedHorizontal) newY = 0;
+            else newY = Math.random() * planetsMaxVerticalSpawnHeight - planetsMaxVerticalSpawnHeight / 2;
+            const newZ = Math.sin(radian) * radius;
+            currentOdyssey.position.set(newX, newY, newZ);
             currentOdyssey.randomConnection(AmountOfGalaxyToGenereate); // TEMP: Generate Random Connection in Class.
             odysseyCircle.add(currentOdyssey);
         }
@@ -876,231 +799,41 @@ if (userCenterOdyssey) {
         scene.add(circle);
     });
     /**
-     * Draw lines between staked Odysseys.
-     */ // setup reusable variables and material
-    let vectorsForLine = [];
-    const lineMat = new _three.LineBasicMaterial({
-        color: 0xFFFFFF,
-        transparent: true,
-        opacity: 0.15
-    });
-    referenceListOfOdysseys.forEach((odyssey)=>{
-        odyssey.connectedOdysseys.forEach((obj)=>{
-            vectorsForLine = [] //clean for next line.
-            ;
-            // Get positions from connected odyssey and draw line.
-            const foundOdyssey = referenceListOfOdysseys.filter((planet)=>planet.number === obj.id)[0];
-            if (foundOdyssey) {
-                const randomLineHeight = Math.random() * maxOdysseyConnectionLineHeight * (Math.random() > 0.5 ? 1 : -1);
-                let middlePosition = new (0, _three.Vector3)((odyssey.position.x + foundOdyssey.position.x) / 2, randomLineHeight, (odyssey.position.z + foundOdyssey.position.z) / 2);
-                const curve = new _three.QuadraticBezierCurve3(odyssey.position, middlePosition, foundOdyssey.position);
-                const curvePoints = curve.getSpacedPoints(20);
-                const curveGeometry = new _three.BufferGeometry().setFromPoints(curvePoints);
-                const curveMesh = new _three.Line(curveGeometry, lineMat);
-                scene.add(curveMesh);
-            }
-        });
-    });
-};
-buildUniverse();
-/**
- * Create circle around for movement
- */ /*
-const movementCurve = new THREE.EllipseCurve(
-    0.0, 0.0,
-    1.5, 1.5,
-    0.0, 2.0 * Math.PI,
-);
-
-const curvePoints = movementCurve.getSpacedPoints(256);
-const curveGeometry = new THREE.BufferGeometry().setFromPoints(curvePoints);
-const curveMaterial = new THREE.LineBasicMaterial({color: 0xff0000});
-const curveCircle = new THREE.LineLoop(curveGeometry, curveMaterial);
-curveCircle.rotation.x = Math.PI / 2;
-scene.add(curveCircle);
-
-*/ /**
- * Test Circle around Odyssey for name
- */ /**
- * Get points around a vector 3 and draw lines between those.
- */ let circleCurve;
-const drawCircleForPathAndGroupIt = ()=>{
-    const nameCircleGroup = new _three.Group();
-    const radius = 1.23;
-    const center = new _three.Vector3();
-    const amountOfPoints = 16;
-    const offsetY = 0.1;
-    let offset = 0;
-    let PointsForAnimationCircle = [];
-    for(let i = 0; i < amountOfPoints; i++){
-        const offsetIncrease = 22.5;
-        const radian = offset * (Math.PI / 180);
-        newX = center.x + Math.cos(radian) * radius;
-        newY = center.y - offsetY;
-        newZ = center.x + Math.sin(radian) * radius;
-        const newPoint = new _three.Vector3(newX, newY, newZ);
-        PointsForAnimationCircle.push(newPoint);
-        offset += offsetIncrease;
+     * ADD CENTER USER ODYSSEY. AFTER GENERATING UNIVERSE.
+     */ const userCenterOdyssey = (0, _odysseyJs.createOdyssey)(999, "Wallet Address", "Frank", "test.com");
+    if (userCenterOdyssey) {
+        scene.add(userCenterOdyssey);
+        referenceListOfOdysseys.push(userCenterOdyssey);
+        userCenterOdyssey.randomConnection(AmountOfGalaxyToGenereate);
+        activeLinesArray = userCenterOdyssey.buildConnectionLines(referenceListOfOdysseys, scene, activeLinesArray);
     }
-    console.log(PointsForAnimationCircle);
-    circleCurve = new _three.CatmullRomCurve3(PointsForAnimationCircle, true); // TODO: make sure this is called in its group later for animation.
-/*nameCircleGroup.add(circleCurve);  
-    nameCircleGroup.add(circleCurve); */ };
-drawCircleForPathAndGroupIt();
-// Define the path.
-// For debuging. Draw the actuall line.
-//                  const circlePoints = circleCurve.getPoints( 50 );
-//                  const circleGeometry = new THREE.BufferGeometry().setFromPoints( circlePoints );
-//                  const circleMaterial = new THREE.LineBasicMaterial( { color: 0xff0000 } );
-//                  const circleCurveObject = new THREE.Line( circleGeometry, circleMaterial );
-//scene.add(circleCurveObject);
-/**
- * Build the name around the odyssey
- */ // Paramenters for the circle to animate.
-// Text parameters.
-let flow // flow variable initiated for animation.
-;
-let textMesh; // Declared for animation
-const nameMaterial = new _three.MeshBasicMaterial({
-    color: 0xFFFFFF,
-    transparent: true,
-    opacity: 0.7,
-    side: _three.FrontSide
-});
-const textLoader = new (0, _fontLoaderJs.FontLoader)();
-/**
- * Function to create the name.
- * @param {string} name 
- * @param {vector3} position 
- */ const CreateNameAroundOdyssey = (name, position)=>{
-    // Build the textMesh;
-    textLoader.load("/fonts/droid_serif_regular.typeface.json", (droidFont)=>{
-        const textGeometry = new (0, _textGeometryJs.TextGeometry)(name, {
-            height: 0,
-            size: 0.2,
-            font: droidFont,
-            curveSegments: 16
-        });
-        textGeometry.rotateX(Math.PI);
-        textGeometry.scale(-1, 1, 1);
-        textMesh = new _three.Mesh(textGeometry, nameMaterial);
-        flow = new (0, _curveModifierJs.Flow)(textMesh);
-        flow2 = new (0, _curveModifierJs.Flow)(textMesh);
-        flow2.updateCurve(0, circleCurve);
-        flow.updateCurve(0, circleCurve);
-        flow2.moveAlongCurve(0.5);
-        scene.add(flow.object3D);
-        scene.add(flow2.object3D);
-    });
 };
-CreateNameAroundOdyssey("CoolBro", new _three.Vector3(0, 0, 0));
 /**
- * Load text and write odyssey name.
- */ //let flow;
-//const nameMaterial = new THREE.MeshBasicMaterial({color: 0xFFFFFF, transparent: true, opacity:0.7, side: THREE.FrontSide});
-//const textLoader = new FontLoader();
-//let textMesh;
-//textLoader.load('/fonts/droid_serif_regular.typeface.json', 
-// (droidFont) => {
-//    const textGeometry = new TextGeometry('Odyssey Name', {
-//        height: 0,
-//        size: 0.2,
-//        font: droidFont,
-//    });
-//     
-//    textGeometry.rotateX(Math.PI);
-//    textGeometry.scale(-1, 1, 1)
-//    //textGeometry.rotateZ(Math.PI);
-//    textMesh = new THREE.Mesh(textGeometry, nameMaterial);
-//    //textMesh.position.x = centerOffset;
-//    //textMesh.position.y = -1.3;
-//    //scene.add(textMesh);
-//
-//    flow = new Flow(textMesh);
-//    flow.updateCurve( 0, circleCurve);
-//    scene.add(flow.object3D);
-//
-//});
-/** 
- * TEMP: Cylinder around odyssey.
- */ const nameGeometry = new _three.CylinderGeometry(1.2, 1.2, 0.5, 32, 1, true);
-nameGeometry.openEnded = true;
-const bannerMaterial = new _three.MeshBasicMaterial({
-    color: 0x000000,
-    transparent: true,
-    opacity: 0.2,
-    side: _three.DoubleSide
-});
-const nameMesh = new _three.Mesh(nameGeometry, bannerMaterial);
-scene.add(nameMesh);
-/**
-* Highlight Mesh
-*/ /*
-const highlightGeometry = new THREE.PlaneGeometry(3,3);
-const highlightMateiral = new THREE.MeshBasicMaterial({color: 0xFFFFFF, transparent: true, opacity: 0.2});
-const highlightMesh = new THREE.Mesh(highlightGeometry, highlightMateiral)
-highlightMesh.lookAt(camera.position);
-scene.add(highlightMesh);
-*/ /*
-function highlightObjects(){
-    
-    raycaster.setFromCamera(pointer, camera);
-
-    const objectToHighlight = raycaster.intersectObjects(scene.children, true);
-    
-    if(objectToHighlight.length > 0){
-
-        objectToHighlight.forEach( item => {
-            if(item.object.isOdyssey && item.object !== selectedOdyssey){
-                highlightMesh.position .set(item.object.position.x, item.object.position.y, item.object.position.z)
-            }
-        })
-
-     }
-     // Update rotation of highlight plane to face camera.
-     highlightMesh.lookAt(camera.position);
-}
-*/ /**
  * Handle fade out
  */ // TEMPORAL TRIGGER FOR FADE OUT: SPACEBAR
-//window.addEventListener('keyup', event => {
-//    if(event.code === 'Space'){
-//        fadeOutScene();
-//    }
-//});
-function fadeOutScene() {
-    // Add new DIV to the HTML for fadeOut
-    const fadeOutDiv = document.createElement("div");
-    fadeOutDiv.classList.add("fadeDiv");
-    // Setup elemt style.
-    fadeOutDiv.style.backgroundColor = "black";
-    fadeOutDiv.style.opacity = 0;
-    fadeOutDiv.style.position = "absolute";
-    fadeOutDiv.style.width = "100vw";
-    fadeOutDiv.style.height = "100vh";
-    document.body.appendChild(fadeOutDiv);
-    //Fade out  with interval
-    const divToFade = document.querySelector(".fadeDiv");
-    let fadeTimer = 0;
-    // Setup interval
-    const fadeOutTimer = setInterval(()=>{
-        // Check if timer is finished.
-        if (fadeTimer >= 1) clearInterval(fadeOutTimer);
-        fadeTimer += 0.01;
-        divToFade.style.opacity = fadeTimer;
-    }, 10);
-}
+/*
+window.addEventListener('keyup', event => 
+{    
+    if(event.code === 'Space')
+    {        
+        fadeOutScene();    
+    }
+});
+*/ buildUniverse();
+// Offset for ringNameAnimation
+let nameRingOffset = 0;
 // Animation
 function animate() {
-    // Update Highlight  
-    //highlightObjects();
-    const timer = 0.0001 + Date.now();
-    flow;
+    // Rotate the texture on the namering
+    //nameRingMaterial.map.offset.x += Math.sin(0.001);
+    // Animate the textures of all ringNameMaterials.
+    nameRingOffset += Math.sin(0.001);
+    for(let i = 0; i < referenceListOfOdysseys.length; i++)referenceListOfOdysseys[i].nameRingMaterial.map.offset.x = nameRingOffset;
     // Update controls for auto-rotate.
     if (!updateCameraRotation) controls.update();
     // Make all avatars face the camera.
-    for(let i = 0; i < referenceListOfOdysseys.length; i++){
-        const odyssey = referenceListOfOdysseys[i].children;
+    for(let i1 = 0; i1 < referenceListOfOdysseys.length; i1++){
+        const odyssey = referenceListOfOdysseys[i1].children;
         odyssey[0].lookAt(camera.position);
     }
     // Render the scene
@@ -1118,7 +851,7 @@ function onWindowResize() {
 window.addEventListener("resize", onWindowResize, false);
 animate();
 
-},{"gsap":"fPSuC","three":"ktPTu","three/examples/jsm/controls/OrbitControls":"7mqRv","dat.gui":"k3xQk","@parcel/transformer-js/src/esmodule-helpers.js":"8Rz06","three/examples/jsm/loaders/FontLoader.js":"h0CPK","three/examples/jsm/geometries/TextGeometry.js":"d5vi9","three/examples/jsm/modifiers/CurveModifier.js":"iSJKe"}],"fPSuC":[function(require,module,exports) {
+},{"gsap":"fPSuC","three":"ktPTu","three/examples/jsm/controls/OrbitControls":"7mqRv","dat.gui":"k3xQk","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3","./odyssey.js":"uTahW","./transitions.js":"93XyA","three/examples/jsm/lines/Line2.js":"kgvYG","three/examples/jsm/lines/LineMaterial.js":"insFK","three/examples/jsm/lines/LineGeometry.js":"5c0fE"}],"fPSuC":[function(require,module,exports) {
 var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
 parcelHelpers.defineInteropFlag(exports);
 parcelHelpers.export(exports, "gsap", ()=>gsapWithCSS);
@@ -1151,7 +884,7 @@ var _csspluginJs = require("./CSSPlugin.js");
 var gsapWithCSS = (0, _gsapCoreJs.gsap).registerPlugin((0, _csspluginJs.CSSPlugin)) || (0, _gsapCoreJs.gsap), // to protect from tree shaking
 TweenMaxWithCSS = gsapWithCSS.core.Tween;
 
-},{"./gsap-core.js":"05eeC","./CSSPlugin.js":"l02JQ","@parcel/transformer-js/src/esmodule-helpers.js":"8Rz06"}],"05eeC":[function(require,module,exports) {
+},{"./gsap-core.js":"05eeC","./CSSPlugin.js":"l02JQ","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"05eeC":[function(require,module,exports) {
 var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
 parcelHelpers.defineInteropFlag(exports);
 parcelHelpers.export(exports, "GSCache", ()=>GSCache);
@@ -4142,7 +3875,7 @@ _coreReady = 1;
 _windowExists() && _wake();
 var Power0 = _easeMap.Power0, Power1 = _easeMap.Power1, Power2 = _easeMap.Power2, Power3 = _easeMap.Power3, Power4 = _easeMap.Power4, Linear = _easeMap.Linear, Quad = _easeMap.Quad, Cubic = _easeMap.Cubic, Quart = _easeMap.Quart, Quint = _easeMap.Quint, Strong = _easeMap.Strong, Elastic = _easeMap.Elastic, Back = _easeMap.Back, SteppedEase = _easeMap.SteppedEase, Bounce = _easeMap.Bounce, Sine = _easeMap.Sine, Expo = _easeMap.Expo, Circ = _easeMap.Circ;
 
-},{"@parcel/transformer-js/src/esmodule-helpers.js":"8Rz06"}],"8Rz06":[function(require,module,exports) {
+},{"@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"gkKU3":[function(require,module,exports) {
 exports.interopDefault = function(a) {
     return a && a.__esModule ? a : {
         default: a
@@ -5117,7 +4850,7 @@ var CSSPlugin = {
 });
 (0, _gsapCoreJs.gsap).registerPlugin(CSSPlugin);
 
-},{"./gsap-core.js":"05eeC","@parcel/transformer-js/src/esmodule-helpers.js":"8Rz06"}],"ktPTu":[function(require,module,exports) {
+},{"./gsap-core.js":"05eeC","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"ktPTu":[function(require,module,exports) {
 /**
  * @license
  * Copyright 2010-2022 Three.js Authors
@@ -34292,7 +34025,7 @@ if (typeof window !== "undefined") {
     else window.__THREE__ = REVISION;
 }
 
-},{"@parcel/transformer-js/src/esmodule-helpers.js":"8Rz06"}],"7mqRv":[function(require,module,exports) {
+},{"@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"7mqRv":[function(require,module,exports) {
 var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
 parcelHelpers.defineInteropFlag(exports);
 parcelHelpers.export(exports, "OrbitControls", ()=>OrbitControls);
@@ -34976,7 +34709,7 @@ class MapControls extends OrbitControls {
     }
 }
 
-},{"three":"ktPTu","@parcel/transformer-js/src/esmodule-helpers.js":"8Rz06"}],"k3xQk":[function(require,module,exports) {
+},{"three":"ktPTu","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"k3xQk":[function(require,module,exports) {
 /**
  * dat-gui JavaScript Controller Library
  * https://github.com/dataarts/dat.gui
@@ -37267,7 +37000,190 @@ var index = {
 };
 exports.default = index;
 
-},{"@parcel/transformer-js/src/esmodule-helpers.js":"8Rz06"}],"h0CPK":[function(require,module,exports) {
+},{"@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"uTahW":[function(require,module,exports) {
+var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
+parcelHelpers.defineInteropFlag(exports);
+parcelHelpers.export(exports, "Odyssey", ()=>Odyssey);
+parcelHelpers.export(exports, "createOdyssey", ()=>createOdyssey);
+var _three = require("three");
+var _fontLoader = require("three/examples/jsm/loaders/FontLoader");
+var _curveModifierJs = require("three/examples/jsm/modifiers/CurveModifier.js");
+var _fontLoaderJs = require("three/examples/jsm/loaders/FontLoader.js");
+var _textGeometryJs = require("three/examples/jsm/geometries/TextGeometry.js");
+var _benderJs = require("./Bender.js");
+var _benderJsDefault = parcelHelpers.interopDefault(_benderJs);
+var _line2Js = require("three/examples/jsm/lines/Line2.js");
+var _lineMaterialJs = require("three/examples/jsm/lines/LineMaterial.js");
+var _lineGeometryJs = require("three/examples/jsm/lines/LineGeometry.js");
+/**
+ * The Odyssey class extend from THREE.MESH.
+ */ class Odyssey extends _three.Mesh {
+    constructor(geometry, material, number, wallet, name, url, nameRingMaterial){
+        // Reference THREE.Mesh
+        super(geometry, material);
+        this.material = material;
+        this.geometry = geometry;
+        this.number = number;
+        this.wallet = wallet;
+        this.name = name;
+        this.url = url;
+        this.isOdyssey = true;
+        this.nameRingMaterial = nameRingMaterial;
+    }
+    // Material for connections.
+    lineMaterial = new (0, _lineMaterialJs.LineMaterial)({
+        color: 0xdda4de,
+        linewidth: 2,
+        transparent: true,
+        opacity: 0.5
+    });
+    // Array to hold all connected Odysseys.
+    connectedOdysseys = [];
+    /**
+     * For dev only:
+     * Generate random ID's to link to other Odysseys.
+     */ // MaxAmount = amount of Odysseys in the world.
+    randomConnection = (maxAmount)=>{
+        const amountToGenerate = 10;
+        for(let i = 0; i < amountToGenerate; i++){
+            const object = {
+                id: Math.floor(Math.random() * maxAmount)
+            };
+            this.connectedOdysseys.push(object);
+        }
+    };
+    buildConnectionLines = (referenceArray, scene, activeLinesArray)=>{
+        const maxOdysseyConnectionLineHeight = 10;
+        const newActivelinesArray = [];
+        if (activeLinesArray) for(let i = 0; i < activeLinesArray.length; i++)scene.remove(activeLinesArray[i]);
+        for(let i1 = 0; i1 < this.connectedOdysseys.length; i1++){
+            // Get the connected Odessey from global reference.
+            const foundOdyssey = referenceArray.filter((planet)=>planet.number === this.connectedOdysseys[i1].id)[0];
+            // Process if found.
+            if (foundOdyssey) {
+                // Create random line hight and calculate middle position
+                //const randomLineHeight = (Math.random() * maxOdysseyConnectionLineHeight ) * (Math.random() > 0.5 ? 1 : -1 );
+                const randomLineHeight = -20; //(Math.random() * maxOdysseyConnectionLineHeight ) * -1;
+                let middlePosition = new _three.Vector3((this.position.x + foundOdyssey.position.x) / 2, randomLineHeight, (this.position.z + foundOdyssey.position.z) / 2);
+                // calculate start XYZ for the line.
+                //const direction = this.isObject3D.lookAt(foundOdyssey);
+                //console.log(foundOdyssey.position);
+                const direction = new _three.Vector3();
+                direction.subVectors(this.position, foundOdyssey.position).normalize();
+                const startVector = new _three.Vector3();
+                //startVector.addVectors(this.position, direction.multiplyScalar(-1));
+                const newY = this.position.y - 0.8;
+                const beginVector = new _three.Vector3(this.position.x, newY, this.position.z);
+                //console.log(beginVector);
+                console.log(startVector);
+                // find look at direction.
+                // add 1 into that direction.
+                // get vector3
+                // Create the curve
+                const curve = new _three.QuadraticBezierCurve3(beginVector, middlePosition, foundOdyssey.position);
+                // Get XYZ along the curve.
+                const curvePoints = curve.getSpacedPoints(50);
+                // Prepare array of numbers for line geometry ( doesnt accept vectors)
+                const linePoints = [];
+                // Build the array for Line from curve Points.
+                for(let i2 = 0; i2 < curvePoints.length; i2++)linePoints.push(curvePoints[i2].x, curvePoints[i2].y, curvePoints[i2].z);
+                const lineGeometry = new (0, _lineGeometryJs.LineGeometry)();
+                lineGeometry.setPositions(linePoints);
+                this.lineMaterial.resolution.set(window.innerWidth, window.innerHeight);
+                const drawLine = new (0, _line2Js.Line2)(lineGeometry, this.lineMaterial);
+                // Add lines to array
+                newActivelinesArray.push(drawLine);
+                // Add line to the scene.
+                scene.add(drawLine);
+            }
+        }
+        return newActivelinesArray;
+    };
+}
+/**
+     * Build the curve and bend text for the animation.
+     * 
+     * @param {Vector3} position 
+     */ /**
+ * Create a new Odyssey. Returns an Odyssey object.
+ */ //Setup texture reflection for the glass effect of the Odyssey
+const environmentReflectionImage = new _three.TextureLoader().load("./images/small/BasicSkyboxHD.jpg");
+environmentReflectionImage.mapping = _three.EquirectangularRefractionMapping;
+// Setup Base geometry and material for the Odysseys.
+const avatarGeometry = new _three.CircleGeometry(0.8, 26); //Standard for all avatars.
+const odysseySphereGeometry = new _three.SphereGeometry(1, 16, 16);
+const odysseyMaterial = new _three.MeshPhysicalMaterial({
+    color: 0xFFFFFF,
+    envMap: environmentReflectionImage,
+    transmission: 1,
+    opacity: 0.3,
+    side: _three.BackSide,
+    ior: 1.5,
+    metalness: 0.3,
+    roughness: 0,
+    specularIntensity: 1,
+    transparent: true
+});
+// Setup ring around odyssey mesh
+const nameRingGeometry = new _three.CylinderGeometry(1.2, 1.2, 0.5, 22, 1, true);
+const createOdyssey = (id, wallet, name, url)=>{
+    //TEMP: Setup URL for temp avatars.
+    const standardTextures = [
+        "./images/small/temp1.jpg",
+        "./images/small/temp2.jpg",
+        "./images/small/temp3.jpg",
+        "./images/small/temp4.jpg",
+        "./images/small/temp5.jpg",
+        "./images/small/avatarTest.jpg"
+    ];
+    //TEMP: Load random texture from the standard textures array.
+    const randNum = Math.floor(Math.random() * standardTextures.length);
+    const randTexture = standardTextures[randNum];
+    const texture = new _three.TextureLoader().load(randTexture);
+    texture.wrapS = _three.RepeatWrapping;
+    const avatarMaterial = new _three.MeshBasicMaterial({
+        side: _three.DoubleSide,
+        map: texture
+    });
+    // Construct avatar Mesh.
+    const avatarMesh = new _three.Mesh(avatarGeometry, avatarMaterial);
+    // Create custom material for name ring.
+    const nameRingMaterial = new _three.MeshBasicMaterial({
+        transparent: true,
+        side: _three.DoubleSide
+    });
+    // Construct odyssey ring mesh.
+    const nameRingMesh = new _three.Mesh(nameRingGeometry, nameRingMaterial);
+    /** 
+     * Build text texture for around the odyssey
+     */ const drawCanvas = document.createElement("canvas");
+    const drawContent = drawCanvas.getContext("2d");
+    drawCanvas.width = 1000;
+    drawCanvas.height = 100;
+    drawContent.font = "Bold 40px Arial";
+    drawContent.fillStyle = "rgba(0, 0, 0, 0.1)";
+    drawContent.fillRect(0, 0, drawCanvas.width, drawCanvas.height);
+    drawContent.fillStyle = "white";
+    drawContent.fillText(name, 0, 60);
+    drawContent.strokeStyle = "black";
+    drawContent.strokeText(name, 0, 60);
+    drawContent.fillStyle = "white";
+    drawContent.fillText(name, 500, 60);
+    drawContent.strokeStyle = "black";
+    drawContent.strokeText(name, 500, 60);
+    const nameTexture = new _three.Texture(drawCanvas);
+    nameTexture.needsUpdate = true;
+    nameRingMesh.material.map = nameTexture;
+    nameRingMesh.material.map.wrapS = (0, _three.RepeatWrapping);
+    // Create new Odyssey from class.
+    const odyssey = new Odyssey(odysseySphereGeometry, odysseyMaterial, id, wallet, name, url, nameRingMaterial);
+    // Add the custom avatar image mesh to the odyssey.
+    odyssey.add(avatarMesh);
+    odyssey.add(nameRingMesh);
+    return odyssey;
+};
+
+},{"@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3","three":"ktPTu","three/examples/jsm/loaders/FontLoader":"h0CPK","three/examples/jsm/modifiers/CurveModifier.js":"iSJKe","three/examples/jsm/loaders/FontLoader.js":"h0CPK","three/examples/jsm/geometries/TextGeometry.js":"d5vi9","./Bender.js":"lG0tv","three/examples/jsm/lines/Line2.js":"kgvYG","three/examples/jsm/lines/LineMaterial.js":"insFK","three/examples/jsm/lines/LineGeometry.js":"5c0fE"}],"h0CPK":[function(require,module,exports) {
 var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
 parcelHelpers.defineInteropFlag(exports);
 parcelHelpers.export(exports, "FontLoader", ()=>FontLoader);
@@ -37373,45 +37289,7 @@ function createPath(char, scale, offsetX, offsetY, data) {
     };
 }
 
-},{"three":"ktPTu","@parcel/transformer-js/src/esmodule-helpers.js":"8Rz06"}],"d5vi9":[function(require,module,exports) {
-/**
- * Text = 3D Text
- *
- * parameters = {
- *  font: <THREE.Font>, // font
- *
- *  size: <float>, // size of the text
- *  height: <float>, // thickness to extrude text
- *  curveSegments: <int>, // number of points on the curves
- *
- *  bevelEnabled: <bool>, // turn on bevel
- *  bevelThickness: <float>, // how deep into text bevel goes
- *  bevelSize: <float>, // how far from text outline (including bevelOffset) is bevel
- *  bevelOffset: <float> // how far from text outline does bevel start
- * }
- */ var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
-parcelHelpers.defineInteropFlag(exports);
-parcelHelpers.export(exports, "TextGeometry", ()=>TextGeometry);
-var _three = require("three");
-class TextGeometry extends (0, _three.ExtrudeGeometry) {
-    constructor(text, parameters = {}){
-        const font = parameters.font;
-        if (font === undefined) super(); // generate default extrude geometry
-        else {
-            const shapes = font.generateShapes(text, parameters.size);
-            // translate parameters to ExtrudeGeometry API
-            parameters.depth = parameters.height !== undefined ? parameters.height : 50;
-            // defaults
-            if (parameters.bevelThickness === undefined) parameters.bevelThickness = 10;
-            if (parameters.bevelSize === undefined) parameters.bevelSize = 8;
-            if (parameters.bevelEnabled === undefined) parameters.bevelEnabled = false;
-            super(shapes, parameters);
-        }
-        this.type = "TextGeometry";
-    }
-}
-
-},{"three":"ktPTu","@parcel/transformer-js/src/esmodule-helpers.js":"8Rz06"}],"iSJKe":[function(require,module,exports) {
+},{"three":"ktPTu","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"iSJKe":[function(require,module,exports) {
 // Original src: https://github.com/zz85/threejs-path-flow
 var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
 parcelHelpers.defineInteropFlag(exports);
@@ -37652,6 +37530,1129 @@ class InstancedFlow extends Flow {
     }
 }
 
-},{"three":"ktPTu","@parcel/transformer-js/src/esmodule-helpers.js":"8Rz06"}]},["jaQsw","bB7Pu"], "bB7Pu", "parcelRequire94c2")
+},{"three":"ktPTu","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"d5vi9":[function(require,module,exports) {
+/**
+ * Text = 3D Text
+ *
+ * parameters = {
+ *  font: <THREE.Font>, // font
+ *
+ *  size: <float>, // size of the text
+ *  height: <float>, // thickness to extrude text
+ *  curveSegments: <int>, // number of points on the curves
+ *
+ *  bevelEnabled: <bool>, // turn on bevel
+ *  bevelThickness: <float>, // how deep into text bevel goes
+ *  bevelSize: <float>, // how far from text outline (including bevelOffset) is bevel
+ *  bevelOffset: <float> // how far from text outline does bevel start
+ * }
+ */ var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
+parcelHelpers.defineInteropFlag(exports);
+parcelHelpers.export(exports, "TextGeometry", ()=>TextGeometry);
+var _three = require("three");
+class TextGeometry extends (0, _three.ExtrudeGeometry) {
+    constructor(text, parameters = {}){
+        const font = parameters.font;
+        if (font === undefined) super(); // generate default extrude geometry
+        else {
+            const shapes = font.generateShapes(text, parameters.size);
+            // translate parameters to ExtrudeGeometry API
+            parameters.depth = parameters.height !== undefined ? parameters.height : 50;
+            // defaults
+            if (parameters.bevelThickness === undefined) parameters.bevelThickness = 10;
+            if (parameters.bevelSize === undefined) parameters.bevelSize = 8;
+            if (parameters.bevelEnabled === undefined) parameters.bevelEnabled = false;
+            super(shapes, parameters);
+        }
+        this.type = "TextGeometry";
+    }
+}
 
-//# sourceMappingURL=index.3d214d75.js.map
+},{"three":"ktPTu","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"lG0tv":[function(require,module,exports) {
+//MIT License
+//Copyright (c) 2020-2021 Sean Bradley
+//https://github.com/Sean-Bradley/Bender/blob/main/LICENSE
+var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
+parcelHelpers.defineInteropFlag(exports);
+class Bender {
+    bend(geometry, axis, angle) {
+        let theta = 0;
+        if (angle !== 0) {
+            const v = geometry.attributes.position.array;
+            for(let i = 0; i < v.length; i += 3){
+                let x = v[i];
+                let y = v[i + 1];
+                let z = v[i + 2];
+                switch(axis){
+                    case "x":
+                        theta = z * angle;
+                        break;
+                    case "y":
+                        theta = x * angle;
+                        break;
+                    default:
+                        theta = x * angle;
+                        break;
+                }
+                let sinTheta = Math.sin(theta);
+                let cosTheta = Math.cos(theta);
+                switch(axis){
+                    case "x":
+                        v[i] = x;
+                        v[i + 1] = (y - 1.0 / angle) * cosTheta + 1.0 / angle;
+                        v[i + 2] = -(y - 1.0 / angle) * sinTheta;
+                        break;
+                    case "y":
+                        v[i] = -(z - 1.0 / angle) * sinTheta;
+                        v[i + 1] = y;
+                        v[i + 2] = (z - 1.0 / angle) * cosTheta + 1.0 / angle;
+                        break;
+                    default:
+                        v[i] = -(y - 1.0 / angle) * sinTheta;
+                        v[i + 1] = (y - 1.0 / angle) * cosTheta + 1.0 / angle;
+                        v[i + 2] = z;
+                        break;
+                }
+            }
+            geometry.attributes.position.needsUpdate = true;
+        }
+    }
+}
+exports.default = Bender;
+
+},{"@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"kgvYG":[function(require,module,exports) {
+var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
+parcelHelpers.defineInteropFlag(exports);
+parcelHelpers.export(exports, "Line2", ()=>Line2);
+var _lineSegments2Js = require("../lines/LineSegments2.js");
+var _lineGeometryJs = require("../lines/LineGeometry.js");
+var _lineMaterialJs = require("../lines/LineMaterial.js");
+class Line2 extends (0, _lineSegments2Js.LineSegments2) {
+    constructor(geometry = new (0, _lineGeometryJs.LineGeometry)(), material = new (0, _lineMaterialJs.LineMaterial)({
+        color: Math.random() * 0xffffff
+    })){
+        super(geometry, material);
+        this.isLine2 = true;
+        this.type = "Line2";
+    }
+}
+
+},{"../lines/LineSegments2.js":"9bg2f","../lines/LineGeometry.js":"5c0fE","../lines/LineMaterial.js":"insFK","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"9bg2f":[function(require,module,exports) {
+var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
+parcelHelpers.defineInteropFlag(exports);
+parcelHelpers.export(exports, "LineSegments2", ()=>LineSegments2);
+var _three = require("three");
+var _lineSegmentsGeometryJs = require("../lines/LineSegmentsGeometry.js");
+var _lineMaterialJs = require("../lines/LineMaterial.js");
+const _start = new (0, _three.Vector3)();
+const _end = new (0, _three.Vector3)();
+const _start4 = new (0, _three.Vector4)();
+const _end4 = new (0, _three.Vector4)();
+const _ssOrigin = new (0, _three.Vector4)();
+const _ssOrigin3 = new (0, _three.Vector3)();
+const _mvMatrix = new (0, _three.Matrix4)();
+const _line = new (0, _three.Line3)();
+const _closestPoint = new (0, _three.Vector3)();
+const _box = new (0, _three.Box3)();
+const _sphere = new (0, _three.Sphere)();
+const _clipToWorldVector = new (0, _three.Vector4)();
+let _ray, _instanceStart, _instanceEnd, _lineWidth;
+// Returns the margin required to expand by in world space given the distance from the camera,
+// line width, resolution, and camera projection
+function getWorldSpaceHalfWidth(camera, distance, resolution) {
+    // transform into clip space, adjust the x and y values by the pixel width offset, then
+    // transform back into world space to get world offset. Note clip space is [-1, 1] so full
+    // width does not need to be halved.
+    _clipToWorldVector.set(0, 0, -distance, 1.0).applyMatrix4(camera.projectionMatrix);
+    _clipToWorldVector.multiplyScalar(1.0 / _clipToWorldVector.w);
+    _clipToWorldVector.x = _lineWidth / resolution.width;
+    _clipToWorldVector.y = _lineWidth / resolution.height;
+    _clipToWorldVector.applyMatrix4(camera.projectionMatrixInverse);
+    _clipToWorldVector.multiplyScalar(1.0 / _clipToWorldVector.w);
+    return Math.abs(Math.max(_clipToWorldVector.x, _clipToWorldVector.y));
+}
+function raycastWorldUnits(lineSegments, intersects) {
+    for(let i = 0, l = _instanceStart.count; i < l; i++){
+        _line.start.fromBufferAttribute(_instanceStart, i);
+        _line.end.fromBufferAttribute(_instanceEnd, i);
+        const pointOnLine = new (0, _three.Vector3)();
+        const point = new (0, _three.Vector3)();
+        _ray.distanceSqToSegment(_line.start, _line.end, point, pointOnLine);
+        const isInside = point.distanceTo(pointOnLine) < _lineWidth * 0.5;
+        if (isInside) intersects.push({
+            point,
+            pointOnLine,
+            distance: _ray.origin.distanceTo(point),
+            object: lineSegments,
+            face: null,
+            faceIndex: i,
+            uv: null,
+            uv2: null
+        });
+    }
+}
+function raycastScreenSpace(lineSegments, camera, intersects) {
+    const projectionMatrix = camera.projectionMatrix;
+    const material = lineSegments.material;
+    const resolution = material.resolution;
+    const matrixWorld = lineSegments.matrixWorld;
+    const geometry = lineSegments.geometry;
+    const instanceStart = geometry.attributes.instanceStart;
+    const instanceEnd = geometry.attributes.instanceEnd;
+    const near = -camera.near;
+    //
+    // pick a point 1 unit out along the ray to avoid the ray origin
+    // sitting at the camera origin which will cause "w" to be 0 when
+    // applying the projection matrix.
+    _ray.at(1, _ssOrigin);
+    // ndc space [ - 1.0, 1.0 ]
+    _ssOrigin.w = 1;
+    _ssOrigin.applyMatrix4(camera.matrixWorldInverse);
+    _ssOrigin.applyMatrix4(projectionMatrix);
+    _ssOrigin.multiplyScalar(1 / _ssOrigin.w);
+    // screen space
+    _ssOrigin.x *= resolution.x / 2;
+    _ssOrigin.y *= resolution.y / 2;
+    _ssOrigin.z = 0;
+    _ssOrigin3.copy(_ssOrigin);
+    _mvMatrix.multiplyMatrices(camera.matrixWorldInverse, matrixWorld);
+    for(let i = 0, l = instanceStart.count; i < l; i++){
+        _start4.fromBufferAttribute(instanceStart, i);
+        _end4.fromBufferAttribute(instanceEnd, i);
+        _start4.w = 1;
+        _end4.w = 1;
+        // camera space
+        _start4.applyMatrix4(_mvMatrix);
+        _end4.applyMatrix4(_mvMatrix);
+        // skip the segment if it's entirely behind the camera
+        const isBehindCameraNear = _start4.z > near && _end4.z > near;
+        if (isBehindCameraNear) continue;
+        // trim the segment if it extends behind camera near
+        if (_start4.z > near) {
+            const deltaDist = _start4.z - _end4.z;
+            const t = (_start4.z - near) / deltaDist;
+            _start4.lerp(_end4, t);
+        } else if (_end4.z > near) {
+            const deltaDist1 = _end4.z - _start4.z;
+            const t1 = (_end4.z - near) / deltaDist1;
+            _end4.lerp(_start4, t1);
+        }
+        // clip space
+        _start4.applyMatrix4(projectionMatrix);
+        _end4.applyMatrix4(projectionMatrix);
+        // ndc space [ - 1.0, 1.0 ]
+        _start4.multiplyScalar(1 / _start4.w);
+        _end4.multiplyScalar(1 / _end4.w);
+        // screen space
+        _start4.x *= resolution.x / 2;
+        _start4.y *= resolution.y / 2;
+        _end4.x *= resolution.x / 2;
+        _end4.y *= resolution.y / 2;
+        // create 2d segment
+        _line.start.copy(_start4);
+        _line.start.z = 0;
+        _line.end.copy(_end4);
+        _line.end.z = 0;
+        // get closest point on ray to segment
+        const param = _line.closestPointToPointParameter(_ssOrigin3, true);
+        _line.at(param, _closestPoint);
+        // check if the intersection point is within clip space
+        const zPos = (0, _three.MathUtils).lerp(_start4.z, _end4.z, param);
+        const isInClipSpace = zPos >= -1 && zPos <= 1;
+        const isInside = _ssOrigin3.distanceTo(_closestPoint) < _lineWidth * 0.5;
+        if (isInClipSpace && isInside) {
+            _line.start.fromBufferAttribute(instanceStart, i);
+            _line.end.fromBufferAttribute(instanceEnd, i);
+            _line.start.applyMatrix4(matrixWorld);
+            _line.end.applyMatrix4(matrixWorld);
+            const pointOnLine = new (0, _three.Vector3)();
+            const point = new (0, _three.Vector3)();
+            _ray.distanceSqToSegment(_line.start, _line.end, point, pointOnLine);
+            intersects.push({
+                point: point,
+                pointOnLine: pointOnLine,
+                distance: _ray.origin.distanceTo(point),
+                object: lineSegments,
+                face: null,
+                faceIndex: i,
+                uv: null,
+                uv2: null
+            });
+        }
+    }
+}
+class LineSegments2 extends (0, _three.Mesh) {
+    constructor(geometry = new (0, _lineSegmentsGeometryJs.LineSegmentsGeometry)(), material = new (0, _lineMaterialJs.LineMaterial)({
+        color: Math.random() * 0xffffff
+    })){
+        super(geometry, material);
+        this.isLineSegments2 = true;
+        this.type = "LineSegments2";
+    }
+    // for backwards-compatibility, but could be a method of LineSegmentsGeometry...
+    computeLineDistances() {
+        const geometry = this.geometry;
+        const instanceStart = geometry.attributes.instanceStart;
+        const instanceEnd = geometry.attributes.instanceEnd;
+        const lineDistances = new Float32Array(2 * instanceStart.count);
+        for(let i = 0, j = 0, l = instanceStart.count; i < l; i++, j += 2){
+            _start.fromBufferAttribute(instanceStart, i);
+            _end.fromBufferAttribute(instanceEnd, i);
+            lineDistances[j] = j === 0 ? 0 : lineDistances[j - 1];
+            lineDistances[j + 1] = lineDistances[j] + _start.distanceTo(_end);
+        }
+        const instanceDistanceBuffer = new (0, _three.InstancedInterleavedBuffer)(lineDistances, 2, 1); // d0, d1
+        geometry.setAttribute("instanceDistanceStart", new (0, _three.InterleavedBufferAttribute)(instanceDistanceBuffer, 1, 0)); // d0
+        geometry.setAttribute("instanceDistanceEnd", new (0, _three.InterleavedBufferAttribute)(instanceDistanceBuffer, 1, 1)); // d1
+        return this;
+    }
+    raycast(raycaster, intersects) {
+        const worldUnits = this.material.worldUnits;
+        const camera = raycaster.camera;
+        if (camera === null && !worldUnits) console.error('LineSegments2: "Raycaster.camera" needs to be set in order to raycast against LineSegments2 while worldUnits is set to false.');
+        const threshold = raycaster.params.Line2 !== undefined ? raycaster.params.Line2.threshold || 0 : 0;
+        _ray = raycaster.ray;
+        const matrixWorld = this.matrixWorld;
+        const geometry = this.geometry;
+        const material = this.material;
+        _lineWidth = material.linewidth + threshold;
+        _instanceStart = geometry.attributes.instanceStart;
+        _instanceEnd = geometry.attributes.instanceEnd;
+        // check if we intersect the sphere bounds
+        if (geometry.boundingSphere === null) geometry.computeBoundingSphere();
+        _sphere.copy(geometry.boundingSphere).applyMatrix4(matrixWorld);
+        // increase the sphere bounds by the worst case line screen space width
+        let sphereMargin;
+        if (worldUnits) sphereMargin = _lineWidth * 0.5;
+        else {
+            const distanceToSphere = Math.max(camera.near, _sphere.distanceToPoint(_ray.origin));
+            sphereMargin = getWorldSpaceHalfWidth(camera, distanceToSphere, material.resolution);
+        }
+        _sphere.radius += sphereMargin;
+        if (_ray.intersectsSphere(_sphere) === false) return;
+        // check if we intersect the box bounds
+        if (geometry.boundingBox === null) geometry.computeBoundingBox();
+        _box.copy(geometry.boundingBox).applyMatrix4(matrixWorld);
+        // increase the box bounds by the worst case line width
+        let boxMargin;
+        if (worldUnits) boxMargin = _lineWidth * 0.5;
+        else {
+            const distanceToBox = Math.max(camera.near, _box.distanceToPoint(_ray.origin));
+            boxMargin = getWorldSpaceHalfWidth(camera, distanceToBox, material.resolution);
+        }
+        _box.expandByScalar(boxMargin);
+        if (_ray.intersectsBox(_box) === false) return;
+        if (worldUnits) raycastWorldUnits(this, intersects);
+        else raycastScreenSpace(this, camera, intersects);
+    }
+}
+
+},{"three":"ktPTu","../lines/LineSegmentsGeometry.js":"c91zC","../lines/LineMaterial.js":"insFK","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"c91zC":[function(require,module,exports) {
+var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
+parcelHelpers.defineInteropFlag(exports);
+parcelHelpers.export(exports, "LineSegmentsGeometry", ()=>LineSegmentsGeometry);
+var _three = require("three");
+const _box = new (0, _three.Box3)();
+const _vector = new (0, _three.Vector3)();
+class LineSegmentsGeometry extends (0, _three.InstancedBufferGeometry) {
+    constructor(){
+        super();
+        this.isLineSegmentsGeometry = true;
+        this.type = "LineSegmentsGeometry";
+        const positions = [
+            -1,
+            2,
+            0,
+            1,
+            2,
+            0,
+            -1,
+            1,
+            0,
+            1,
+            1,
+            0,
+            -1,
+            0,
+            0,
+            1,
+            0,
+            0,
+            -1,
+            -1,
+            0,
+            1,
+            -1,
+            0
+        ];
+        const uvs = [
+            -1,
+            2,
+            1,
+            2,
+            -1,
+            1,
+            1,
+            1,
+            -1,
+            -1,
+            1,
+            -1,
+            -1,
+            -2,
+            1,
+            -2
+        ];
+        const index = [
+            0,
+            2,
+            1,
+            2,
+            3,
+            1,
+            2,
+            4,
+            3,
+            4,
+            5,
+            3,
+            4,
+            6,
+            5,
+            6,
+            7,
+            5
+        ];
+        this.setIndex(index);
+        this.setAttribute("position", new (0, _three.Float32BufferAttribute)(positions, 3));
+        this.setAttribute("uv", new (0, _three.Float32BufferAttribute)(uvs, 2));
+    }
+    applyMatrix4(matrix) {
+        const start = this.attributes.instanceStart;
+        const end = this.attributes.instanceEnd;
+        if (start !== undefined) {
+            start.applyMatrix4(matrix);
+            end.applyMatrix4(matrix);
+            start.needsUpdate = true;
+        }
+        if (this.boundingBox !== null) this.computeBoundingBox();
+        if (this.boundingSphere !== null) this.computeBoundingSphere();
+        return this;
+    }
+    setPositions(array) {
+        let lineSegments;
+        if (array instanceof Float32Array) lineSegments = array;
+        else if (Array.isArray(array)) lineSegments = new Float32Array(array);
+        const instanceBuffer = new (0, _three.InstancedInterleavedBuffer)(lineSegments, 6, 1); // xyz, xyz
+        this.setAttribute("instanceStart", new (0, _three.InterleavedBufferAttribute)(instanceBuffer, 3, 0)); // xyz
+        this.setAttribute("instanceEnd", new (0, _three.InterleavedBufferAttribute)(instanceBuffer, 3, 3)); // xyz
+        //
+        this.computeBoundingBox();
+        this.computeBoundingSphere();
+        return this;
+    }
+    setColors(array) {
+        let colors;
+        if (array instanceof Float32Array) colors = array;
+        else if (Array.isArray(array)) colors = new Float32Array(array);
+        const instanceColorBuffer = new (0, _three.InstancedInterleavedBuffer)(colors, 6, 1); // rgb, rgb
+        this.setAttribute("instanceColorStart", new (0, _three.InterleavedBufferAttribute)(instanceColorBuffer, 3, 0)); // rgb
+        this.setAttribute("instanceColorEnd", new (0, _three.InterleavedBufferAttribute)(instanceColorBuffer, 3, 3)); // rgb
+        return this;
+    }
+    fromWireframeGeometry(geometry) {
+        this.setPositions(geometry.attributes.position.array);
+        return this;
+    }
+    fromEdgesGeometry(geometry) {
+        this.setPositions(geometry.attributes.position.array);
+        return this;
+    }
+    fromMesh(mesh) {
+        this.fromWireframeGeometry(new (0, _three.WireframeGeometry)(mesh.geometry));
+        // set colors, maybe
+        return this;
+    }
+    fromLineSegments(lineSegments) {
+        const geometry = lineSegments.geometry;
+        this.setPositions(geometry.attributes.position.array); // assumes non-indexed
+        // set colors, maybe
+        return this;
+    }
+    computeBoundingBox() {
+        if (this.boundingBox === null) this.boundingBox = new (0, _three.Box3)();
+        const start = this.attributes.instanceStart;
+        const end = this.attributes.instanceEnd;
+        if (start !== undefined && end !== undefined) {
+            this.boundingBox.setFromBufferAttribute(start);
+            _box.setFromBufferAttribute(end);
+            this.boundingBox.union(_box);
+        }
+    }
+    computeBoundingSphere() {
+        if (this.boundingSphere === null) this.boundingSphere = new (0, _three.Sphere)();
+        if (this.boundingBox === null) this.computeBoundingBox();
+        const start = this.attributes.instanceStart;
+        const end = this.attributes.instanceEnd;
+        if (start !== undefined && end !== undefined) {
+            const center = this.boundingSphere.center;
+            this.boundingBox.getCenter(center);
+            let maxRadiusSq = 0;
+            for(let i = 0, il = start.count; i < il; i++){
+                _vector.fromBufferAttribute(start, i);
+                maxRadiusSq = Math.max(maxRadiusSq, center.distanceToSquared(_vector));
+                _vector.fromBufferAttribute(end, i);
+                maxRadiusSq = Math.max(maxRadiusSq, center.distanceToSquared(_vector));
+            }
+            this.boundingSphere.radius = Math.sqrt(maxRadiusSq);
+            if (isNaN(this.boundingSphere.radius)) console.error("THREE.LineSegmentsGeometry.computeBoundingSphere(): Computed radius is NaN. The instanced position data is likely to have NaN values.", this);
+        }
+    }
+    toJSON() {
+    // todo
+    }
+    applyMatrix(matrix) {
+        console.warn("THREE.LineSegmentsGeometry: applyMatrix() has been renamed to applyMatrix4().");
+        return this.applyMatrix4(matrix);
+    }
+}
+
+},{"three":"ktPTu","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"insFK":[function(require,module,exports) {
+/**
+ * parameters = {
+ *  color: <hex>,
+ *  linewidth: <float>,
+ *  dashed: <boolean>,
+ *  dashScale: <float>,
+ *  dashSize: <float>,
+ *  dashOffset: <float>,
+ *  gapSize: <float>,
+ *  resolution: <Vector2>, // to be set by renderer
+ * }
+ */ var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
+parcelHelpers.defineInteropFlag(exports);
+parcelHelpers.export(exports, "LineMaterial", ()=>LineMaterial);
+var _three = require("three");
+(0, _three.UniformsLib).line = {
+    worldUnits: {
+        value: 1
+    },
+    linewidth: {
+        value: 1
+    },
+    resolution: {
+        value: new (0, _three.Vector2)(1, 1)
+    },
+    dashOffset: {
+        value: 0
+    },
+    dashScale: {
+        value: 1
+    },
+    dashSize: {
+        value: 1
+    },
+    gapSize: {
+        value: 1
+    } // todo FIX - maybe change to totalSize
+};
+(0, _three.ShaderLib)["line"] = {
+    uniforms: (0, _three.UniformsUtils).merge([
+        (0, _three.UniformsLib).common,
+        (0, _three.UniformsLib).fog,
+        (0, _three.UniformsLib).line
+    ]),
+    vertexShader: /* glsl */ `
+		#include <common>
+		#include <color_pars_vertex>
+		#include <fog_pars_vertex>
+		#include <logdepthbuf_pars_vertex>
+		#include <clipping_planes_pars_vertex>
+
+		uniform float linewidth;
+		uniform vec2 resolution;
+
+		attribute vec3 instanceStart;
+		attribute vec3 instanceEnd;
+
+		attribute vec3 instanceColorStart;
+		attribute vec3 instanceColorEnd;
+
+		#ifdef WORLD_UNITS
+
+			varying vec4 worldPos;
+			varying vec3 worldStart;
+			varying vec3 worldEnd;
+
+			#ifdef USE_DASH
+
+				varying vec2 vUv;
+
+			#endif
+
+		#else
+
+			varying vec2 vUv;
+
+		#endif
+
+		#ifdef USE_DASH
+
+			uniform float dashScale;
+			attribute float instanceDistanceStart;
+			attribute float instanceDistanceEnd;
+			varying float vLineDistance;
+
+		#endif
+
+		void trimSegment( const in vec4 start, inout vec4 end ) {
+
+			// trim end segment so it terminates between the camera plane and the near plane
+
+			// conservative estimate of the near plane
+			float a = projectionMatrix[ 2 ][ 2 ]; // 3nd entry in 3th column
+			float b = projectionMatrix[ 3 ][ 2 ]; // 3nd entry in 4th column
+			float nearEstimate = - 0.5 * b / a;
+
+			float alpha = ( nearEstimate - start.z ) / ( end.z - start.z );
+
+			end.xyz = mix( start.xyz, end.xyz, alpha );
+
+		}
+
+		void main() {
+
+			#ifdef USE_COLOR
+
+				vColor.xyz = ( position.y < 0.5 ) ? instanceColorStart : instanceColorEnd;
+
+			#endif
+
+			#ifdef USE_DASH
+
+				vLineDistance = ( position.y < 0.5 ) ? dashScale * instanceDistanceStart : dashScale * instanceDistanceEnd;
+				vUv = uv;
+
+			#endif
+
+			float aspect = resolution.x / resolution.y;
+
+			// camera space
+			vec4 start = modelViewMatrix * vec4( instanceStart, 1.0 );
+			vec4 end = modelViewMatrix * vec4( instanceEnd, 1.0 );
+
+			#ifdef WORLD_UNITS
+
+				worldStart = start.xyz;
+				worldEnd = end.xyz;
+
+			#else
+
+				vUv = uv;
+
+			#endif
+
+			// special case for perspective projection, and segments that terminate either in, or behind, the camera plane
+			// clearly the gpu firmware has a way of addressing this issue when projecting into ndc space
+			// but we need to perform ndc-space calculations in the shader, so we must address this issue directly
+			// perhaps there is a more elegant solution -- WestLangley
+
+			bool perspective = ( projectionMatrix[ 2 ][ 3 ] == - 1.0 ); // 4th entry in the 3rd column
+
+			if ( perspective ) {
+
+				if ( start.z < 0.0 && end.z >= 0.0 ) {
+
+					trimSegment( start, end );
+
+				} else if ( end.z < 0.0 && start.z >= 0.0 ) {
+
+					trimSegment( end, start );
+
+				}
+
+			}
+
+			// clip space
+			vec4 clipStart = projectionMatrix * start;
+			vec4 clipEnd = projectionMatrix * end;
+
+			// ndc space
+			vec3 ndcStart = clipStart.xyz / clipStart.w;
+			vec3 ndcEnd = clipEnd.xyz / clipEnd.w;
+
+			// direction
+			vec2 dir = ndcEnd.xy - ndcStart.xy;
+
+			// account for clip-space aspect ratio
+			dir.x *= aspect;
+			dir = normalize( dir );
+
+			#ifdef WORLD_UNITS
+
+				// get the offset direction as perpendicular to the view vector
+				vec3 worldDir = normalize( end.xyz - start.xyz );
+				vec3 offset;
+				if ( position.y < 0.5 ) {
+
+					offset = normalize( cross( start.xyz, worldDir ) );
+
+				} else {
+
+					offset = normalize( cross( end.xyz, worldDir ) );
+
+				}
+
+				// sign flip
+				if ( position.x < 0.0 ) offset *= - 1.0;
+
+				float forwardOffset = dot( worldDir, vec3( 0.0, 0.0, 1.0 ) );
+
+				// don't extend the line if we're rendering dashes because we
+				// won't be rendering the endcaps
+				#ifndef USE_DASH
+
+					// extend the line bounds to encompass  endcaps
+					start.xyz += - worldDir * linewidth * 0.5;
+					end.xyz += worldDir * linewidth * 0.5;
+
+					// shift the position of the quad so it hugs the forward edge of the line
+					offset.xy -= dir * forwardOffset;
+					offset.z += 0.5;
+
+				#endif
+
+				// endcaps
+				if ( position.y > 1.0 || position.y < 0.0 ) {
+
+					offset.xy += dir * 2.0 * forwardOffset;
+
+				}
+
+				// adjust for linewidth
+				offset *= linewidth * 0.5;
+
+				// set the world position
+				worldPos = ( position.y < 0.5 ) ? start : end;
+				worldPos.xyz += offset;
+
+				// project the worldpos
+				vec4 clip = projectionMatrix * worldPos;
+
+				// shift the depth of the projected points so the line
+				// segments overlap neatly
+				vec3 clipPose = ( position.y < 0.5 ) ? ndcStart : ndcEnd;
+				clip.z = clipPose.z * clip.w;
+
+			#else
+
+				vec2 offset = vec2( dir.y, - dir.x );
+				// undo aspect ratio adjustment
+				dir.x /= aspect;
+				offset.x /= aspect;
+
+				// sign flip
+				if ( position.x < 0.0 ) offset *= - 1.0;
+
+				// endcaps
+				if ( position.y < 0.0 ) {
+
+					offset += - dir;
+
+				} else if ( position.y > 1.0 ) {
+
+					offset += dir;
+
+				}
+
+				// adjust for linewidth
+				offset *= linewidth;
+
+				// adjust for clip-space to screen-space conversion // maybe resolution should be based on viewport ...
+				offset /= resolution.y;
+
+				// select end
+				vec4 clip = ( position.y < 0.5 ) ? clipStart : clipEnd;
+
+				// back to clip space
+				offset *= clip.w;
+
+				clip.xy += offset;
+
+			#endif
+
+			gl_Position = clip;
+
+			vec4 mvPosition = ( position.y < 0.5 ) ? start : end; // this is an approximation
+
+			#include <logdepthbuf_vertex>
+			#include <clipping_planes_vertex>
+			#include <fog_vertex>
+
+		}
+		`,
+    fragmentShader: /* glsl */ `
+		uniform vec3 diffuse;
+		uniform float opacity;
+		uniform float linewidth;
+
+		#ifdef USE_DASH
+
+			uniform float dashOffset;
+			uniform float dashSize;
+			uniform float gapSize;
+
+		#endif
+
+		varying float vLineDistance;
+
+		#ifdef WORLD_UNITS
+
+			varying vec4 worldPos;
+			varying vec3 worldStart;
+			varying vec3 worldEnd;
+
+			#ifdef USE_DASH
+
+				varying vec2 vUv;
+
+			#endif
+
+		#else
+
+			varying vec2 vUv;
+
+		#endif
+
+		#include <common>
+		#include <color_pars_fragment>
+		#include <fog_pars_fragment>
+		#include <logdepthbuf_pars_fragment>
+		#include <clipping_planes_pars_fragment>
+
+		vec2 closestLineToLine(vec3 p1, vec3 p2, vec3 p3, vec3 p4) {
+
+			float mua;
+			float mub;
+
+			vec3 p13 = p1 - p3;
+			vec3 p43 = p4 - p3;
+
+			vec3 p21 = p2 - p1;
+
+			float d1343 = dot( p13, p43 );
+			float d4321 = dot( p43, p21 );
+			float d1321 = dot( p13, p21 );
+			float d4343 = dot( p43, p43 );
+			float d2121 = dot( p21, p21 );
+
+			float denom = d2121 * d4343 - d4321 * d4321;
+
+			float numer = d1343 * d4321 - d1321 * d4343;
+
+			mua = numer / denom;
+			mua = clamp( mua, 0.0, 1.0 );
+			mub = ( d1343 + d4321 * ( mua ) ) / d4343;
+			mub = clamp( mub, 0.0, 1.0 );
+
+			return vec2( mua, mub );
+
+		}
+
+		void main() {
+
+			#include <clipping_planes_fragment>
+
+			#ifdef USE_DASH
+
+				if ( vUv.y < - 1.0 || vUv.y > 1.0 ) discard; // discard endcaps
+
+				if ( mod( vLineDistance + dashOffset, dashSize + gapSize ) > dashSize ) discard; // todo - FIX
+
+			#endif
+
+			float alpha = opacity;
+
+			#ifdef WORLD_UNITS
+
+				// Find the closest points on the view ray and the line segment
+				vec3 rayEnd = normalize( worldPos.xyz ) * 1e5;
+				vec3 lineDir = worldEnd - worldStart;
+				vec2 params = closestLineToLine( worldStart, worldEnd, vec3( 0.0, 0.0, 0.0 ), rayEnd );
+
+				vec3 p1 = worldStart + lineDir * params.x;
+				vec3 p2 = rayEnd * params.y;
+				vec3 delta = p1 - p2;
+				float len = length( delta );
+				float norm = len / linewidth;
+
+				#ifndef USE_DASH
+
+					#ifdef USE_ALPHA_TO_COVERAGE
+
+						float dnorm = fwidth( norm );
+						alpha = 1.0 - smoothstep( 0.5 - dnorm, 0.5 + dnorm, norm );
+
+					#else
+
+						if ( norm > 0.5 ) {
+
+							discard;
+
+						}
+
+					#endif
+
+				#endif
+
+			#else
+
+				#ifdef USE_ALPHA_TO_COVERAGE
+
+					// artifacts appear on some hardware if a derivative is taken within a conditional
+					float a = vUv.x;
+					float b = ( vUv.y > 0.0 ) ? vUv.y - 1.0 : vUv.y + 1.0;
+					float len2 = a * a + b * b;
+					float dlen = fwidth( len2 );
+
+					if ( abs( vUv.y ) > 1.0 ) {
+
+						alpha = 1.0 - smoothstep( 1.0 - dlen, 1.0 + dlen, len2 );
+
+					}
+
+				#else
+
+					if ( abs( vUv.y ) > 1.0 ) {
+
+						float a = vUv.x;
+						float b = ( vUv.y > 0.0 ) ? vUv.y - 1.0 : vUv.y + 1.0;
+						float len2 = a * a + b * b;
+
+						if ( len2 > 1.0 ) discard;
+
+					}
+
+				#endif
+
+			#endif
+
+			vec4 diffuseColor = vec4( diffuse, alpha );
+
+			#include <logdepthbuf_fragment>
+			#include <color_fragment>
+
+			gl_FragColor = vec4( diffuseColor.rgb, alpha );
+
+			#include <tonemapping_fragment>
+			#include <encodings_fragment>
+			#include <fog_fragment>
+			#include <premultiplied_alpha_fragment>
+
+		}
+		`
+};
+class LineMaterial extends (0, _three.ShaderMaterial) {
+    constructor(parameters){
+        super({
+            type: "LineMaterial",
+            uniforms: (0, _three.UniformsUtils).clone((0, _three.ShaderLib)["line"].uniforms),
+            vertexShader: (0, _three.ShaderLib)["line"].vertexShader,
+            fragmentShader: (0, _three.ShaderLib)["line"].fragmentShader,
+            clipping: true // required for clipping support
+        });
+        this.isLineMaterial = true;
+        Object.defineProperties(this, {
+            color: {
+                enumerable: true,
+                get: function() {
+                    return this.uniforms.diffuse.value;
+                },
+                set: function(value) {
+                    this.uniforms.diffuse.value = value;
+                }
+            },
+            worldUnits: {
+                enumerable: true,
+                get: function() {
+                    return "WORLD_UNITS" in this.defines;
+                },
+                set: function(value) {
+                    if (value === true) this.defines.WORLD_UNITS = "";
+                    else delete this.defines.WORLD_UNITS;
+                }
+            },
+            linewidth: {
+                enumerable: true,
+                get: function() {
+                    return this.uniforms.linewidth.value;
+                },
+                set: function(value) {
+                    this.uniforms.linewidth.value = value;
+                }
+            },
+            dashed: {
+                enumerable: true,
+                get: function() {
+                    return Boolean("USE_DASH" in this.defines);
+                },
+                set (value) {
+                    if (Boolean(value) !== Boolean("USE_DASH" in this.defines)) this.needsUpdate = true;
+                    if (value === true) this.defines.USE_DASH = "";
+                    else delete this.defines.USE_DASH;
+                }
+            },
+            dashScale: {
+                enumerable: true,
+                get: function() {
+                    return this.uniforms.dashScale.value;
+                },
+                set: function(value) {
+                    this.uniforms.dashScale.value = value;
+                }
+            },
+            dashSize: {
+                enumerable: true,
+                get: function() {
+                    return this.uniforms.dashSize.value;
+                },
+                set: function(value) {
+                    this.uniforms.dashSize.value = value;
+                }
+            },
+            dashOffset: {
+                enumerable: true,
+                get: function() {
+                    return this.uniforms.dashOffset.value;
+                },
+                set: function(value) {
+                    this.uniforms.dashOffset.value = value;
+                }
+            },
+            gapSize: {
+                enumerable: true,
+                get: function() {
+                    return this.uniforms.gapSize.value;
+                },
+                set: function(value) {
+                    this.uniforms.gapSize.value = value;
+                }
+            },
+            opacity: {
+                enumerable: true,
+                get: function() {
+                    return this.uniforms.opacity.value;
+                },
+                set: function(value) {
+                    this.uniforms.opacity.value = value;
+                }
+            },
+            resolution: {
+                enumerable: true,
+                get: function() {
+                    return this.uniforms.resolution.value;
+                },
+                set: function(value) {
+                    this.uniforms.resolution.value.copy(value);
+                }
+            },
+            alphaToCoverage: {
+                enumerable: true,
+                get: function() {
+                    return Boolean("USE_ALPHA_TO_COVERAGE" in this.defines);
+                },
+                set: function(value) {
+                    if (Boolean(value) !== Boolean("USE_ALPHA_TO_COVERAGE" in this.defines)) this.needsUpdate = true;
+                    if (value === true) {
+                        this.defines.USE_ALPHA_TO_COVERAGE = "";
+                        this.extensions.derivatives = true;
+                    } else {
+                        delete this.defines.USE_ALPHA_TO_COVERAGE;
+                        this.extensions.derivatives = false;
+                    }
+                }
+            }
+        });
+        this.setValues(parameters);
+    }
+}
+
+},{"three":"ktPTu","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"5c0fE":[function(require,module,exports) {
+var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
+parcelHelpers.defineInteropFlag(exports);
+parcelHelpers.export(exports, "LineGeometry", ()=>LineGeometry);
+var _lineSegmentsGeometryJs = require("../lines/LineSegmentsGeometry.js");
+class LineGeometry extends (0, _lineSegmentsGeometryJs.LineSegmentsGeometry) {
+    constructor(){
+        super();
+        this.isLineGeometry = true;
+        this.type = "LineGeometry";
+    }
+    setPositions(array) {
+        // converts [ x1, y1, z1,  x2, y2, z2, ... ] to pairs format
+        const length = array.length - 3;
+        const points = new Float32Array(2 * length);
+        for(let i = 0; i < length; i += 3){
+            points[2 * i] = array[i];
+            points[2 * i + 1] = array[i + 1];
+            points[2 * i + 2] = array[i + 2];
+            points[2 * i + 3] = array[i + 3];
+            points[2 * i + 4] = array[i + 4];
+            points[2 * i + 5] = array[i + 5];
+        }
+        super.setPositions(points);
+        return this;
+    }
+    setColors(array) {
+        // converts [ r1, g1, b1,  r2, g2, b2, ... ] to pairs format
+        const length = array.length - 3;
+        const colors = new Float32Array(2 * length);
+        for(let i = 0; i < length; i += 3){
+            colors[2 * i] = array[i];
+            colors[2 * i + 1] = array[i + 1];
+            colors[2 * i + 2] = array[i + 2];
+            colors[2 * i + 3] = array[i + 3];
+            colors[2 * i + 4] = array[i + 4];
+            colors[2 * i + 5] = array[i + 5];
+        }
+        super.setColors(colors);
+        return this;
+    }
+    fromLine(line) {
+        const geometry = line.geometry;
+        this.setPositions(geometry.attributes.position.array); // assumes non-indexed
+        // set colors, maybe
+        return this;
+    }
+}
+
+},{"../lines/LineSegmentsGeometry.js":"c91zC","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"93XyA":[function(require,module,exports) {
+var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
+parcelHelpers.defineInteropFlag(exports);
+parcelHelpers.export(exports, "fadeOutScene", ()=>fadeOutScene);
+function fadeOutScene() {
+    // Add new DIV to the HTML for fadeOut
+    const fadeOutDiv = document.createElement("div");
+    fadeOutDiv.classList.add("fadeDiv");
+    // Setup elemt style.
+    fadeOutDiv.style.backgroundColor = "black";
+    fadeOutDiv.style.opacity = 0;
+    fadeOutDiv.style.position = "absolute";
+    fadeOutDiv.style.width = "100vw";
+    fadeOutDiv.style.height = "100vh";
+    document.body.appendChild(fadeOutDiv);
+    //Fade out  with interval
+    const divToFade = document.querySelector(".fadeDiv");
+    let fadeTimer = 0;
+    // Setup interval
+    const fadeOutTimer = setInterval(()=>{
+        // Check if timer is finished.
+        if (fadeTimer >= 1) clearInterval(fadeOutTimer);
+        fadeTimer += 0.01;
+        divToFade.style.opacity = fadeTimer;
+    }, 10);
+}
+
+},{"@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}]},["cVgJb","ebWYT"], "ebWYT", "parcelRequire839b")
+
+//# sourceMappingURL=index.739bf03c.js.map
