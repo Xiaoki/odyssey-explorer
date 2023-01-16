@@ -12,13 +12,10 @@ import gsap, { normalize } from "gsap";
 import * as THREE from "three";
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
 import * as dat from 'dat.gui';
-import {fadeOutScene} from './transitions.js';
 import {createOdyssey, buildConnectionLines} from "./odyssey.js";
-import { Line2 } from 'three/examples/jsm/lines/Line2.js';
-import { LineMaterial } from 'three/examples/jsm/lines/LineMaterial.js';
-import { LineGeometry } from 'three/examples/jsm/lines/LineGeometry.js';
-import { Line } from "three";
 import { ActivateFirstPerson, OnKeyDown, OnKeyUp } from './firstpersonlogic.js';
+import {calculateMouseOverLocation, doHighlightRayTrace } from "./mouseOver.js";
+
 
 ActivateFirstPerson();
 
@@ -26,7 +23,7 @@ ActivateFirstPerson();
  * For Dev Only
  */
 
-let AmountOfGalaxyToGenereate = 200;
+let AmountOfGalaxyToGenereate = 100;
 let maxOdysseyConnectionLineHeight = 20;
 let MaxOrbitCameraDistance = 200;
 let planetAreSpawnedHorizontal = false;
@@ -47,6 +44,7 @@ let updateCameraRotation = false;
 gui.hide();
 let transitionToPlanetFinished = true;
 let activeLinesArray = [];
+let leftMouseButtonIsDown = false;
 
 let meshArray = [];
   
@@ -191,8 +189,22 @@ gui.add(parameters, "YHeight").min(1).max(150).step(1).onFinishChange(generateGa
 function onPointerMove(event){
     pointer.x = ( event.clientX / window.innerWidth ) * 2 - 1;
     pointer.y = - ( event.clientY / window.innerHeight ) * 2 + 1;
+    
+    // Do raytrace to detect mouseOver for highlight.
+    if(!leftMouseButtonIsDown)
+    {
+        doHighlightRayTrace(pointer, camera);
+    }
+    
 };
 
+const onMouseUp = (event) =>
+{   
+    if(event.button == 0) 
+    {
+        leftMouseButtonIsDown = false;
+    }
+}
 
 // Onclick event 
 
@@ -201,6 +213,11 @@ function onMouseDown(event){
     if(event.button != 0) {
         return;
     }
+
+
+    // Set let mouse button to down.
+    leftMouseButtonIsDown = true;
+
     // Create Raycast
     raycaster.setFromCamera(pointer, camera);
     const castRay = raycaster.intersectObjects(referenceListOfOdysseys, false);
@@ -232,6 +249,7 @@ function onMouseDown(event){
 
         let targetVector = new THREE.Vector3();
         targetPlanet.object.getWorldPosition(targetVector);
+    
 
         
         // Prepare fly to planets.
@@ -280,7 +298,8 @@ function onMouseDown(event){
                 controls.enablePan = true;
                 controls.autoRotate = true; 
                 controls.target = targetPlanetLocation; 
-                transitionToPlanetFinished = true;         
+                transitionToPlanetFinished = true;  
+                console.log(controls);       
            }
        });
     
@@ -292,6 +311,7 @@ function onMouseDown(event){
 
 window.addEventListener( 'pointermove', onPointerMove);
 window.addEventListener('mousedown', onMouseDown);
+window.addEventListener('mouseup', onMouseUp);
 
 
 
@@ -446,14 +466,16 @@ function animate(){
     // Time reference.
     const time = performance.now();
     
-    // Rotate the texture on the namering
-    //nameRingMaterial.map.offset.x += Math.sin(0.001);
-    
-    // Animate the textures of all ringNameMaterials.
-    nameRingOffset += Math.sin(0.001);
+
+
+    /**
+     * Removing this comment will animate all name rings on every odyssey.
+     */
+
+    /* nameRingOffset += Math.sin(0.001);
     for(let i = 0; i < referenceListOfOdysseys.length; i++){
         referenceListOfOdysseys[i].nameRingMaterial.map.offset.x = nameRingOffset;
-    }
+    }*/
 
 
     // Update controls for auto-rotate.
@@ -465,7 +487,10 @@ function animate(){
     for(  let i = 0; i < referenceListOfOdysseys.length; i++){
         const odyssey = referenceListOfOdysseys[i].children;
         odyssey[0].lookAt(camera.position);
-    };
+    }; 
+
+    // Set the mouseOverEffect.
+    calculateMouseOverLocation();
 
     // Render the scene
     renderer.render(scene, camera);
@@ -474,6 +499,7 @@ function animate(){
     window.requestAnimationFrame(animate);
 
 };
+
 
 
 
@@ -490,3 +516,5 @@ document.addEventListener('keydown', OnKeyDown);
 document.addEventListener('keyup', OnKeyUp);
 
 animate();
+
+export { pointer, camera, referenceListOfOdysseys, scene} ;

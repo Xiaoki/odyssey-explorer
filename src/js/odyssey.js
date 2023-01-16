@@ -231,21 +231,18 @@ const createOdyssey = (id, wallet, name, url) =>
     drawContent.fillStyle = "rgba(0, 0, 0, 0.1)";
     drawContent.fillRect(0, 0, drawCanvas.width, drawCanvas.height);
 
-   
+    // Draw the title once.
     drawContent.fillStyle = "rgba(245, 199, 255, 0.9";
     drawContent.fillText(name, 0, 60);
     drawContent.strokeStyle = "rgba(124, 86, 133)";
     drawContent.strokeText(name, 0, 60);
 
-    /*
-        Draw title twice.
-
-    drawContent.fillStyle = 'white';
+    // Draw the name a second time.
+    drawContent.fillStyle = "rgba(245, 199, 255, 0.9";;
     drawContent.fillText(name, 500, 60);
-    drawContent.strokeStyle = 'black';
+    drawContent.strokeStyle = "rgba(124, 86, 133)";
     drawContent.strokeText(name, 500, 60);
 
-    */
 
 
 
