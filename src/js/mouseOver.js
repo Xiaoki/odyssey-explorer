@@ -1,5 +1,11 @@
+//import { pointer, camera, referenceListOfOdysseys, scene } from "./index.js";
 import * as THREE from 'three';
-import { pointer, camera, referenceListOfOdysseys, scene} from "./index.js";
+
+/**
+ * Important variables.
+ */
+
+ let activeOdyssey, highlightTarget;
 
 // Construct the highlight object
 const mouseOverGeo = new THREE.PlaneGeometry(1,1);
@@ -10,10 +16,17 @@ const mouseOverMesh = new THREE.Mesh(mouseOverGeo, mouseOverMat);
 // Const Variables for Development.
 const mouseOverDistancefromCamera = 5;
 
-let highlightTarget;
+// set active Odyssey for the second highlight.
+const setActiveOdyssey = (Odyssey) => 
+{
+    activeOdyssey = Odyssey;
+
+    // Removed the mouse over highlight on click.
+    mouseOverMesh.visible = false;
+}
 
 // Call every frame to do a raytrace for the mouse over effect.
-const doHighlightRayTrace = () =>
+const doHighlightRayTrace = (pointer, camera, referenceListOfOdysseys, scene) =>
 {
     
     // Create raycaster.
@@ -27,19 +40,44 @@ const doHighlightRayTrace = () =>
 
     if(ray.length > 0)
     {   
+        // Ignore the active Odyssey.
+        if (ray[0].object == activeOdyssey)
+            {
+                return
+            }
         
-        
+        // if the ray hits the same Odyssey. Ignore it.
         if (ray[0].object == highlightTarget) 
         {
             return;
 
         } else {
             
+
             // Set the new Odyssey as highlight target.
             highlightTarget = ray[0].object;
+
+             // if the highlight is set to invisble from previous selection set to visible now.
+             if(!mouseOverMesh.visible)
+             {
+                 mouseOverMesh.visible = true;
+             }
+
+
+
+            // Set the size of the mouseOverMesh based on raytrace distance.
+
+            if ( ray[0].distance > 50) {
+                mouseOverMesh.scale.set(0.5, 0.5, 0.5);
+            } else if  (ray[0].distance > 25) {
+                    mouseOverMesh.scale.set(0.8, 0.8, 0.8);
+                } else {
+                    mouseOverMesh.scale.set(1, 1, 1);
+                    }
+
             
             // calculate new mouseOver XYZ.
-            calculateMouseOverLocation(highlightTarget);
+            calculateMouseOverLocation(highlightTarget, camera);
         }
         
     }
@@ -48,12 +86,13 @@ const doHighlightRayTrace = () =>
 
 
 
-const calculateMouseOverLocation= () =>
+const calculateMouseOverLocation= (highlightTarget, camera) =>
 {
     if (highlightTarget == undefined)
     {
         return;
     }
+
     // Calculate the new position for the mouseOver.
     const direction = new THREE.Vector3;
     direction.subVectors(highlightTarget.position, camera.position).normalize();
@@ -63,18 +102,15 @@ const calculateMouseOverLocation= () =>
 
     // Set the world location of the mouseOverImage.
     mouseOverMesh.position.set(mouseOverXYZ.x, mouseOverXYZ.y, mouseOverXYZ.z);
-    mouseOverMesh.lookAt(camera.position); 
-    
-    // find a better solution for this.
-    scene.add(mouseOverMesh);
+    mouseOverMesh.lookAt(camera.position);
+
 }
 
-export {doHighlightRayTrace, calculateMouseOverLocation};
 
-/**
- * Overlay plan
-*/
-    // Raycast calls this function on a hit. Sends hit object here.
-    // Calculate the distance between camera XYZ and Planet XYZ.
-    // Move X amount over into that direction and return the XYZ.
-    // Spawnm a plane on that XYZ and make it lookat() the camera.
+const renderOdysseyInformationPopup = (odyssey) => 
+{
+    console.log(`We should spawn a information object at this location`)
+    console.log(odyssey.position);
+}
+
+export {doHighlightRayTrace, calculateMouseOverLocation, highlightTarget, mouseOverMesh, setActiveOdyssey, renderOdysseyInformationPopup};

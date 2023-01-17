@@ -14,7 +14,14 @@ import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
 import * as dat from 'dat.gui';
 import {createOdyssey, buildConnectionLines} from "./odyssey.js";
 import { ActivateFirstPerson, OnKeyDown, OnKeyUp } from './firstpersonlogic.js';
-import {calculateMouseOverLocation, doHighlightRayTrace } from "./mouseOver.js";
+import { calculateMouseOverLocation, 
+    doHighlightRayTrace, 
+    highlightTarget, 
+    mouseOverMesh, 
+    renderOdysseyInformationPopup,
+    setActiveOdyssey,
+    renderOdysseyInformationPopup 
+} from "./mouseOver.js";
 
 
 ActivateFirstPerson();
@@ -46,11 +53,15 @@ let transitionToPlanetFinished = true;
 let activeLinesArray = [];
 let leftMouseButtonIsDown = false;
 
+
+
 let meshArray = [];
   
 // Scene setup
 canvas = document.querySelector(".webgl");
 scene = new THREE.Scene();
+
+scene.add(mouseOverMesh);
 
 // Camera Setup
 const aspect = window.innerWidth / window.innerHeight;
@@ -80,7 +91,6 @@ controls.enablePan = true;
 controls.maxDistance = MaxOrbitCameraDistance;
 controls.minDistance = minimalDistanceToPlanetForCamera; 
 controls.zoomSpeed = 1;
-
 
 
 /**
@@ -193,7 +203,7 @@ function onPointerMove(event){
     // Do raytrace to detect mouseOver for highlight.
     if(!leftMouseButtonIsDown)
     {
-        doHighlightRayTrace(pointer, camera);
+        doHighlightRayTrace(pointer, camera, referenceListOfOdysseys,scene);
     }
     
 };
@@ -238,10 +248,6 @@ function onMouseDown(event){
         if(targetPlanet.object === selectedOdyssey){
             return;
         }
-
-
-        // Log information about selected Odyssey
-        console.log(targetPlanet.object);
         
 
         selectedOdyssey = targetPlanet.object;
@@ -272,6 +278,9 @@ function onMouseDown(event){
         let targetLocation = new THREE.Vector3();
         targetLocation.addVectors(camera.position, direction.multiplyScalar(distance));
 
+        // Set active Odyssey for highlight with information.
+        setActiveOdyssey(selectedOdyssey);
+
          //Animate using gsap module.
         gsap.to(camera.position, {
            duration: 1.5,
@@ -299,7 +308,8 @@ function onMouseDown(event){
                 controls.autoRotate = true; 
                 controls.target = targetPlanetLocation; 
                 transitionToPlanetFinished = true;  
-                console.log(controls);       
+                renderOdysseyInformationPopup(selectedOdyssey);
+                      
            }
        });
     
@@ -490,7 +500,8 @@ function animate(){
     }; 
 
     // Set the mouseOverEffect.
-    calculateMouseOverLocation();
+    calculateMouseOverLocation(highlightTarget,camera);
+    
 
     // Render the scene
     renderer.render(scene, camera);
@@ -517,4 +528,3 @@ document.addEventListener('keyup', OnKeyUp);
 
 animate();
 
-export { pointer, camera, referenceListOfOdysseys, scene} ;
