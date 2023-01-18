@@ -20,7 +20,8 @@ import { calculateMouseOverLocation,
     mouseOverMesh, 
     renderOdysseyInformationPopup,
     setActiveOdyssey,
-    renderOdysseyInformationPopup 
+    renderOdysseyInformationPopup,
+    infoObjectMesh 
 } from "./mouseOver.js";
 
 
@@ -62,6 +63,7 @@ canvas = document.querySelector(".webgl");
 scene = new THREE.Scene();
 
 scene.add(mouseOverMesh);
+scene.add(infoObjectMesh);
 
 // Camera Setup
 const aspect = window.innerWidth / window.innerHeight;
@@ -294,7 +296,8 @@ function onMouseDown(event){
                 controls.enabled = false;
                 controls.autoRotate = false; 
                 controls.enablePan = false;
-                activeLinesArray = selectedOdyssey.buildConnectionLines(referenceListOfOdysseys, scene, activeLinesArray);                
+                activeLinesArray = selectedOdyssey.buildConnectionLines(referenceListOfOdysseys, scene, activeLinesArray); 
+                renderOdysseyInformationPopup(selectedOdyssey);               
            },
            onUpdate: function(){
                
@@ -308,8 +311,7 @@ function onMouseDown(event){
                 controls.autoRotate = true; 
                 controls.target = targetPlanetLocation; 
                 transitionToPlanetFinished = true;  
-                renderOdysseyInformationPopup(selectedOdyssey);
-                      
+                
            }
        });
     
@@ -440,7 +442,10 @@ const buildUniverse = () => {
 
  }
 
-
+const lookAtCameraObjects = () =>
+{
+    infoObjectMesh.lookAt(camera.position);
+}
 
 
 
@@ -475,7 +480,7 @@ function animate(){
 
     // Time reference.
     const time = performance.now();
-    
+    lookAtCameraObjects();
 
 
     /**
@@ -527,4 +532,3 @@ document.addEventListener('keydown', OnKeyDown);
 document.addEventListener('keyup', OnKeyUp);
 
 animate();
-

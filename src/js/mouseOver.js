@@ -8,10 +8,17 @@ import * as THREE from 'three';
  let activeOdyssey, highlightTarget;
 
 // Construct the highlight object
-const mouseOverGeo = new THREE.PlaneGeometry(1,1);
-const mouseOverTexture = new THREE.TextureLoader().load('./images/crossair.png');
+const mouseOverGeo = new THREE.PlaneGeometry(1, 0.7);
+const mouseOverTexture = new THREE.TextureLoader().load('./images/info.png');
 const mouseOverMat = new THREE.MeshStandardMaterial({color: 0xFFFFFF, transparent: true, opacity: 1, map: mouseOverTexture});
 const mouseOverMesh = new THREE.Mesh(mouseOverGeo, mouseOverMat);
+
+// Construct the information object to display Odyssey info.
+const infoObjectGeo = new THREE.PlaneGeometry(3,2);
+const infoObjectTexture = new THREE.TextureLoader().load('./images/info.png');
+const infoObjectMat = new THREE.MeshStandardMaterial({color: 0xfffff, transparent: true, opacity: 0.8, map: infoObjectTexture});
+const infoObjectMesh = new THREE.Mesh(infoObjectGeo, infoObjectMat);
+
 
 // Const Variables for Development.
 const mouseOverDistancefromCamera = 5;
@@ -68,11 +75,13 @@ const doHighlightRayTrace = (pointer, camera, referenceListOfOdysseys, scene) =>
             // Set the size of the mouseOverMesh based on raytrace distance.
 
             if ( ray[0].distance > 50) {
-                mouseOverMesh.scale.set(0.5, 0.5, 0.5);
-            } else if  (ray[0].distance > 25) {
-                    mouseOverMesh.scale.set(0.8, 0.8, 0.8);
-                } else {
-                    mouseOverMesh.scale.set(1, 1, 1);
+                mouseOverMesh.scale.set(0.3, 0.3);
+            } else if (ray[0].distance > 25) {
+                    mouseOverMesh.scale.set(0.5, 0.5);
+                } else if (ray[0].distance > 10) {
+                    mouseOverMesh.scale.set(1, 1);
+                    } else {
+                        mouseOverMesh.scale.set(1.5, 1.5);
                     }
 
             
@@ -109,8 +118,12 @@ const calculateMouseOverLocation= (highlightTarget, camera) =>
 
 const renderOdysseyInformationPopup = (odyssey) => 
 {
+    infoObjectMesh.position.set(odyssey.position.x, odyssey.position.y, odyssey.position.z);
     console.log(`We should spawn a information object at this location`)
     console.log(odyssey.position);
 }
 
-export {doHighlightRayTrace, calculateMouseOverLocation, highlightTarget, mouseOverMesh, setActiveOdyssey, renderOdysseyInformationPopup};
+
+export {doHighlightRayTrace, calculateMouseOverLocation, highlightTarget, mouseOverMesh, setActiveOdyssey, renderOdysseyInformationPopup, infoObjectMesh};
+
+
