@@ -28,12 +28,68 @@ class Odyssey extends THREE.Mesh {
         this.url = url;
         this.isOdyssey = true;
         this.nameRingMaterial = nameRingMaterial;
+
+        this.temporallyFillStakeArrays();
     }
 
     // Material for connections.
     lineMaterial = new LineMaterial({ color: 0xdda4de, linewidth: 2, transparent: true, opacity: 0.5});
     // Array to hold all connected Odysseys.
     connectedOdysseys = [];
+
+    // Arrays for connected Odysseys.
+    mutualStakedConnections = [];
+    stakedInMeConnections = [];
+    iStakedInConnections = [];
+
+    // FOR TESTING: FILL ARRAYS ABOVE.
+    temporallyFillStakeArrays = () =>
+    {
+        let numbers = 50; // ID will be between 0 and this number.
+        const allRandomNumbers = []; // Used to check for duplicated.
+
+        // Check if the random generate ID is a duplicate or not.
+        const checkIfNumberIsUsed = (number) => {
+            if (allRandomNumbers.includes(number))
+            {   
+                return true;
+            } else {
+                return false;
+            }
+        }
+
+        // Populate every Odyssey with 5 connections per array.
+        for (let i = 0; i < 5; i++) {
+            
+            let randomId;
+
+            do {
+                randomId = Math.floor(Math.random() * numbers);
+            } while (checkIfNumberIsUsed(randomId))
+            this.mutualStakedConnections.push(randomId);
+            allRandomNumbers.push(randomId);
+            
+            do {
+                randomId = Math.floor(Math.random() * numbers);
+            } while (checkIfNumberIsUsed(randomId))
+            this.iStakedInConnections.push(randomId);
+            allRandomNumbers.push(randomId);
+
+            do {
+                randomId = Math.floor(Math.random() * numbers);
+            } while (checkIfNumberIsUsed(randomId))
+            this.stakedInMeConnections.push(randomId);
+            allRandomNumbers.push(randomId);
+
+
+
+            
+        }
+
+
+    }
+
+
 
     /**
      * For dev only:

@@ -23,6 +23,7 @@ import { calculateMouseOverLocation,
     renderOdysseyInformationPopup,
     infoObjectMesh 
 } from "./mouseOver.js";
+import { placeOdysseyInUniverse, drawConnectionsBetweenOdysseys } from "./buildUniverse.js"; 
 
 
 ActivateFirstPerson();
@@ -253,7 +254,7 @@ function onMouseDown(event){
         
 
         selectedOdyssey = targetPlanet.object;
-      
+        console.log(selectedOdyssey);
 
         let targetVector = new THREE.Vector3();
         targetPlanet.object.getWorldPosition(targetVector);
@@ -357,8 +358,27 @@ window.addEventListener('mouseup', onMouseUp);
   * Create Circular Universe of Odysseys
   */
 
+  // REMOVE: for testing the new Universe build
+  const newBuild = true;
+  const myOdyssey = createOdyssey(999, "Wallet Address", " My Odyssey", "test.com");
+
 const buildUniverse = () => {
     
+    // REMOVE: FOr testing the new universe build only
+    if (newBuild) 
+    {
+        // Set center Odyssey.
+        
+        scene.add(myOdyssey);
+
+        // Construct the universe and add to the scene.
+        const theUniverse = placeOdysseyInUniverse(myOdyssey, listOfOddyseys);
+        scene.add(theUniverse);
+
+
+        return
+    }
+
     let radius = 10;
     const radiusIncreaseValue = 15;
     let AmountOfOdysseyInNextRing = 10;
@@ -445,6 +465,13 @@ const buildUniverse = () => {
 const lookAtCameraObjects = () =>
 {
     infoObjectMesh.lookAt(camera.position);
+
+    
+   if(myOdyssey)
+    {
+        myOdyssey.children[0].lookAt(camera.position);
+    }
+    
 }
 
 
