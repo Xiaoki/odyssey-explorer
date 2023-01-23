@@ -32,7 +32,7 @@ ActivateFirstPerson();
  * For Dev Only
  */
 
-let AmountOfGalaxyToGenereate = 100;
+let AmountOfGalaxyToGenereate = 200;
 let maxOdysseyConnectionLineHeight = 20;
 let MaxOrbitCameraDistance = 200;
 let planetAreSpawnedHorizontal = false;
@@ -354,114 +354,7 @@ window.addEventListener('mouseup', onMouseUp);
 
 
 
- /**
-  * Create Circular Universe of Odysseys
-  */
-
-  // REMOVE: for testing the new Universe build
-  const newBuild = true;
-  const myOdyssey = createOdyssey(999, "Wallet Address", " My Odyssey", "test.com");
-
-const buildUniverse = () => {
-    
-    // REMOVE: FOr testing the new universe build only
-    if (newBuild) 
-    {
-        // Set center Odyssey.
-        
-        scene.add(myOdyssey);
-
-        // Construct the universe and add to the scene.
-        const theUniverse = placeOdysseyInUniverse(myOdyssey, listOfOddyseys);
-        scene.add(theUniverse);
-
-
-        return
-    }
-
-    let radius = 10;
-    const radiusIncreaseValue = 15;
-    let AmountOfOdysseyInNextRing = 10;
-    let ringCount = 1;
-    let odysseyGroups = [];
-
-    // Build circles in groups.
-    function createRing(){
-
-        // if amount to be spawned bigger than available odyssey
-        if(listOfOddyseys.length < AmountOfOdysseyInNextRing){
-            AmountOfOdysseyInNextRing = listOfOddyseys.length;
-        }
-
-        let degreeBetweenOdyssey = 360 /AmountOfOdysseyInNextRing;
-        let offset = 0;
-        let currentOdyssey
-
-        const odysseyCircle = new THREE.Group();
-        odysseyCircle.name = "circle" + ringCount;
-
-
-        // Fill circle with odysseys.
-        for(let i = 0; i < AmountOfOdysseyInNextRing; i++){
-            currentOdyssey = listOfOddyseys[i];
-            const radian = offset * ( Math.PI / 180);
-            offset += degreeBetweenOdyssey;
-
-            const newX = Math.cos(radian) * radius;
-            let newY
-            if (planetAreSpawnedHorizontal){
-                newY = 0;
-            }else{
-                newY =  (Math.random() * planetsMaxVerticalSpawnHeight) - (planetsMaxVerticalSpawnHeight /2);
-            }
-            const newZ = Math.sin(radian) * radius;
-
-            currentOdyssey.position.set(newX, newY, newZ);
-        
-            currentOdyssey.randomConnection(AmountOfGalaxyToGenereate); // TEMP: Generate Random Connection in Class.
-
-            odysseyCircle.add(currentOdyssey);
-            
-       } 
-
-       listOfOddyseys.splice(0, AmountOfOdysseyInNextRing);
-       
-       radius += radiusIncreaseValue * (ringCount / 2);
-       AmountOfOdysseyInNextRing = AmountOfOdysseyInNextRing * 1.5;
-       ringCount++;
-       
-       // Add newly created ring of odysseys to the array.
-       odysseyGroups.push(odysseyCircle);
-       
-
-    }
-
-
-    /** Trigger While loop posting all odyssey. */
-    while(listOfOddyseys.length > 0){
-        createRing();
-    }
-
-    // Add all odyssey rings to the scene.
-    odysseyGroups.forEach( circle => {
-        scene.add(circle);
-
-    })
-
-    /**
-     * ADD CENTER USER ODYSSEY. AFTER GENERATING UNIVERSE.
-     */
-    const userCenterOdyssey = createOdyssey(999, "Wallet Address", " Visit Frank", "test.com");
-    if (userCenterOdyssey) {
-        scene.add(userCenterOdyssey);
-        referenceListOfOdysseys.push(userCenterOdyssey);
-        userCenterOdyssey.randomConnection(AmountOfGalaxyToGenereate);
-        activeLinesArray = userCenterOdyssey.buildConnectionLines(referenceListOfOdysseys, scene, activeLinesArray);
-    };
-
-
- }
-
+// Triggered per frame. All objects will look at the camera.
 const lookAtCameraObjects = () =>
 {
     infoObjectMesh.lookAt(camera.position);
@@ -474,33 +367,14 @@ const lookAtCameraObjects = () =>
     
 }
 
+// Setup Center Odyssey.
+const myOdyssey = createOdyssey(999, "Wallet Address", " My Odyssey", "test.com");
+referenceListOfOdysseys.push(myOdyssey);
+scene.add(myOdyssey);
 
-
-/**
- * Handle fade out
- */
-
-// TEMPORAL TRIGGER FOR FADE OUT: SPACEBAR
-/*
-window.addEventListener('keyup', event => 
-{    
-    if(event.code === 'Space')
-    {        
-        fadeOutScene();    
-    }
-});
-*/
-
-
-
-
-
-
-buildUniverse();
-
-// Offset for ringNameAnimation
-let nameRingOffset = 0;
-
+// Construct the universe and add to the scene.
+const theUniverse = placeOdysseyInUniverse(myOdyssey, listOfOddyseys);
+scene.add(theUniverse);
 
 // Animation
 function animate(){

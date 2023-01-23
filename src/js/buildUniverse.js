@@ -4,12 +4,14 @@ import * as THREE from 'three';
 // Define rules for placements of Odysseys.
 let stakedCircleRadius = 10;
 let standardCircleRadius = 30;
-const circleRadiusIncreaseValue = 15;
-let amountOfOdysseysInNextCircle = 10;
+let circleRadiusIncreaseValue = 10;
+let amountOfRandomOdysseysInNextCircle = 10;
+let amountOfStakedOdysseysInNextRound = 5;
 let ringCounter = 1;
-let odysseyGroups = [];
+let odysseyGroups = []; // This is for both staked and non-staked.
 const equatorMaxHeight = 5;
 const minimalDistanceToEquator = 8;
+const randomOdysseyMaxSpawnHeight = 100;
 
 const placeOdysseyInUniverse = (myOdyssey, listOfOddyseys) =>
 {
@@ -42,19 +44,29 @@ const placeOdysseyInUniverse = (myOdyssey, listOfOddyseys) =>
             listOfOddyseys.splice(index, 1)
         }
     });
-
+    
     // Process and place the staked Odysseys.
-    const stakedOdysseyCircles = ProcessStakedOdysseys(myOdyssey, stakedOdysseysObject);
+    while (stakedOdysseysObject.length > 0)
+    {
+        ProcessStakedOdysseys(myOdyssey, stakedOdysseysObject);
+    }
 
-    // Add an X amount of random Odysseys to fill the Universe.
-    const RandomOdysseyCircles = ProcessRandomOdysseys(listOfOddyseys);
+    // Process and place the Random Odysseys.
+    while(listOfOddyseys.length > 0)
+    {
+        ProcessRandomOdysseys(listOfOddyseys);
+    }
+    
 
     // the final object for the Universe. Must be returned and added to the scene in the index.js
     let theUniverse = new THREE.Group();
-    theUniverse.add(stakedOdysseyCircles);
 
-    //theUniverse.add(stakedOdysseyCircles);
-    //theUniverse.add(randomOdysseysCircles); to be made.
+
+    // Add all circles to the Universe group.
+    odysseyGroups.map( (ring) =>
+    {
+        theUniverse.add(ring);
+    });
 
     return theUniverse;
 }
@@ -62,22 +74,25 @@ const placeOdysseyInUniverse = (myOdyssey, listOfOddyseys) =>
 // Process given array of Odysseys
 const ProcessStakedOdysseys = (myOddysey, stakedOdysseysObject) => 
 {   
-
-    // Set limit to amount for the first circle. To make sure we dont overcrowd.
-
+    // If there are less Odysseys available than set for next round. Adapt the amount.
+    if( stakedOdysseysObject.length < amountOfStakedOdysseysInNextRound) 
+    {
+        amountOfStakedOdysseysInNextRound = stakedOdysseysObject.length
+    }
+    
     // Define the amount of Odyssey required to be placed.
     // Then define the space between them for a perfect circle. (offset)
-    const amount = stakedOdysseysObject.length;
+    const amount = amountOfStakedOdysseysInNextRound;
     const distanceBetweenOdyssey = 360 / amount;
 
     // Offset will define how far along the circle the odyssey will be placed. 
     let offset = 0;
 
-
     // Define a circle
     let circle = new THREE.Group();
     circle.name = "circle" + ringCounter;
 
+    // Process the Odyssey location and add them to a ring.
     for (let i = 0; i < amount; i++)
     {
         const currentOdyssey = stakedOdysseysObject[i]
@@ -124,28 +139,91 @@ const ProcessStakedOdysseys = (myOddysey, stakedOdysseysObject) =>
         // Set position of current odyssey with new XYZ.
         currentOdyssey.position.set(placementXYZ.x, placementXYZ.y, placementXYZ.z);
 
-        
-        //console.log(currentOdyssey);
-
         // Add this Odyssey to circle group.
         circle.add(currentOdyssey);
+
+       
+
     }
 
-    // Return the circle group.
+     // Remove processed Odysseys from staked array.
+     stakedOdysseysObject.splice(0, amount);
 
-    return circle
+     // Increase Amount to place
+     amountOfStakedOdysseysInNextRound += amountOfStakedOdysseysInNextRound * 1.5
+
+     // Increase radius
+     stakedCircleRadius += circleRadiusIncreaseValue * ( ringCounter / 2);
+
+     // Increase the ringCounter.
+     ringCounter++;
+    
+    // Return the circle group.
+    odysseyGroups.push(circle);
 }
 
 const ProcessRandomOdysseys = (listOfOddyseys) =>
 {
-    // Setup variables
-    let totalAmount = listOfOddyseys.length;
-    let radius = 20;
-    let amountOfOdysseysInNextRing = 10;
-    circleCount = 1;
-    let odysseyGroups = [];
+
+    // Check if there are enough odyssey left. If not adapt the amount ot the amount that is left.
+    if ( listOfOddyseys.length < amountOfRandomOdysseysInNextCircle)
+    {
+        amountOfRandomOdysseysInNextCircle = listOfOddyseys.length;
+    }
+
+    // Define the distance between Odysseys based on current amount.
+    let amount = amountOfRandomOdysseysInNextCircle;
+    const distanceBetweenOdyssey = 360 / amount;
+
+    // The offset will be increased after setting the XYZ of a Odyssey.
+    let offset = 0;
+
+    // Create a ring to add Odysseys to.
+    let circle = new THREE.Group();
+    circle.name = "circle" + ringCounter;
     
-    console.log(`I received: ${listOfOddyseys.length} unique Odysseys to place.`)
+    // Calculate the XYZ and place the Odyssey.
+    for (let i = 0; i < amountOfRandomOdysseysInNextCircle; i++) 
+    {
+        // Set current Odyssey.
+        const currentOdyssey = listOfOddyseys[i];
+
+        // Calculate Radian
+        let radian = offset * (Math.PI / 180);
+
+        // new XYZ Vector3
+        const placementXYZ = new THREE.Vector3;
+
+        // Calculate the XYZ.
+        placementXYZ.x = Math.cos(radian) * standardCircleRadius;
+        placementXYZ.y = ( Math.random() * randomOdysseyMaxSpawnHeight ) - (randomOdysseyMaxSpawnHeight / 2);
+        placementXYZ.z = Math.sin(radian) * standardCircleRadius;
+
+        // Increase the offset for the next Odyssye.
+        offset += distanceBetweenOdyssey;
+
+        // Set the position of the current Odyssey.
+        currentOdyssey.position.set(placementXYZ.x, placementXYZ.y, placementXYZ.z);
+
+        // Add the current Odyssey to the group.
+        circle.add(currentOdyssey);
+    }
+
+    // Remove the Odyssey from the array.
+    listOfOddyseys.splice(0, amount);
+
+    // Increase the amount to place in the next circle.
+    amountOfRandomOdysseysInNextCircle = amountOfRandomOdysseysInNextCircle * 1.5;
+
+    // Increas the circle radius for the next ring.
+    standardCircleRadius += circleRadiusIncreaseValue * (ringCounter /2);
+
+    // Increasa the ring counter
+    ringCounter++;
+
+    // Add the circle to the total amount of rings array
+    odysseyGroups.push(circle);
+
 }
 
 // Shuffle an given array.
