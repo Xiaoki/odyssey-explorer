@@ -372,9 +372,13 @@ const myOdyssey = createOdyssey(999, "Wallet Address", " My Odyssey", "test.com"
 referenceListOfOdysseys.push(myOdyssey);
 scene.add(myOdyssey);
 
+
 // Construct the universe and add to the scene.
 const theUniverse = placeOdysseyInUniverse(myOdyssey, listOfOddyseys);
 scene.add(theUniverse);
+
+// Build Connection lines for my center odyssey
+activeLinesArray = myOdyssey.buildConnectionLines(referenceListOfOdysseys, scene, activeLinesArray);
 
 // Animation
 function animate(){

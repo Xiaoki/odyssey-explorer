@@ -11,7 +11,7 @@ let ringCounter = 1;
 let odysseyGroups = []; // This is for both staked and non-staked.
 const equatorMaxHeight = 5;
 const minimalDistanceToEquator = 8;
-const randomOdysseyMaxSpawnHeight = 100;
+const randomOdysseyMaxSpawnHeight = 20;
 
 const placeOdysseyInUniverse = (myOdyssey, listOfOddyseys) =>
 {

@@ -8,16 +8,17 @@ import * as THREE from 'three';
  let activeOdyssey, highlightTarget;
 
 // Construct the highlight object
-const mouseOverGeo = new THREE.PlaneGeometry(1, 1);
+const mouseOverGeo = new THREE.PlaneGeometry(1,1);
 const mouseOverTexture = new THREE.TextureLoader().load('./images/test3.png');
-const mouseOverMat = new THREE.MeshStandardMaterial({color: 0xFFFFFF, transparent: true, opacity: 1, map: mouseOverTexture});
+const mouseOverMat = new THREE.MeshBasicMaterial({color: 0xFFFFFF, transparent: true, map: mouseOverTexture});
 const mouseOverMesh = new THREE.Mesh(mouseOverGeo, mouseOverMat);
 
 // Construct the information object to display Odyssey info.
 const infoObjectGeo = new THREE.PlaneGeometry(3,3);
 const infoObjectTexture = new THREE.TextureLoader().load('./images/Nearby.png');
-const infoObjectMat = new THREE.MeshStandardMaterial({color: 0xfffff, transparent: true, opacity: 1, map: infoObjectTexture});
+const infoObjectMat = new THREE.MeshBasicMaterial({color: 0xFFFFFF, transparent: true, map: infoObjectTexture});
 const infoObjectMesh = new THREE.Mesh(infoObjectGeo, infoObjectMat);
+infoObjectMesh.visible = false;
 
 
 // Const Variables for Development.
@@ -117,7 +118,11 @@ const calculateMouseOverLocation= (highlightTarget, camera) =>
 
 
 const renderOdysseyInformationPopup = (odyssey) => 
-{
+{   
+    if(!infoObjectMesh.visible)
+    {
+        infoObjectMesh.visible = true;
+    }
     infoObjectMesh.position.set(odyssey.position.x, odyssey.position.y, odyssey.position.z);
 }
 

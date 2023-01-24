@@ -4,7 +4,7 @@ import { Flow } from 'three/examples/jsm/modifiers/CurveModifier.js';
 import { FontLoader} from 'three/examples/jsm/loaders/FontLoader.js';
 import { TextGeometry } from 'three/examples/jsm/geometries/TextGeometry.js';
 import Bender from './Bender.js';
-import { DoubleSide, RepeatWrapping } from 'three';
+import { DoubleSide, Line, RepeatWrapping } from 'three';
 import { Line2 } from 'three/examples/jsm/lines/Line2.js';
 import { LineMaterial } from 'three/examples/jsm/lines/LineMaterial.js';
 import { LineGeometry } from 'three/examples/jsm/lines/LineGeometry.js';
@@ -34,8 +34,12 @@ class Odyssey extends THREE.Mesh {
 
     // Material for connections.
     lineMaterial = new LineMaterial({ color: 0xdda4de, linewidth: 2, transparent: true, opacity: 0.5});
+    mutualLineMaterial = new LineMaterial({color: 0x01FFB3, linewidth: 2, transparent: true, opacity: 0.5})
+    iStakedInMaterial = new LineMaterial({ color: 0xFF8801, linewidth: 2, transparent: true, opacity: 0.5})
+
+
     // Array to hold all connected Odysseys.
-    connectedOdysseys = [];
+    allRandomNumbers = [];
 
     // Arrays for connected Odysseys.
     mutualStakedConnections = [];
@@ -89,8 +93,6 @@ class Odyssey extends THREE.Mesh {
 
     }
 
-
-
     /**
      * For dev only:
      * Generate random ID's to link to other Odysseys.
@@ -107,16 +109,16 @@ class Odyssey extends THREE.Mesh {
                 id: Math.floor(Math.random() * maxAmount),
             }
 
-            this.connectedOdysseys.push(object); 
+            this.allRandomNumbers.push(object); 
         }
     }
 
     buildConnectionLines = (referenceArray, scene, activeLinesArray) =>
     {
-        
+    
         const maxOdysseyConnectionLineHeight = 10;
         const newActivelinesArray = [];
-
+        
         if (activeLinesArray) 
         {
             for(let i = 0; i < activeLinesArray.length; i++)
@@ -125,20 +127,23 @@ class Odyssey extends THREE.Mesh {
             }
         };
         
+        const linesToBeDrawnArray = [...this.mutualStakedConnections, ...this.iStakedInConnections, ...this.stakedInMeConnections];
 
 
-        for (let i = 0; i < this.connectedOdysseys.length; i++) 
+        for (let i = 0; i < linesToBeDrawnArray.length; i++) 
         {
 
-            // Get the connected Odessey from global reference.
-            const foundOdyssey = referenceArray.filter( planet => planet.number === this.connectedOdysseys[i].id)[0];
             
+            // Get the connected Odessey from global reference.
+            //const foundOdyssey = referenceArray.filter( planet => planet.number === this.linesToBeDrawnArray[i].id)[0];
+            const foundOdyssey = referenceArray.find( item => item.number == linesToBeDrawnArray[i] );
+
             // Process if found.
             if (foundOdyssey) 
             {
                 // Create random line hight and calculate middle position
                 //const randomLineHeight = (Math.random() * maxOdysseyConnectionLineHeight ) * (Math.random() > 0.5 ? 1 : -1 );
-                const randomLineHeight = -20; //(Math.random() * maxOdysseyConnectionLineHeight ) * -1;
+                const randomLineHeight = -20 //(Math.random() * maxOdysseyConnectionLineHeight ) * -1;
                 let middlePosition = new THREE.Vector3((this.position.x + foundOdyssey.position.x) /2, randomLineHeight, (this.position.z + foundOdyssey.position.z) /2);
                 
                 // calculate start XYZ for the line.
@@ -181,9 +186,21 @@ class Odyssey extends THREE.Mesh {
                 
                 const lineGeometry = new LineGeometry();
                 lineGeometry.setPositions(linePoints);
-                this.lineMaterial.resolution.set(window.innerWidth, window.innerHeight);
-                
-                const drawLine = new Line2(lineGeometry, this.lineMaterial);
+
+                let materialToUseForLine = this.lineMaterial;
+
+                // Filter what type for color:
+                if(this.mutualStakedConnections.includes(foundOdyssey.number))
+                {
+                    materialToUseForLine = this.mutualLineMaterial;
+                } else if(this.iStakedInConnections.includes(foundOdyssey.number))
+                {
+                    materialToUseForLine = this.iStakedInMaterial;
+                }
+
+                // If staked in me use standard material
+                materialToUseForLine.resolution.set(window.innerWidth, window.innerHeight);              
+                const drawLine = new Line2(lineGeometry,materialToUseForLine);
                 
                 // Add lines to array
                 newActivelinesArray.push(drawLine);
@@ -233,7 +250,7 @@ const odysseyMaterial = new THREE.MeshPhysicalMaterial(
         metalness: 0.3,
         roughness: 0,
         specularIntensity: 1,
-        transparent: true,
+        transparent: false,
     }
 )
 
@@ -262,7 +279,7 @@ const createOdyssey = (id, wallet, name, url) =>
     const avatarMaterial = new THREE.MeshBasicMaterial(
         {
             side: THREE.DoubleSide,
-            map: texture,
+            map: texture
         });
 
     // Construct avatar Mesh.
@@ -316,7 +333,7 @@ const createOdyssey = (id, wallet, name, url) =>
     
     // Add the custom avatar image mesh to the odyssey.
     odyssey.add(avatarMesh);
-    odyssey.add(nameRingMesh);
+    //odyssey.add(nameRingMesh);
 
     return odyssey;
 };
