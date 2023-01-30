@@ -11,7 +11,6 @@ Author:  Frank Bloemendal
 import gsap, { normalize } from "gsap";
 import * as THREE from "three";
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
-import * as dat from 'dat.gui';
 import {createOdyssey, buildConnectionLines} from "./odyssey.js";
 import { ActivateFirstPerson, OnKeyDown, OnKeyUp } from './firstpersonlogic.js';
 import { calculateMouseOverLocation, 
@@ -21,9 +20,14 @@ import { calculateMouseOverLocation,
     renderOdysseyInformationPopup,
     setActiveOdyssey,
     renderOdysseyInformationPopup,
-    infoObjectMesh 
+    infoObjectMesh,
+    load3DHighlight,
+    Place3DHighlight
 } from "./mouseOver.js";
 import { placeOdysseyInUniverse, drawConnectionsBetweenOdysseys } from "./buildUniverse.js"; 
+import { generateGalaxy } from "./galaxy.js";
+
+
 
 
 ActivateFirstPerson();
@@ -48,9 +52,9 @@ let scene, canvas, renderer, controls, selectedOdyssey;
 
 const raycaster = new THREE.Raycaster();
 const pointer = new THREE.Vector2;
-const gui = new dat.GUI();
+
 let updateCameraRotation = false;
-gui.hide();
+
 let transitionToPlanetFinished = true;
 let activeLinesArray = [];
 let leftMouseButtonIsDown = false;
@@ -62,7 +66,6 @@ let meshArray = [];
 // Scene setup
 canvas = document.querySelector(".webgl");
 scene = new THREE.Scene();
-
 scene.add(mouseOverMesh);
 scene.add(infoObjectMesh);
 
@@ -104,99 +107,12 @@ backgroundImage.mapping = THREE.EquirectangularReflectionMapping;
 scene.background = backgroundImage;
 
 
-
 /**
- * Build Galaxy
+ * Add noise to the galaxy.
  */
-const parameters = {};
-parameters.count = 100000;
-parameters.size = 0.001;
-parameters.radius = 100;
-parameters.branches = 3;
-parameters.spin = 1.3;
-parameters.randomnes = 0.2;
-parameters.randomnesPower = 3;
-parameters.YHeight= 100;
-
-let pointsGeometry = null;
-let pointsMaterial = null;
-let points = null;
-
-const generateGalaxy = () => {
-
-    /**
-     * Clean previous renders of galaxy.
-     */
-    if(points !== null){
-        pointsGeometry.dispose();
-        pointsMaterial.dispose();
-        scene.remove(points);
-    };
-
-    /**
-     * Geometry
-     */
-    pointsGeometry = new THREE.BufferGeometry();
-    const position = new Float32Array(parameters.count * 3);
-
-    for(let i = 0; i < parameters.count; i++ ){
-
-        const i3 = i * 3;
-
-        const radius = Math.random() * parameters.radius;
-        const spinAngle = radius * parameters.spin;
-        const branchAngle = (i % parameters.branches) / parameters.branches * Math.PI * 2;
-
-        const randomX = Math.pow(Math.random(), parameters.randomnesPower) * (Math.random() < 0.5 ? 1 : -1);
-        const randomY = Math.pow(Math.random(), parameters.randomnesPower) * (Math.random() < 0.5 ? parameters.YHeight : -parameters.YHeight);
-        const randomZ = Math.pow(Math.random(), parameters.randomnesPower) * (Math.random() < 0.5 ? 1 : -1);
+//scene.add(generateGalaxy());
 
 
-        position[i3 + 0] = Math.cos(branchAngle + spinAngle) * radius + randomX; 
-        position[i3 + 1] = randomY;
-        position[i3 + 2] = Math.sin(branchAngle + spinAngle) * radius + randomZ;
-    }
-
-    pointsGeometry.setAttribute(
-        'position',
-        new THREE.BufferAttribute(position, 3)
-    );
-
-    /**
-     * Material
-     */
-    pointsMaterial = new THREE.PointsMaterial({
-        size: parameters.size,
-        sizeAttenuation: true,
-        depthWrite: false,
-        blending: THREE.AdditiveBlending,
-        color: 0xFF5588,
-        transparent: true,
-        opacity: 0.5,
-    });
-
-    /**
-     * Create stars in the universe.
-     */
-    points = new THREE.Points(pointsGeometry, pointsMaterial);
-    scene.add(points);
-
-
-};
-
-//const axesHelper = new THREE.AxesHelper( 5 );
-//scene.add( axesHelper );
-
-generateGalaxy();
-
-gui.add(parameters, "count").min(100).max(1000000).step(100).onFinishChange(generateGalaxy);
-gui.add(parameters, "size").min(0.001).max(0.1).step(0.001).onFinishChange(generateGalaxy);
-gui.add(parameters, "radius").min(1).max(500).step(1).onFinishChange(generateGalaxy);
-gui.add(parameters, "branches").min(2).max(10).step(1).onFinishChange(generateGalaxy);
-gui.add(parameters, "spin").min(-3).max(3).step(0.1).onFinishChange(generateGalaxy);
-gui.add(parameters, "randomnes").min(0).max(2).step(0.001).onFinishChange(generateGalaxy);
-gui.add(parameters, "randomnesPower").min(1).max(10).step(0.001).onFinishChange(generateGalaxy);
-gui.add(parameters, "YHeight").min(1).max(150).step(1).onFinishChange(generateGalaxy);
 
 // update mouse location on screen
 function onPointerMove(event){
@@ -298,7 +214,7 @@ function onMouseDown(event){
                 controls.autoRotate = false; 
                 controls.enablePan = false;
                 activeLinesArray = selectedOdyssey.buildConnectionLines(referenceListOfOdysseys, scene, activeLinesArray); 
-                renderOdysseyInformationPopup(selectedOdyssey);               
+                renderOdysseyInformationPopup(selectedOdyssey);              
            },
            onUpdate: function(){
                
@@ -342,7 +258,7 @@ window.addEventListener('mouseup', onMouseUp);
 
      //Build an odyssey for all given entries.
      for(let i = 0; i < numberOfPlanets; i++){
-        const odyssey = createOdyssey(i, "Wallet Address", "VISIT " + "ODYSSEY " + i , "test.com");
+        const odyssey = createOdyssey(i, "Wallet Address", "ODYSSEY " + i , "test.com");
         listOfOddyseys.push(odyssey);
      }
 
@@ -357,7 +273,11 @@ window.addEventListener('mouseup', onMouseUp);
 // Triggered per frame. All objects will look at the camera.
 const lookAtCameraObjects = () =>
 {
-    infoObjectMesh.lookAt(camera.position);
+   //infoObjectMesh.lookAt(camera.position);
+   //highlight3Dmodel.rotateY(0.005);
+   //highlight3Dmodel.rotateX(0.005);
+   //highlight3Dmodel.rotateZ(0.005);
+
 
     
    if(myOdyssey)
@@ -367,11 +287,15 @@ const lookAtCameraObjects = () =>
     
 }
 
+
 // Setup Center Odyssey.
 const myOdyssey = createOdyssey(999, "Wallet Address", " My Odyssey", "test.com");
 referenceListOfOdysseys.push(myOdyssey);
+myOdyssey.scale.set(3,3,3);
 scene.add(myOdyssey);
 
+/// ISUE HERE
+scene.add(load3DHighlight);
 
 // Construct the universe and add to the scene.
 const theUniverse = placeOdysseyInUniverse(myOdyssey, listOfOddyseys);
@@ -404,6 +328,7 @@ function animate(){
     }
 
     // Make all avatars face the camera.
+    
     for(  let i = 0; i < referenceListOfOdysseys.length; i++){
         const odyssey = referenceListOfOdysseys[i].children;
         odyssey[0].lookAt(camera.position);
@@ -420,9 +345,6 @@ function animate(){
     window.requestAnimationFrame(animate);
 
 };
-
-
-
 
 // On window resize:
 function onWindowResize(){

@@ -108,7 +108,7 @@ const ProcessStakedOdysseys = (myOddysey, stakedOdysseysObject) =>
         {   
             // on the equator.
             placementXYZ.x = Math.cos(radian) * stakedCircleRadius;
-            placementXYZ.y = 0 ;
+            placementXYZ.y = -5 ;
             placementXYZ.z = Math.sin(radian) * stakedCircleRadius;
 
 
@@ -116,7 +116,7 @@ const ProcessStakedOdysseys = (myOddysey, stakedOdysseysObject) =>
             {
                 // Above the equator
                 placementXYZ.x = Math.cos(radian) * stakedCircleRadius;
-                placementXYZ.y = minimalDistanceToEquator; //(Math.random() * equatorMaxHeight) + minimalDistanceToEquator;
+                placementXYZ.y =  -10//minimalDistanceToEquator; //(Math.random() * equatorMaxHeight) + minimalDistanceToEquator;
                 placementXYZ.z = Math.sin(radian) * stakedCircleRadius;
                 
 
@@ -124,13 +124,16 @@ const ProcessStakedOdysseys = (myOddysey, stakedOdysseysObject) =>
                 {
                     // Below the equator.
                     placementXYZ.x = Math.cos(radian) * stakedCircleRadius;
-                    placementXYZ.y = -minimalDistanceToEquator; //(Math.random() * -equatorMaxHeight) - minimalDistanceToEquator;
+                    placementXYZ.y =  -15//-minimalDistanceToEquator; //(Math.random() * -equatorMaxHeight) - minimalDistanceToEquator;
                     placementXYZ.z = Math.sin(radian) * stakedCircleRadius;
                     
 
                 } else 
                     {
-                      console.log(`Error: Odyssey ${[currentOdyssey.number]} is not related to My Odyssey.`)  
+                      // Random placement
+                    placementXYZ.x = Math.cos(radian) * stakedCircleRadius;
+                    placementXYZ.y = (Math.random() * equatorMaxHeight) - minimalDistanceToEquator;
+                    placementXYZ.z = Math.sin(radian) * stakedCircleRadius;
                     }
 
         // Set offset for the next odyssey.
@@ -196,7 +199,7 @@ const ProcessRandomOdysseys = (listOfOddyseys) =>
 
         // Calculate the XYZ.
         placementXYZ.x = Math.cos(radian) * standardCircleRadius;
-        placementXYZ.y = ( Math.random() * randomOdysseyMaxSpawnHeight ) - (randomOdysseyMaxSpawnHeight / 2);
+        placementXYZ.y = -30 //( Math.random() * randomOdysseyMaxSpawnHeight ) - (randomOdysseyMaxSpawnHeight / 2);
         placementXYZ.z = Math.sin(radian) * standardCircleRadius;
 
         // Increase the offset for the next Odyssye.
