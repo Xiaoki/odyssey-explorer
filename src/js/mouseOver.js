@@ -1,229 +1,321 @@
-//import { pointer, camera, referenceListOfOdysseys, scene } from "./index.js";
-import * as THREE from 'three';
-import { GLTFLoader} from 'three/examples/jsm/loaders/GLTFLoader.js';
+    //import { pointer, camera, referenceListOfOdysseys, scene } from "./index.js";
+    import * as THREE from 'three';
+    import { MeshBasicMaterial, Vector3 } from 'three';
+    import { GLTFLoader} from 'three/examples/jsm/loaders/GLTFLoader.js';
+    import { FontLoader } from 'three/examples/jsm/loaders/FontLoader.js';
+	import { TextGeometry, TextGeometry } from 'three/examples/jsm/geometries/TextGeometry.js';
 
-/**
- * Important variables.
- */
+    /**
+     * Important variables.
+     */
 
- let activeOdyssey, highlightTarget;
-
-// Construct the highlight object
-const mouseOverGeo = new THREE.PlaneGeometry(1,1);
-const mouseOverTexture = new THREE.TextureLoader().load('./images/test3.png');
-const mouseOverMat = new THREE.MeshBasicMaterial({color: 0xFFFFFF, transparent: true, map: mouseOverTexture});
-const mouseOverMesh = new THREE.Mesh(mouseOverGeo, mouseOverMat);
-
-// Construct the information object to display Odyssey info.
-const infoObjectGeo = new THREE.PlaneGeometry(3,3);
-const infoObjectTexture = new THREE.TextureLoader().load('./images/Nearby.png');
-const infoObjectMat = new THREE.MeshBasicMaterial({ side: THREE.DoubleSide, transparent: true, map: infoObjectTexture});
-const infoObjectMesh = new THREE.Mesh(infoObjectGeo, infoObjectMat);
-infoObjectMesh.visible = false;
-
-// Construct name sign
-const namePlaneGeo = new THREE.PlaneGeometry(1, 0.5);
-const namePlaneMat = new THREE.MeshStandardMaterial({transparent: true, side: THREE.DoubleSide});
-const namePlaneMesh = new THREE.Mesh(namePlaneGeo, namePlaneMat);
-mouseOverMesh.add(namePlaneMesh);
-namePlaneMesh.position.set(0,-0.6,0); //Local position. Is attached to mouseOverMesh.
-
-const DrawNameOneCanvas = (name) =>
-{
-    // Draw name texture
-    const odysseyNameCanvas = document.createElement('canvas');
-    const odysseyNameContent = odysseyNameCanvas.getContext('2d');
-    odysseyNameCanvas.width = 400;
-    odysseyNameCanvas.height = 120;
-    odysseyNameContent.font = "Bold 40px Trebuchet MS";
+    let activeOdyssey, highlightTarget;
+    let font;
+    let odysseyName;
+    let cameraObject;
+    let rayDistance;
 
 
-    // fill it.
-    odysseyNameContent.fillStyle = "rgba(0, 0, 0, 0";
-    odysseyNameContent.fillRect(0, 0, odysseyNameContent.width, odysseyNameContent.height);
+    /*
+    // Construct the highlight object
+    const mouseOverGeo = new THREE.PlaneGeometry(1,1);
+    const mouseOverTexture = new THREE.TextureLoader().load('./images/test3.png');
+    const mouseOverMat = new THREE.MeshBasicMaterial({color: 0xFFFFFF, transparent: true, map: mouseOverTexture});
+    const mouseOverMesh = new THREE.Mesh(mouseOverGeo, mouseOverMat);
+    */
 
-    // Write name
-    odysseyNameContent.textBaseline = "middle";
-    odysseyNameContent.textAlign = "center";
-    odysseyNameContent.fillStyle = "rgba(1, 255, 179, 1";
-    odysseyNameContent.fillText(name, 200, 30);
+    /*
+    // Construct the information object to display Odyssey info.
+    const infoObjectGeo = new THREE.PlaneGeometry(3,3);
+    const infoObjectTexture = new THREE.TextureLoader().load('./images/Nearby.png');
+    const infoObjectMat = new THREE.MeshBasicMaterial({ side: THREE.DoubleSide, transparent: true, map: infoObjectTexture});
+    const infoObjectMesh = new THREE.Mesh(infoObjectGeo, infoObjectMat);
+    infoObjectMesh.visible = false;
+    */
+
+    /*
+    // Construct name sign
+    const namePlaneGeo = new THREE.PlaneGeometry(1, 0.5);
+    const namePlaneMat = new THREE.MeshStandardMaterial({transparent: true, side: THREE.DoubleSide});
+    const namePlaneMesh = new THREE.Mesh(namePlaneGeo, namePlaneMat);
+    mouseOverMesh.add(namePlaneMesh);
+    namePlaneMesh.position.set(0,-0.6,0); //Local position. Is attached to mouseOverMesh.
+    */
+
+    // Material for 3D highlight mesh.
+    const mat3DHighlight = new THREE.MeshBasicMaterial({color: 0x01FFB3, transparent: true, opacity: 0.8})
+
+    /*
+    const DrawNameOneCanvas = (name) =>
+    {
+        // Draw name texture
+        const odysseyNameCanvas = document.createElement('canvas');
+        const odysseyNameContent = odysseyNameCanvas.getContext('2d');
+        odysseyNameCanvas.width = 400;
+        odysseyNameCanvas.height = 120;
+        odysseyNameContent.font = "Bold 40px Trebuchet MS";
 
 
-    const odysseyNameTexture= new THREE.Texture(odysseyNameCanvas);
-    odysseyNameTexture.needsUpdate = true;
+        // fill it.
+        odysseyNameContent.fillStyle = "rgba(0, 0, 0, 0";
+        odysseyNameContent.fillRect(0, 0, odysseyNameContent.width, odysseyNameContent.height);
 
-    namePlaneMesh.material.map = odysseyNameTexture;
-    //namePlaneMesh.material.map.wrapS = THREE.RepeatWrapping;
-}
+        // Write name
+        odysseyNameContent.textBaseline = "middle";
+        odysseyNameContent.textAlign = "center";
+        odysseyNameContent.fillStyle = "rgba(1, 255, 179, 1";
+        odysseyNameContent.fillText(name, 200, 30);
+
+
+        const odysseyNameTexture= new THREE.Texture(odysseyNameCanvas);
+        odysseyNameTexture.needsUpdate = true;
+
+        namePlaneMesh.material.map = odysseyNameTexture;
+        //namePlaneMesh.material.map.wrapS = THREE.RepeatWrapping;
+    }
+    */
 
 
 
 
-// Const Variables for Development.
-const mouseOverDistancefromCamera = 5;
+    // Const Variables for Development.
+    const mouseOverDistancefromCamera = 5;
 
-// set active Odyssey for the second highlight.
-const setActiveOdyssey = (Odyssey) => 
-{
-    activeOdyssey = Odyssey;
+    // set active Odyssey for the second highlight.
+    const setActiveOdyssey = (Odyssey) => 
+    {
+        activeOdyssey = Odyssey;
 
-    // Removed the mouse over highlight on click.
-    mouseOverMesh.visible = false;
-}
+    }
 
-// Call every frame to do a raytrace for the mouse over effect.
-const doHighlightRayTrace = (pointer, camera, referenceListOfOdysseys, scene) =>
-{
-    
-    // Create raycaster.
-    const highlightRaycaster = new THREE.Raycaster()
-    
-    // Set start en direction for raycast.
-    highlightRaycaster.setFromCamera(pointer, camera);
-
-    // Execute Raycast and respond only to objects in the referelist list.
-    const ray = highlightRaycaster.intersectObjects(referenceListOfOdysseys, false);
-
-    if(ray.length > 0)
-    {   
-        // Ignore the active Odyssey.
-        if (ray[0].object == activeOdyssey)
-            {
-                return
-            }
-        
-        // if the ray hits the same Odyssey. Ignore it.
-        if (ray[0].object == highlightTarget) 
+    // Call every frame to do a raytrace for the mouse over effect.
+    const doHighlightRayTrace = (pointer, camera, referenceListOfOdysseys, scene, Highlight3DModel) =>
+    {
+        if(!cameraObject)
         {
-            return;
+            cameraObject = camera;
+        }
+        
+        // Create raycaster.
+        const highlightRaycaster = new THREE.Raycaster()
+        
+        // Set start en direction for raycast.
+        highlightRaycaster.setFromCamera(pointer, camera);
 
-        } else {
+        // Execute Raycast and respond only to objects in the referelist list.
+        const ray = highlightRaycaster.intersectObjects(referenceListOfOdysseys, false);
+
+        if(ray.length > 0)
+        {   
+            // Ignore the active Odyssey.
+            if (ray[0].object == activeOdyssey)
+                {
+                    return
+                }
             
+            // if the ray hits the same Odyssey. Ignore it.
+            if (ray[0].object == highlightTarget) 
+            {
+                return;
 
-            // Set the new Odyssey as highlight target.
-            highlightTarget = ray[0].object;
+            } else {
+                
+                rayDistance = ray[0].distance;
 
-            // Set name under the Odyssey.
-            DrawNameOneCanvas(highlightTarget.name);
+                // Set the new Odyssey as highlight target.
+                highlightTarget = ray[0].object;
 
-             // if the highlight is set to invisble from previous selection set to visible now.
-             if(!mouseOverMesh.visible)
-             {
-                 mouseOverMesh.visible = true;
-             }
+                if(!Highlight3DModel.visible)
+                {
+                    Highlight3DModel.visible = true;
+                }
+                
+                // Set 3D highlight model on the oddyssey        
+                Highlight3DModel.position.set(highlightTarget.position.x, highlightTarget.position.y, highlightTarget.position.z);
+
+                // Set scale of highlight based on distance,.
+                if(ray[0].distance < 45){
+                    Highlight3DModel.scale.set(1.5,1.5,1.5);
+                   
+                } else if(ray[0].distance < 100) 
+                {
+                    Highlight3DModel.scale.set(2,2,2);
+                    
+                } else {
+                    Highlight3DModel.scale.set(2.5,2.5,2.5);
+                    
+                }
+
+                // if it is the center odyssey ( your own. Set bigger highlight);
+                const pos3D = highlightTarget.position; 
+                if(highlightTarget.name == 'My Odyssey' || pos3D.x === 0 && pos3D.y === 0 && pos3D.z === 0) 
+                {
+
+                    Highlight3DModel.scale.set(3,3,3);
+                }
+
+                if (odysseyName) {
+                    scene.remove(odysseyName);
+                }
+                
+                odysseyName = generateOdysseyName(highlightTarget.name);
+                handleNamePlacement(odysseyName, camera);
+
+                scene.add(odysseyName);
 
 
+            }
+            
+        }
 
-            // Set sizes for the highlights.
+    }
 
-            if ( ray[0].distance > 50) {
+    const LoadFont = () =>
+    {
 
-                mouseOverMesh.scale.set(0.3, 0.3);
-                namePlaneMesh.scale.set(2,2,2);
-                namePlaneMesh.position.set(0, -0.8, 0.05) // Small Z value to prevent flickering.
+        const loader = new FontLoader();
+        loader.load('fonts/' + 'Poppins_Regular.json', (response) =>
+        {
+            font = response;
+        })
+    }
+    LoadFont(); // Get the font for the text
 
-            } else if (ray[0].distance > 25) {
 
-                    mouseOverMesh.scale.set(0.5, 0.5);
-                    namePlaneMesh.scale.set(1.5,1.5,1.5);
-                    namePlaneMesh.position.set(0, -0.7, 0.05) // Small Z value to prevent flickering.
+    const generateOdysseyName = (text) =>
+    {
+        const print = text;	
+        const size = 0.5;
+        
+        if (font) {
+            const textGeometry = new TextGeometry(print, 
+                {
+                    font: font,
+                    size: size, 
+                    height: 0.2,
+                    curveSegments: 12,
+                    bevelEnabled: false,
+                    bevelThickness: 0.03,
+                    bevelSize: 0.02,
+                    bevelOffset: 0,
+                    bevelSegments: 1
+                });
 
-                } else if (ray[0].distance > 10) {
+            // Center the text
+            textGeometry.computeBoundingBox();
+            textGeometry.translate(
+                - textGeometry.boundingBox.max.x * 0.5,
+                - textGeometry.boundingBox.max.y * 0.5,
+                - textGeometry.boundingBox.max.z * 0.5
+            )
+            const textMaterial = new THREE.MeshBasicMaterial({ color: 0x01FFB3, });
+            const text = new THREE.Mesh(textGeometry, textMaterial);
+            return text;
+        } 
 
-                    mouseOverMesh.scale.set(1, 1);
-                    namePlaneMesh.scale.set(1,1,1);
-                    namePlaneMesh.position.set(0, -0.6, 0.05)   // Small Z value to prevent flickering.
+    }
 
-                    } else {
-                        mouseOverMesh.scale.set(1.5, 1.5);
-  
-                    }
+    const handleNamePlacement = (nameObject) => 
+    {
 
-            // Set name under the Odyssey.
-            DrawNameOneCanvas(highlightTarget.name);
+        // Set object scale based on distance.
+        let offsetNameLocationVertical;
 
-            // calculate new mouseOver XYZ.
-            calculateMouseOverLocation(highlightTarget, camera);
+
+        if (highlightTarget.position.x == 0 && highlightTarget.position.y == 0 && highlightTarget.position.z == 0)
+        {
+            nameObject.scale.set(1.2, 1.2, 1.2);
+            offsetNameLocationVertical = 6;
+            console.log(`Main`);
+
+        } else if (rayDistance < 45) {
+            nameObject.scale.set(1.2, 1.2, 1.2);
+            offsetNameLocationVertical = 3;
+
+        } else if( rayDistance < 80) 
+        {
+            nameObject.scale.set(2,2,2);
+            offsetNameLocationVertical = 3;
+        } else if( rayDistance < 120) 
+        {
+            nameObject.scale.set( 2.5, 2.5, 2.5)
+            offsetNameLocationVertical = 4;      
+        } else {
+            nameObject.scale.set(3,3,3)
+            offsetNameLocationVertical = 5;
+        }
+
+        
+        const pos = new Vector3(highlightTarget.position.x, highlightTarget.position.y, highlightTarget.position.z)
+        nameObject.position.set(pos.x, pos.y + offsetNameLocationVertical, pos.z);
+        
+        HighlightHandleLookAt();
+        
+    }
+
+    const HighlightHandleLookAt = () => 
+    {
+        if(odysseyName) 
+        {
+            odysseyName.lookAt(cameraObject.position);
         }
         
     }
 
-}
 
+    const renderOdysseyInformationPopup = (odyssey) => 
+    {   
 
-
-const calculateMouseOverLocation= (highlightTarget, camera) =>
-{
-    if (highlightTarget == undefined)
-    {
-        return;
-    }
-
-    // Calculate the new position for the mouseOver.
-    const direction = new THREE.Vector3;
-    direction.subVectors(highlightTarget.position, camera.position).normalize();
-
-    const mouseOverXYZ = new THREE.Vector3();
-    mouseOverXYZ.addVectors(camera.position, direction.multiplyScalar(mouseOverDistancefromCamera));
-
-    // Set the world location of the mouseOverImage.
-    mouseOverMesh.position.set(mouseOverXYZ.x + 0.01, mouseOverXYZ.y + 0.01, mouseOverXYZ.z + 0.01) ;
-    mouseOverMesh.lookAt(camera.position);
-
-}
-
-
-const renderOdysseyInformationPopup = (odyssey) => 
-{   
-
-    /*
-    if(!infoObjectMesh.visible)
-    {
-        infoObjectMesh.visible = true;
-    }
-
-    // added a small offset +0.01 to prevent conflict with avatar image on the exact same position and orientation
-    infoObjectMesh.position.set(odyssey.position.x , odyssey.position.y, odyssey.position.z);
-    */
-}
-
-
-
-
-/**
- * Prepare 3D highlight.
- */
-const highlighd3DMaterial = new THREE.MeshBasicMaterial({color: 0x01FFB3, transparent: true, opacity: 0.8});
-
-const load3DHighlight = () => 
-{
-    const gltfLoader = new GLTFLoader();
-    let model3D = gltfLoader.load('./images/highlight.glb', (gltf) => 
+        /*
+        if(!infoObjectMesh.visible)
         {
-        const model = gltf.scene;
-        model.scale.set(1.2,1.2,1.2);
-        model.scale.set(5,5,5);
-        
-        model.children.forEach( child => 
-            {
-                child.material = highlighd3DMaterial;
+            infoObjectMesh.visible = true;
+        }
+
+        // added a small offset +0.01 to prevent conflict with avatar image on the exact same position and orientation
+        infoObjectMesh.position.set(odyssey.position.x , odyssey.position.y, odyssey.position.z);
+        */
+    }
+
+
+
+
+    /**
+     * Prepare 3D highlight.
+     */
+    const highlighd3DMaterial = new THREE.MeshBasicMaterial({color: 0x01FFB3, transparent: true, opacity: 0.8});
+    // let testModel = new THREE.Object3D;
+
+    const load3DHighlight = (scene) => 
+    {
+        const gltfLoader = new GLTFLoader();
+        const highlightModel = new THREE.Group();
+
+        const test = gltfLoader.load('./images/highlight.glb', (gltf) => 
+            {   
+                gltf.scene.traverse( child => 
+                    {
+                        child.material = mat3DHighlight;
+                    })
+                const children = [... gltf.scene.children];
+
+                for (const child of children)
+                {   
+                    highlightModel.add(child);
+                }
+
+                scene.add(highlightModel);
+
             });
-        return model
-        
-        });
 
-    return model3D;
-        
-}
+        return highlightModel;
+    
+    }
 
-const Place3DHighlight = (targetLocation) =>
-{
-    highlight3Dmodel.position.set(targetLocation.x, targetLocation.y, targetLocation.z);
-}
+    
 
 
 
-
-export {Place3DHighlight, load3DHighlight, doHighlightRayTrace, calculateMouseOverLocation, highlightTarget, mouseOverMesh, setActiveOdyssey, renderOdysseyInformationPopup, infoObjectMesh, namePlaneMesh};
+    export {HighlightHandleLookAt, load3DHighlight, doHighlightRayTrace, calculateMouseOverLocation, highlightTarget, setActiveOdyssey, renderOdysseyInformationPopup};
 
 

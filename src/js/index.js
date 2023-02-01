@@ -15,18 +15,14 @@ import {createOdyssey, buildConnectionLines} from "./odyssey.js";
 import { ActivateFirstPerson, OnKeyDown, OnKeyUp } from './firstpersonlogic.js';
 import { calculateMouseOverLocation, 
     doHighlightRayTrace, 
-    highlightTarget, 
-    mouseOverMesh, 
     renderOdysseyInformationPopup,
     setActiveOdyssey,
     renderOdysseyInformationPopup,
-    infoObjectMesh,
     load3DHighlight,
-    Place3DHighlight
+    HighlightHandleLookAt,
 } from "./mouseOver.js";
 import { placeOdysseyInUniverse, drawConnectionsBetweenOdysseys } from "./buildUniverse.js"; 
 import { generateGalaxy } from "./galaxy.js";
-
 
 
 
@@ -41,7 +37,7 @@ let maxOdysseyConnectionLineHeight = 20;
 let MaxOrbitCameraDistance = 200;
 let planetAreSpawnedHorizontal = false;
 let planetsMaxVerticalSpawnHeight = 100;
-const minimalDistanceToPlanetForCamera = 5;
+const minimalDistanceToPlanetForCamera = 12;
 
 
 /**
@@ -66,8 +62,6 @@ let meshArray = [];
 // Scene setup
 canvas = document.querySelector(".webgl");
 scene = new THREE.Scene();
-scene.add(mouseOverMesh);
-scene.add(infoObjectMesh);
 
 // Camera Setup
 const aspect = window.innerWidth / window.innerHeight;
@@ -102,9 +96,9 @@ controls.zoomSpeed = 1;
 /**
  * Happyship skybox
  */
-const backgroundImage = new THREE.TextureLoader().load('./images/small/BasicSkyboxHD.jpg');
-backgroundImage.mapping = THREE.EquirectangularReflectionMapping;
-scene.background = backgroundImage;
+//const backgroundImage = new THREE.TextureLoader().load('./images/small/BasicSkyboxHD.jpg');
+//backgroundImage.mapping = THREE.EquirectangularReflectionMapping;
+//scene.background = backgroundImage;
 
 
 /**
@@ -122,9 +116,9 @@ function onPointerMove(event){
     // Do raytrace to detect mouseOver for highlight.
     if(!leftMouseButtonIsDown)
     {
-        doHighlightRayTrace(pointer, camera, referenceListOfOdysseys,scene);
+        doHighlightRayTrace(pointer, camera, referenceListOfOdysseys, scene, Highlight3DModel);
     }
-    
+
 };
 
 const onMouseUp = (event) =>
@@ -199,6 +193,7 @@ function onMouseDown(event){
 
         // Set active Odyssey for highlight with information.
         setActiveOdyssey(selectedOdyssey);
+        //Highlight3DModel.visible = false;
 
          //Animate using gsap module.
         gsap.to(camera.position, {
@@ -273,11 +268,22 @@ window.addEventListener('mouseup', onMouseUp);
 // Triggered per frame. All objects will look at the camera.
 const lookAtCameraObjects = () =>
 {
-   //infoObjectMesh.lookAt(camera.position);
-   //highlight3Dmodel.rotateY(0.005);
-   //highlight3Dmodel.rotateX(0.005);
-   //highlight3Dmodel.rotateZ(0.005);
+   
+   //Highlight3DModel.rotateY(0.005);
+   //Highlight3DModel.rotateX(0.005);
+   //Highlight3DModel.rotateZ(0.005);
 
+   if(Highlight3DModel.children.length) {
+    //Highlight3DModel.children[0].rotateX(0.003);
+    Highlight3DModel.children[0].rotateY(0.01);
+    //Highlight3DModel.children[0].rotateZ(0.01);
+
+    Highlight3DModel.children[1].rotateX(-0.005);
+    Highlight3DModel.children[1].rotateY(-0.005);
+    Highlight3DModel.children[1].rotateZ(-0.005);
+   }
+
+   HighlightHandleLookAt();
 
     
    if(myOdyssey)
@@ -289,17 +295,25 @@ const lookAtCameraObjects = () =>
 
 
 // Setup Center Odyssey.
-const myOdyssey = createOdyssey(999, "Wallet Address", " My Odyssey", "test.com");
+const myOdyssey = createOdyssey(999, "Wallet Address", "My Odyssey", "test.com");
 referenceListOfOdysseys.push(myOdyssey);
 myOdyssey.scale.set(3,3,3);
 scene.add(myOdyssey);
 
-/// ISUE HERE
-scene.add(load3DHighlight);
-
 // Construct the universe and add to the scene.
 const theUniverse = placeOdysseyInUniverse(myOdyssey, listOfOddyseys);
 scene.add(theUniverse);
+
+
+/**
+ * TESTING
+ *
+ */
+
+const Highlight3DModel = load3DHighlight(scene);
+Highlight3DModel.visible = false
+Highlight3DModel.scale.set(1.2 , 1.2 , 1.2);
+
 
 // Build Connection lines for my center odyssey
 activeLinesArray = myOdyssey.buildConnectionLines(referenceListOfOdysseys, scene, activeLinesArray);
@@ -335,7 +349,7 @@ function animate(){
     }; 
 
     // Set the mouseOverEffect.
-    calculateMouseOverLocation(highlightTarget,camera);
+    //calculateMouseOverLocation(highlightTarget,camera);
     
 
     // Render the scene
