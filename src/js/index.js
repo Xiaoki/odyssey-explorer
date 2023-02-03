@@ -101,7 +101,7 @@ controls.zoomSpeed = 1;
 //backgroundImage.mapping = THREE.EquirectangularReflectionMapping;
 //scene.background = backgroundImage;
 
-const backgroundImage = new THREE.TextureLoader().load('./images/test5.png');
+const backgroundImage = new THREE.TextureLoader().load('./images/galaxy.jpg');
 backgroundImage.mapping = THREE.EquirectangularReflectionMapping;
 backgroundImage.needsUpdate = true;
 //backgroundImage.encoding = THREE.sRGBEncoding;

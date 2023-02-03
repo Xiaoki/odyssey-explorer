@@ -603,7 +603,7 @@ controls.zoomSpeed = 1;
  */ //const backgroundImage = new THREE.TextureLoader().load('./images/small/BasicSkyboxHD.jpg');
 //backgroundImage.mapping = THREE.EquirectangularReflectionMapping;
 //scene.background = backgroundImage;
-const backgroundImage = new _three.TextureLoader().load("./images/test5.png");
+const backgroundImage = new _three.TextureLoader().load("./images/galaxy.jpg");
 backgroundImage.mapping = _three.EquirectangularReflectionMapping;
 backgroundImage.needsUpdate = true;
 //backgroundImage.encoding = THREE.sRGBEncoding;
@@ -34912,11 +34912,11 @@ var _lineGeometryJs = require("three/examples/jsm/lines/LineGeometry.js");
 /**
  * Create a new Odyssey. Returns an Odyssey object.
  */ //Setup texture reflection for the glass effect of the Odyssey
-const environmentReflectionImage = new _three.TextureLoader().load("./images/small/BasicSkyboxHD.jpg");
+const environmentReflectionImage = new _three.TextureLoader().load("./images/odyssey.orb.pattern.jpg");
 environmentReflectionImage.mapping = _three.EquirectangularRefractionMapping;
 // Setup Base geometry and material for the Odysseys.
-const avatarGeometry = new _three.CircleGeometry(0.8, 26); //Standard for all avatars.
-const odysseySphereGeometry = new _three.SphereGeometry(1, 16, 16);
+const avatarGeometry = new _three.CircleGeometry(0.7, 26); //Standard for all avatars.
+const odysseySphereGeometry = new _three.SphereGeometry(1, 32, 32);
 const odysseyMaterial = new _three.MeshPhysicalMaterial({
     color: 0xFFFFFF,
     envMap: environmentReflectionImage,

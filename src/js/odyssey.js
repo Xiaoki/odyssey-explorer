@@ -337,12 +337,12 @@ class Odyssey extends THREE.Mesh {
  */
 
 //Setup texture reflection for the glass effect of the Odyssey
-const environmentReflectionImage = new THREE.TextureLoader().load('./images/small/BasicSkyboxHD.jpg')
+const environmentReflectionImage = new THREE.TextureLoader().load('./images/odyssey.orb.pattern.jpg')
 environmentReflectionImage.mapping = THREE.EquirectangularRefractionMapping;
 
 // Setup Base geometry and material for the Odysseys.
-const avatarGeometry = new THREE.CircleGeometry(0.8, 26); //Standard for all avatars.
-const odysseySphereGeometry = new THREE.SphereGeometry( 1,16,16);
+const avatarGeometry = new THREE.CircleGeometry(0.7, 26); //Standard for all avatars.
+const odysseySphereGeometry = new THREE.SphereGeometry( 1,32,32);
 const odysseyMaterial = new THREE.MeshPhysicalMaterial(
     {
         color: 0xFFFFFF,
