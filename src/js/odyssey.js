@@ -430,6 +430,8 @@ const createOdyssey = (id, wallet, name, url) =>
     
     //Build text texture for around the odyssey
      
+    /*
+    
     const drawCanvas = document.createElement('canvas');
     const drawContent = drawCanvas.getContext('2d');
     drawCanvas.width = 1000;
@@ -452,7 +454,7 @@ const createOdyssey = (id, wallet, name, url) =>
     drawContent.strokeStyle = "rgba(124, 86, 133)";
     drawContent.strokeText(name, 500, 60);
 
-
+   
 
 
 
@@ -462,7 +464,7 @@ const createOdyssey = (id, wallet, name, url) =>
     nameRingMesh.material.map = nameTexture;
     nameRingMesh.material.map.wrapS = RepeatWrapping;
 
-    
+     */
  
 
     // Create new Odyssey from class.

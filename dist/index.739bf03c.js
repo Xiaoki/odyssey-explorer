@@ -603,7 +603,7 @@ controls.zoomSpeed = 1;
  */ //const backgroundImage = new THREE.TextureLoader().load('./images/small/BasicSkyboxHD.jpg');
 //backgroundImage.mapping = THREE.EquirectangularReflectionMapping;
 //scene.background = backgroundImage;
-const backgroundImage = new _three.TextureLoader().load("./images/Galaxy.Explorer.jpg");
+const backgroundImage = new _three.TextureLoader().load("./images/test5.png");
 backgroundImage.mapping = _three.EquirectangularReflectionMapping;
 backgroundImage.needsUpdate = true;
 //backgroundImage.encoding = THREE.sRGBEncoding;
@@ -34972,28 +34972,41 @@ const createOdyssey = (id, wallet, name, url)=>{
     // Construct odyssey ring mesh.
     const nameRingMesh = new _three.Mesh(nameRingGeometry, nameRingMaterial);
     //Build text texture for around the odyssey
-    const drawCanvas = document.createElement("canvas");
-    const drawContent = drawCanvas.getContext("2d");
+    /*
+    
+    const drawCanvas = document.createElement('canvas');
+    const drawContent = drawCanvas.getContext('2d');
     drawCanvas.width = 1000;
     drawCanvas.height = 100;
     drawContent.font = "Bold 40px Trebuchet MS";
+    
+    
     drawContent.fillStyle = "rgba(0, 0, 0, 0.1)";
     drawContent.fillRect(0, 0, drawCanvas.width, drawCanvas.height);
+
     // Draw the title once.
     drawContent.fillStyle = "rgba(245, 199, 255, 0.9";
     drawContent.fillText(name, 0, 60);
     drawContent.strokeStyle = "rgba(124, 86, 133)";
     drawContent.strokeText(name, 0, 60);
+
     // Draw the name a second time.
-    drawContent.fillStyle = "rgba(245, 199, 255, 0.9";
+    drawContent.fillStyle = "rgba(245, 199, 255, 0.9";;
     drawContent.fillText(name, 500, 60);
     drawContent.strokeStyle = "rgba(124, 86, 133)";
     drawContent.strokeText(name, 500, 60);
-    const nameTexture = new _three.Texture(drawCanvas);
+
+   
+
+
+
+    const nameTexture = new THREE.Texture(drawCanvas);
     nameTexture.needsUpdate = true;
+
     nameRingMesh.material.map = nameTexture;
-    nameRingMesh.material.map.wrapS = (0, _three.RepeatWrapping);
-    // Create new Odyssey from class.
+    nameRingMesh.material.map.wrapS = RepeatWrapping;
+
+     */ // Create new Odyssey from class.
     const odyssey = new Odyssey(odysseySphereGeometry, odysseyMaterial, id, wallet, name, url, nameRingMaterial);
     // Add the custom avatar image mesh to the odyssey.
     odyssey.add(avatarMesh);
