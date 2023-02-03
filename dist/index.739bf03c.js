@@ -544,13 +544,11 @@ var _gsap = require("gsap");
 var _gsapDefault = parcelHelpers.interopDefault(_gsap);
 var _three = require("three");
 var _orbitControls = require("three/examples/jsm/controls/OrbitControls");
-var _datGui = require("dat.gui");
-var _transitionsJs = require("./transitions.js");
 var _odysseyJs = require("./odyssey.js");
-var _line2Js = require("three/examples/jsm/lines/Line2.js");
-var _lineMaterialJs = require("three/examples/jsm/lines/LineMaterial.js");
-var _lineGeometryJs = require("three/examples/jsm/lines/LineGeometry.js");
 var _firstpersonlogicJs = require("./firstpersonlogic.js");
+var _mouseOverJs = require("./mouseOver.js");
+var _buildUniverseJs = require("./buildUniverse.js");
+var _galaxyJs = require("./galaxy.js");
 (0, _firstpersonlogicJs.ActivateFirstPerson)();
 /**
  * For Dev Only
@@ -559,17 +557,16 @@ let maxOdysseyConnectionLineHeight = 20;
 let MaxOrbitCameraDistance = 200;
 let planetAreSpawnedHorizontal = false;
 let planetsMaxVerticalSpawnHeight = 100;
-const minimalDistanceToPlanetForCamera = 5;
+const minimalDistanceToPlanetForCamera = 12;
 /**
  * Setup the scene.
  */ let scene, canvas, renderer, controls, selectedOdyssey;
 const raycaster = new _three.Raycaster();
 const pointer = new _three.Vector2;
-const gui = new _datGui.GUI();
 let updateCameraRotation = false;
-gui.hide();
 let transitionToPlanetFinished = true;
 let activeLinesArray = [];
+let leftMouseButtonIsDown = false;
 let meshArray = [];
 // Scene setup
 canvas = document.querySelector(".webgl");
@@ -603,83 +600,54 @@ controls.minDistance = minimalDistanceToPlanetForCamera;
 controls.zoomSpeed = 1;
 /**
  * Happyship skybox
- */ const backgroundImage = new _three.TextureLoader().load("./images/small/BasicSkyboxHD.jpg");
+ */ //const backgroundImage = new THREE.TextureLoader().load('./images/small/BasicSkyboxHD.jpg');
+//backgroundImage.mapping = THREE.EquirectangularReflectionMapping;
+//scene.background = backgroundImage;
+const backgroundImage = new _three.TextureLoader().load("./images/Galaxy.Explorer.jpg");
 backgroundImage.mapping = _three.EquirectangularReflectionMapping;
+backgroundImage.needsUpdate = true;
+//backgroundImage.encoding = THREE.sRGBEncoding;
 scene.background = backgroundImage;
-/**
- * Build Galaxy
- */ const parameters = {};
-parameters.count = 100000;
-parameters.size = 0.001;
-parameters.radius = 100;
-parameters.branches = 3;
-parameters.spin = 1.3;
-parameters.randomnes = 0.2;
-parameters.randomnesPower = 3;
-parameters.YHeight = 100;
-let pointsGeometry = null;
-let pointsMaterial = null;
-let points = null;
-const generateGalaxy = ()=>{
-    /**
-     * Clean previous renders of galaxy.
-     */ if (points !== null) {
-        pointsGeometry.dispose();
-        pointsMaterial.dispose();
-        scene.remove(points);
-    }
-    /**
-     * Geometry
-     */ pointsGeometry = new _three.BufferGeometry();
-    const position = new Float32Array(parameters.count * 3);
-    for(let i = 0; i < parameters.count; i++){
-        const i3 = i * 3;
-        const radius = Math.random() * parameters.radius;
-        const spinAngle = radius * parameters.spin;
-        const branchAngle = i % parameters.branches / parameters.branches * Math.PI * 2;
-        const randomX = Math.pow(Math.random(), parameters.randomnesPower) * (Math.random() < 0.5 ? 1 : -1);
-        const randomY = Math.pow(Math.random(), parameters.randomnesPower) * (Math.random() < 0.5 ? parameters.YHeight : -parameters.YHeight);
-        const randomZ = Math.pow(Math.random(), parameters.randomnesPower) * (Math.random() < 0.5 ? 1 : -1);
-        position[i3 + 0] = Math.cos(branchAngle + spinAngle) * radius + randomX;
-        position[i3 + 1] = randomY;
-        position[i3 + 2] = Math.sin(branchAngle + spinAngle) * radius + randomZ;
-    }
-    pointsGeometry.setAttribute("position", new _three.BufferAttribute(position, 3));
-    /**
-     * Material
-     */ pointsMaterial = new _three.PointsMaterial({
-        size: parameters.size,
-        sizeAttenuation: true,
-        depthWrite: false,
-        blending: _three.AdditiveBlending,
-        color: 0xFF5588,
-        transparent: true,
-        opacity: 0.5
-    });
-    /**
-     * Create stars in the universe.
-     */ points = new _three.Points(pointsGeometry, pointsMaterial);
-    scene.add(points);
-};
-//const axesHelper = new THREE.AxesHelper( 5 );
-//scene.add( axesHelper );
-generateGalaxy();
-gui.add(parameters, "count").min(100).max(1000000).step(100).onFinishChange(generateGalaxy);
-gui.add(parameters, "size").min(0.001).max(0.1).step(0.001).onFinishChange(generateGalaxy);
-gui.add(parameters, "radius").min(1).max(500).step(1).onFinishChange(generateGalaxy);
-gui.add(parameters, "branches").min(2).max(10).step(1).onFinishChange(generateGalaxy);
-gui.add(parameters, "spin").min(-3).max(3).step(0.1).onFinishChange(generateGalaxy);
-gui.add(parameters, "randomnes").min(0).max(2).step(0.001).onFinishChange(generateGalaxy);
-gui.add(parameters, "randomnesPower").min(1).max(10).step(0.001).onFinishChange(generateGalaxy);
-gui.add(parameters, "YHeight").min(1).max(150).step(1).onFinishChange(generateGalaxy);
+a = backgroundImage.wrapT = (0, _three.RepeatWrapping);
+/*
+CUSTOM ODYSSEY OPEN SOURCE Skybox
+*/ /*
+const skyboxGeo = new THREE.BoxGeometry(500,500,500);
+
+
+const ft = new THREE.TextureLoader().load('./images/skybox_front.png')
+const bk = new THREE.TextureLoader().load('./images/skybox_back.png')
+const up = new THREE.TextureLoader().load('./images/skybox_up.png')
+const dn = new THREE.TextureLoader().load('./images/skybox_down.png')
+const rt = new THREE.TextureLoader().load('./images/skybox_right.png')
+const lf = new THREE.TextureLoader().load('./images/skybox_left.png')
+const skyboxTextures = [ft, bk, up, dn, rt, lf];
+
+const skyboxMaterialArray = skyboxTextures.map( texture => 
+  {
+      return new THREE.MeshBasicMaterial({ map: texture, side: THREE.BackSide });
+   });
+
+const skyboxMesh = new THREE.Mesh(skyboxGeo, skyboxMaterialArray);
+scene.add(skyboxMesh);
+*/ /**
+ * Add noise to the galaxy.
+ */ //scene.add(generateGalaxy());
 // update mouse location on screen
 function onPointerMove(event) {
     pointer.x = event.clientX / window.innerWidth * 2 - 1;
     pointer.y = -(event.clientY / window.innerHeight) * 2 + 1;
+    // Do raytrace to detect mouseOver for highlight.
+    if (!leftMouseButtonIsDown) (0, _mouseOverJs.doHighlightRayTrace)(pointer, camera, referenceListOfOdysseys, scene, Highlight3DModel);
 }
+const onMouseUp = (event)=>{
+    if (event.button == 0) leftMouseButtonIsDown = false;
+};
 // Onclick event 
 function onMouseDown(event) {
     if (event.button != 0) return;
+    // Set let mouse button to down.
+    leftMouseButtonIsDown = true;
     // Create Raycast
     raycaster.setFromCamera(pointer, camera);
     const castRay = raycaster.intersectObjects(referenceListOfOdysseys, false);
@@ -691,9 +659,8 @@ function onMouseDown(event) {
         const targetPlanet = castRay[0];
         // If clicked planet is same as current selected one return
         if (targetPlanet.object === selectedOdyssey) return;
-        // Log information about selected Odyssey
-        console.log(targetPlanet.object);
         selectedOdyssey = targetPlanet.object;
+        console.log(selectedOdyssey);
         let targetVector = new _three.Vector3();
         targetPlanet.object.getWorldPosition(targetVector);
         // Prepare fly to planets.
@@ -711,6 +678,9 @@ function onMouseDown(event) {
         // Create new target for the camera.
         let targetLocation = new _three.Vector3();
         targetLocation.addVectors(camera.position, direction.multiplyScalar(distance));
+        // Set active Odyssey for highlight with information.
+        (0, _mouseOverJs.setActiveOdyssey)(selectedOdyssey);
+        //Highlight3DModel.visible = false;
         //Animate using gsap module.
         (0, _gsapDefault.default).to(camera.position, {
             duration: 1.5,
@@ -724,6 +694,7 @@ function onMouseDown(event) {
                 controls.autoRotate = false;
                 controls.enablePan = false;
                 activeLinesArray = selectedOdyssey.buildConnectionLines(referenceListOfOdysseys, scene, activeLinesArray);
+                (0, _mouseOverJs.renderOdysseyInformationPopup)(selectedOdyssey);
             },
             onUpdate: function() {
                 camera.quaternion.copy(startOrientation).slerp(targetOrientation, this.progress());
@@ -741,6 +712,7 @@ function onMouseDown(event) {
 }
 window.addEventListener("pointermove", onPointerMove);
 window.addEventListener("mousedown", onMouseDown);
+window.addEventListener("mouseup", onMouseUp);
 /**
 * Create test array for odyssey
 */ let listOfOddyseys = [];
@@ -749,7 +721,7 @@ const ProcessOdyssey = ()=>{
     const numberOfPlanets = AmountOfGalaxyToGenereate;
     //Build an odyssey for all given entries.
     for(let i = 0; i < numberOfPlanets; i++){
-        const odyssey = (0, _odysseyJs.createOdyssey)(i, "Wallet Address", "VISIT ODYSSEY " + i, "test.com");
+        const odyssey = (0, _odysseyJs.createOdyssey)(i, "Wallet Address", "ODYSSEY " + i, "test.com");
         listOfOddyseys.push(odyssey);
     }
     referenceListOfOdysseys = [
@@ -757,89 +729,58 @@ const ProcessOdyssey = ()=>{
     ];
 };
 ProcessOdyssey();
-/**
-  * Create Circular Universe of Odysseys
-  */ const buildUniverse = ()=>{
-    let radius = 10;
-    const radiusIncreaseValue = 15;
-    let AmountOfOdysseyInNextRing = 10;
-    let ringCount = 1;
-    let odysseyGroups = [];
-    // Build circles in groups.
-    function createRing() {
-        // if amount to be spawned bigger than available odyssey
-        if (listOfOddyseys.length < AmountOfOdysseyInNextRing) AmountOfOdysseyInNextRing = listOfOddyseys.length;
-        let degreeBetweenOdyssey = 360 / AmountOfOdysseyInNextRing;
-        let offset = 0;
-        let currentOdyssey;
-        const odysseyCircle = new _three.Group();
-        odysseyCircle.name = "circle" + ringCount;
-        // Fill circle with odysseys.
-        for(let i = 0; i < AmountOfOdysseyInNextRing; i++){
-            currentOdyssey = listOfOddyseys[i];
-            const radian = offset * (Math.PI / 180);
-            offset += degreeBetweenOdyssey;
-            const newX = Math.cos(radian) * radius;
-            let newY;
-            if (planetAreSpawnedHorizontal) newY = 0;
-            else newY = Math.random() * planetsMaxVerticalSpawnHeight - planetsMaxVerticalSpawnHeight / 2;
-            const newZ = Math.sin(radian) * radius;
-            currentOdyssey.position.set(newX, newY, newZ);
-            currentOdyssey.randomConnection(AmountOfGalaxyToGenereate); // TEMP: Generate Random Connection in Class.
-            odysseyCircle.add(currentOdyssey);
-        }
-        listOfOddyseys.splice(0, AmountOfOdysseyInNextRing);
-        radius += radiusIncreaseValue * (ringCount / 2);
-        AmountOfOdysseyInNextRing = AmountOfOdysseyInNextRing * 1.5;
-        ringCount++;
-        // Add newly created ring of odysseys to the array.
-        odysseyGroups.push(odysseyCircle);
+// Triggered per frame. All objects will look at the camera.
+const lookAtCameraObjects = ()=>{
+    //Highlight3DModel.rotateY(0.005);
+    //Highlight3DModel.rotateX(0.005);
+    //Highlight3DModel.rotateZ(0.005);
+    if (Highlight3DModel.children.length) {
+        //Highlight3DModel.children[0].rotateX(0.003);
+        Highlight3DModel.children[0].rotateY(0.01);
+        //Highlight3DModel.children[0].rotateZ(0.01);
+        Highlight3DModel.children[1].rotateX(-0.005);
+        Highlight3DModel.children[1].rotateY(-0.005);
+        Highlight3DModel.children[1].rotateZ(-0.005);
     }
-    /** Trigger While loop posting all odyssey. */ while(listOfOddyseys.length > 0)createRing();
-    // Add all odyssey rings to the scene.
-    odysseyGroups.forEach((circle)=>{
-        scene.add(circle);
-    });
-    /**
-     * ADD CENTER USER ODYSSEY. AFTER GENERATING UNIVERSE.
-     */ const userCenterOdyssey = (0, _odysseyJs.createOdyssey)(999, "Wallet Address", " Visit Frank", "test.com");
-    if (userCenterOdyssey) {
-        scene.add(userCenterOdyssey);
-        referenceListOfOdysseys.push(userCenterOdyssey);
-        userCenterOdyssey.randomConnection(AmountOfGalaxyToGenereate);
-        activeLinesArray = userCenterOdyssey.buildConnectionLines(referenceListOfOdysseys, scene, activeLinesArray);
-    }
+    (0, _mouseOverJs.HighlightHandleLookAt)();
+    if (myOdyssey) myOdyssey.children[0].lookAt(camera.position);
 };
+// Setup Center Odyssey.
+const myOdyssey = (0, _odysseyJs.createOdyssey)(999, "Wallet Address", "My Odyssey", "test.com");
+referenceListOfOdysseys.push(myOdyssey);
+myOdyssey.scale.set(3, 3, 3);
+scene.add(myOdyssey);
+// Construct the universe and add to the scene.
+const theUniverse = (0, _buildUniverseJs.placeOdysseyInUniverse)(myOdyssey, listOfOddyseys);
+scene.add(theUniverse);
 /**
- * Handle fade out
- */ // TEMPORAL TRIGGER FOR FADE OUT: SPACEBAR
-/*
-window.addEventListener('keyup', event => 
-{    
-    if(event.code === 'Space')
-    {        
-        fadeOutScene();    
-    }
-});
-*/ buildUniverse();
-// Offset for ringNameAnimation
-let nameRingOffset = 0;
+ * TESTING
+ *
+ */ const Highlight3DModel = (0, _mouseOverJs.load3DHighlight)(scene);
+Highlight3DModel.visible = false;
+Highlight3DModel.scale.set(1.2, 1.2, 1.2);
+// Build Connection lines for my center odyssey
+activeLinesArray = myOdyssey.buildConnectionLines(referenceListOfOdysseys, scene, activeLinesArray);
 // Animation
 function animate() {
     // Time reference.
     const time = performance.now();
-    // Rotate the texture on the namering
-    //nameRingMaterial.map.offset.x += Math.sin(0.001);
-    // Animate the textures of all ringNameMaterials.
-    nameRingOffset += Math.sin(0.001);
-    for(let i = 0; i < referenceListOfOdysseys.length; i++)referenceListOfOdysseys[i].nameRingMaterial.map.offset.x = nameRingOffset;
-    // Update controls for auto-rotate.
+    lookAtCameraObjects();
+    backgroundImage.offset.y = Math.sin(0.001);
+    /**
+     * Removing this comment will animate all name rings on every odyssey.
+     */ /* nameRingOffset += Math.sin(0.001);
+    for(let i = 0; i < referenceListOfOdysseys.length; i++){
+        referenceListOfOdysseys[i].nameRingMaterial.map.offset.x = nameRingOffset;
+    }*/ // Update controls for auto-rotate.
     if (!updateCameraRotation) controls.update();
     // Make all avatars face the camera.
-    for(let i1 = 0; i1 < referenceListOfOdysseys.length; i1++){
-        const odyssey = referenceListOfOdysseys[i1].children;
+    for(let i = 0; i < referenceListOfOdysseys.length; i++){
+        const odyssey = referenceListOfOdysseys[i].children;
         odyssey[0].lookAt(camera.position);
     }
+    // Set the mouseOverEffect.
+    //calculateMouseOverLocation(highlightTarget,camera);
     // Render the scene
     renderer.render(scene, camera);
     // Re-call Animation
@@ -857,7 +798,7 @@ document.addEventListener("keydown", (0, _firstpersonlogicJs.OnKeyDown));
 document.addEventListener("keyup", (0, _firstpersonlogicJs.OnKeyUp));
 animate();
 
-},{"gsap":"fPSuC","three":"ktPTu","three/examples/jsm/controls/OrbitControls":"7mqRv","dat.gui":"k3xQk","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3","./odyssey.js":"uTahW","./transitions.js":"93XyA","three/examples/jsm/lines/Line2.js":"kgvYG","three/examples/jsm/lines/LineMaterial.js":"insFK","three/examples/jsm/lines/LineGeometry.js":"5c0fE","./firstpersonlogic.js":"bYvHP"}],"fPSuC":[function(require,module,exports) {
+},{"gsap":"fPSuC","three":"ktPTu","three/examples/jsm/controls/OrbitControls":"7mqRv","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3","./odyssey.js":"uTahW","./firstpersonlogic.js":"bYvHP","./mouseOver.js":"9P9c0","./buildUniverse.js":"2Qgse","./galaxy.js":"1OpXQ"}],"fPSuC":[function(require,module,exports) {
 var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
 parcelHelpers.defineInteropFlag(exports);
 parcelHelpers.export(exports, "gsap", ()=>gsapWithCSS);
@@ -34715,7 +34656,4691 @@ class MapControls extends OrbitControls {
     }
 }
 
-},{"three":"ktPTu","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"k3xQk":[function(require,module,exports) {
+},{"three":"ktPTu","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"uTahW":[function(require,module,exports) {
+var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
+parcelHelpers.defineInteropFlag(exports);
+parcelHelpers.export(exports, "Odyssey", ()=>Odyssey);
+parcelHelpers.export(exports, "createOdyssey", ()=>createOdyssey);
+var _three = require("three");
+var _fontLoader = require("three/examples/jsm/loaders/FontLoader");
+var _curveModifierJs = require("three/examples/jsm/modifiers/CurveModifier.js");
+var _fontLoaderJs = require("three/examples/jsm/loaders/FontLoader.js");
+var _textGeometryJs = require("three/examples/jsm/geometries/TextGeometry.js");
+var _line2Js = require("three/examples/jsm/lines/Line2.js");
+var _lineMaterialJs = require("three/examples/jsm/lines/LineMaterial.js");
+var _lineGeometryJs = require("three/examples/jsm/lines/LineGeometry.js");
+/**
+ * The Odyssey class extend from THREE.MESH.
+ */ class Odyssey extends _three.Mesh {
+    constructor(geometry, material, number, wallet, name, url, nameRingMaterial){
+        // Reference THREE.Mesh
+        super(geometry, material);
+        this.material = material;
+        this.geometry = geometry;
+        this.number = number;
+        this.wallet = wallet;
+        this.name = name;
+        this.url = url;
+        this.isOdyssey = true;
+        this.nameRingMaterial = nameRingMaterial;
+        this.temporallyFillStakeArrays();
+    }
+    // Material for connections.
+    lineMaterial = new (0, _lineMaterialJs.LineMaterial)({
+        color: 0xECA400,
+        linewidth: 2,
+        transparent: true,
+        opacity: 0.8
+    });
+    mutualLineMaterial = new (0, _lineMaterialJs.LineMaterial)({
+        color: 0x01FFB3,
+        linewidth: 2,
+        transparent: true,
+        opacity: 0.8
+    });
+    iStakedInMaterial = new (0, _lineMaterialJs.LineMaterial)({
+        color: 0x0abaff,
+        linewidth: 2,
+        transparent: true,
+        opacity: 0.8
+    });
+    secondaryConnectionMaterial = new (0, _lineMaterialJs.LineMaterial)({
+        color: 0xFFFFFF,
+        linewidth: 1,
+        transparent: true,
+        opacity: 0.2
+    });
+    generalLineMaterial = new (0, _lineMaterialJs.LineMaterial)({
+        color: 0x01FFB3,
+        linewidth: 2,
+        transparent: true,
+        opacity: 0.8
+    });
+    // Array to hold all connected Odysseys.
+    allRandomNumbers = [];
+    // Arrays for connected Odysseys.
+    mutualStakedConnections = [];
+    stakedInMeConnections = [];
+    iStakedInConnections = [];
+    // FOR TESTING: FILL ARRAYS ABOVE.
+    temporallyFillStakeArrays = ()=>{
+        let numbers = 200; // ID will be between 0 and this number.
+        const allRandomNumbers = []; // Used to check for duplicated.
+        // Check if the random generate ID is a duplicate or not.
+        const checkIfNumberIsUsed = (number)=>{
+            if (allRandomNumbers.includes(number)) return true;
+            else return false;
+        };
+        // Populate every Odyssey with 5 connections per array.
+        for(let i = 0; i < 5; i++){
+            let randomId;
+            do randomId = Math.floor(Math.random() * numbers);
+            while (checkIfNumberIsUsed(randomId));
+            this.mutualStakedConnections.push(randomId);
+            allRandomNumbers.push(randomId);
+            do randomId = Math.floor(Math.random() * numbers);
+            while (checkIfNumberIsUsed(randomId));
+            this.iStakedInConnections.push(randomId);
+            allRandomNumbers.push(randomId);
+            do randomId = Math.floor(Math.random() * numbers);
+            while (checkIfNumberIsUsed(randomId));
+            this.stakedInMeConnections.push(randomId);
+            allRandomNumbers.push(randomId);
+        }
+    };
+    /**
+     * For dev only:
+     * Generate random ID's to link to other Odysseys.
+     */ // MaxAmount = amount of Odysseys in the world.
+    randomConnection = (maxAmount)=>{
+        const amountToGenerate = 10;
+        for(let i = 0; i < amountToGenerate; i++){
+            const object = {
+                id: Math.floor(Math.random() * maxAmount)
+            };
+            this.allRandomNumbers.push(object);
+        }
+    };
+    buildConnectionLines = (referenceArray, scene, activeLinesArray)=>{
+        const maxOdysseyConnectionLineHeight = 10;
+        const newActivelinesArray = [];
+        if (activeLinesArray) for(let i = 0; i < activeLinesArray.length; i++)scene.remove(activeLinesArray[i]);
+        const linesToBeDrawnArray = [
+            ...this.mutualStakedConnections,
+            ...this.iStakedInConnections,
+            ...this.stakedInMeConnections
+        ];
+        for(let i1 = 0; i1 < linesToBeDrawnArray.length; i1++){
+            // Get the connected Odessey from global reference.
+            //const foundOdyssey = referenceArray.filter( planet => planet.number === this.linesToBeDrawnArray[i].id)[0];
+            const foundOdyssey = referenceArray.find((item)=>item.number == linesToBeDrawnArray[i1]);
+            // Process if found.
+            if (foundOdyssey) {
+                let materialToUseForLine;
+                // Filter what type for color:
+                if (this.mutualStakedConnections.includes(foundOdyssey.number)) materialToUseForLine = this.mutualLineMaterial;
+                else if (this.iStakedInConnections.includes(foundOdyssey.number)) materialToUseForLine = this.iStakedInMaterial;
+                else materialToUseForLine = this.lineMaterial;
+                //TEMP OVERULE LINE COLORS:
+                //  materialToUseForLine = this.generalLineMaterial;
+                this.drawLine(this.position, foundOdyssey.position, scene, newActivelinesArray, materialToUseForLine);
+            /*
+                
+                // Create random line hight and calculate middle position
+                //const randomLineHeight = (Math.random() * maxOdysseyConnectionLineHeight ) * (Math.random() > 0.5 ? 1 : -1 );
+                //const randomLineHeight = -10 //(Math.random() * maxOdysseyConnectionLineHeight ) * -1;
+                const middlePointCurve = calculateLineMiddlePointDepth(this.position, foundOdyssey.position);
+                //const middlePointCurve = -10
+
+                let middlePosition = new THREE.Vector3((this.position.x + foundOdyssey.position.x) /2, middlePointCurve, (this.position.z + foundOdyssey.position.z) /2);
+                
+                // calculate start XYZ for the line.
+                //const direction = this.isObject3D.lookAt(foundOdyssey);
+
+                //console.log(foundOdyssey.position);
+                const direction = new THREE.Vector3();
+                direction.subVectors(this.position, foundOdyssey.position ).normalize();
+                const startVector = new THREE.Vector3();
+                startVector.addVectors(this.position, direction.multiplyScalar(-0.7));
+
+                const newY = this.position.y - 0.8;
+                //const beginVector = new THREE.Vector3(this.position.x, newY, this.position.z)
+                startVector.y = newY;
+                const secondVector = new THREE.Vector3(startVector.x, newY - 1, startVector.z);
+                
+
+
+                // Create the curve                
+                const curve = new THREE.CubicBezierCurve3(
+                    startVector,
+                    secondVector,
+                    middlePosition,
+                    foundOdyssey.position,
+                );    
+
+                // Get XYZ along the curve.
+                const curvePoints = curve.getSpacedPoints(50);
+        
+
+                // Prepare array of numbers for line geometry ( doesnt accept vectors)
+                const linePoints = [];
+                
+
+                // Build the array for Line from curve Points.
+                for (let i = 0; i < curvePoints.length; i++) 
+                {
+                    linePoints.push(curvePoints[i].x, curvePoints[i].y, curvePoints[i].z);
+                }
+                
+                const lineGeometry = new LineGeometry();
+                lineGeometry.setPositions(linePoints);
+
+                let materialToUseForLine = this.lineMaterial;
+
+                // Filter what type for color:
+                if(this.mutualStakedConnections.includes(foundOdyssey.number))
+                {
+                    materialToUseForLine = this.mutualLineMaterial;
+                } else if(this.iStakedInConnections.includes(foundOdyssey.number))
+                {
+                    materialToUseForLine = this.iStakedInMaterial;
+                }
+                //TEMP OVERULE LINE COLORS:
+                materialToUseForLine = this.generalLineMaterial;
+
+                // If staked in me use standard material
+                materialToUseForLine.resolution.set(window.innerWidth, window.innerHeight);              
+                const drawLine = new Line2(lineGeometry,materialToUseForLine);
+                
+                // Add lines to array
+                newActivelinesArray.push(drawLine);
+                // Add line to the scene.
+                scene.add(drawLine);
+                */ }
+            this.buildSecondaryConnectionLines(foundOdyssey, referenceArray, scene, newActivelinesArray);
+        }
+        return newActivelinesArray;
+    };
+    buildSecondaryConnectionLines = (odyssey, referenceArray, scene, newActivelinesArray)=>{
+        // Collect all connection from the current Odyssey.
+        //const collectionOfOdysseys = [...odyssey.mutualStakedConnections, ...odyssey.iStakedInConnections, ...odyssey.stakedInMeConnections];
+        const collectionOfOdysseys = odyssey.mutualStakedConnections;
+        for(let i = 0; i < collectionOfOdysseys.length; i++){
+            const startPointOdyssey = odyssey.position;
+            const EndPointOdyssey = referenceArray.find((item)=>item.number == collectionOfOdysseys[i]).position;
+            this.drawLine(startPointOdyssey, EndPointOdyssey, scene, newActivelinesArray, this.secondaryConnectionMaterial);
+        }
+    };
+    drawLine = (startPointOdyssey, EndPointOdyssey, scene, newActivelinesArray, lineMaterialToUse)=>{
+        // set XYZ for middle point.
+        // const curveDepth = -80;
+        const curveDepth = calculateLineMiddlePointDepth(startPointOdyssey, EndPointOdyssey);
+        const middlePoint = new _three.Vector3((startPointOdyssey.x + EndPointOdyssey.x) / 2, curveDepth, (startPointOdyssey.z + EndPointOdyssey.z) / 2);
+        // Calculate startpoint( a little below the Odysseys.)
+        const direction = new _three.Vector3;
+        direction.subVectors(startPointOdyssey, EndPointOdyssey).normalize();
+        const startPoint = new _three.Vector3();
+        startPoint.addVectors(startPointOdyssey, direction.multiplyScalar(-0.7)); // Move sideways away from Odyssey center.
+        // Check if it is the center odyssey or not. Ifso move start position futher down.
+        if (startPointOdyssey.y == 0 && startPointOdyssey.x == 0 && startPointOdyssey.z == 0) startPoint.y = startPoint.y - 2.5;
+        else startPoint.y = startPoint.y - 0.8; // Move down away from Odyssey center
+        //Calculate endpoint ( little below the endPoint );
+        direction.subVectors(EndPointOdyssey, startPointOdyssey).normalize();
+        const endPoint = new _three.Vector3();
+        endPoint.addVectors(EndPointOdyssey, direction.multiplyScalar(-0.7));
+        endPoint.y = endPoint.y - 0.8;
+        //Calculate second point
+        const secondPoint = new _three.Vector3(startPoint.x, startPoint.y - 1, startPoint.z);
+        // Draw the curve and set points along the line.             
+        const curve = new _three.CubicBezierCurve3(startPoint, secondPoint, middlePoint, endPoint);
+        const pointsAlongTheLine = curve.getSpacedPoints(50); // get points
+        // Prepare the points in an array. (because the geometry doesn't accept Vectors);
+        let arrayOfPoints = [];
+        for(let i = 0; i < pointsAlongTheLine.length; i++)arrayOfPoints.push(pointsAlongTheLine[i].x, pointsAlongTheLine[i].y, pointsAlongTheLine[i].z);
+        // Create Line geometry.
+        const lineGeometry = new (0, _lineGeometryJs.LineGeometry)();
+        lineGeometry.setPositions(arrayOfPoints);
+        let materialToUseForLine = lineMaterialToUse;
+        materialToUseForLine.resolution.set(window.innerWidth, window.innerHeight);
+        const drawLine = new (0, _line2Js.Line2)(lineGeometry, materialToUseForLine);
+        // Add lines to array
+        newActivelinesArray.push(drawLine);
+        // Add line to the scene.
+        scene.add(drawLine);
+    };
+}
+/**
+ * Create a new Odyssey. Returns an Odyssey object.
+ */ //Setup texture reflection for the glass effect of the Odyssey
+const environmentReflectionImage = new _three.TextureLoader().load("./images/small/BasicSkyboxHD.jpg");
+environmentReflectionImage.mapping = _three.EquirectangularRefractionMapping;
+// Setup Base geometry and material for the Odysseys.
+const avatarGeometry = new _three.CircleGeometry(0.8, 26); //Standard for all avatars.
+const odysseySphereGeometry = new _three.SphereGeometry(1, 16, 16);
+const odysseyMaterial = new _three.MeshPhysicalMaterial({
+    color: 0xFFFFFF,
+    envMap: environmentReflectionImage,
+    transmission: 1,
+    opacity: 0.3,
+    side: _three.BackSide,
+    ior: 1.5,
+    metalness: 0.3,
+    roughness: 0,
+    specularIntensity: 1,
+    transparent: false
+});
+const calculateLineMiddlePointDepth = (startVector, endVector)=>{
+    const lineDistance = startVector.distanceTo(endVector);
+    const middlePoint = new (0, _three.Vector3)((startVector.x + endVector.x) / 2, (startVector.y + endVector.y) / 2, (startVector.z + endVector.z) / 2);
+    let curveDepth;
+    if (lineDistance < 30) curveDepth = middlePoint.y - 5;
+    else if (lineDistance < 50) curveDepth = middlePoint.y - 20;
+    else if (lineDistance < 80) curveDepth = middlePoint.y - 30;
+    else curveDepth = -40;
+    return curveDepth;
+};
+// Setup ring around odyssey mesh
+const nameRingGeometry = new _three.CylinderGeometry(1.2, 1.2, 0.5, 22, 1, true);
+const createOdyssey = (id, wallet, name, url)=>{
+    //TEMP: Setup URL for temp avatars.
+    const standardTextures = [
+        "./images/small/temp1.jpg",
+        "./images/small/temp2.jpg",
+        "./images/small/temp3.jpg",
+        "./images/small/temp4.jpg",
+        "./images/small/temp5.jpg",
+        "./images/small/avatarTest.jpg"
+    ];
+    //TEMP: Load random texture from the standard textures array.
+    const randNum = Math.floor(Math.random() * standardTextures.length);
+    const randTexture = standardTextures[randNum];
+    const texture = new _three.TextureLoader().load(randTexture);
+    texture.wrapS = _three.RepeatWrapping;
+    const avatarMaterial = new _three.MeshBasicMaterial({
+        side: _three.DoubleSide,
+        map: texture
+    });
+    // Construct avatar Mesh.
+    const avatarMesh = new _three.Mesh(avatarGeometry, avatarMaterial);
+    /**
+     * Create the name ring around the Odyssey. Removed.
+     */ // Create custom material for name ring.
+    const nameRingMaterial = new _three.MeshBasicMaterial({
+        transparent: true,
+        side: _three.DoubleSide
+    });
+    // Construct odyssey ring mesh.
+    const nameRingMesh = new _three.Mesh(nameRingGeometry, nameRingMaterial);
+    //Build text texture for around the odyssey
+    const drawCanvas = document.createElement("canvas");
+    const drawContent = drawCanvas.getContext("2d");
+    drawCanvas.width = 1000;
+    drawCanvas.height = 100;
+    drawContent.font = "Bold 40px Trebuchet MS";
+    drawContent.fillStyle = "rgba(0, 0, 0, 0.1)";
+    drawContent.fillRect(0, 0, drawCanvas.width, drawCanvas.height);
+    // Draw the title once.
+    drawContent.fillStyle = "rgba(245, 199, 255, 0.9";
+    drawContent.fillText(name, 0, 60);
+    drawContent.strokeStyle = "rgba(124, 86, 133)";
+    drawContent.strokeText(name, 0, 60);
+    // Draw the name a second time.
+    drawContent.fillStyle = "rgba(245, 199, 255, 0.9";
+    drawContent.fillText(name, 500, 60);
+    drawContent.strokeStyle = "rgba(124, 86, 133)";
+    drawContent.strokeText(name, 500, 60);
+    const nameTexture = new _three.Texture(drawCanvas);
+    nameTexture.needsUpdate = true;
+    nameRingMesh.material.map = nameTexture;
+    nameRingMesh.material.map.wrapS = (0, _three.RepeatWrapping);
+    // Create new Odyssey from class.
+    const odyssey = new Odyssey(odysseySphereGeometry, odysseyMaterial, id, wallet, name, url, nameRingMaterial);
+    // Add the custom avatar image mesh to the odyssey.
+    odyssey.add(avatarMesh);
+    //odyssey.add(nameRingMesh);
+    return odyssey;
+};
+
+},{"@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3","three":"ktPTu","three/examples/jsm/loaders/FontLoader":"h0CPK","three/examples/jsm/modifiers/CurveModifier.js":"iSJKe","three/examples/jsm/loaders/FontLoader.js":"h0CPK","three/examples/jsm/geometries/TextGeometry.js":"d5vi9","three/examples/jsm/lines/Line2.js":"kgvYG","three/examples/jsm/lines/LineMaterial.js":"insFK","three/examples/jsm/lines/LineGeometry.js":"5c0fE"}],"h0CPK":[function(require,module,exports) {
+var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
+parcelHelpers.defineInteropFlag(exports);
+parcelHelpers.export(exports, "FontLoader", ()=>FontLoader);
+parcelHelpers.export(exports, "Font", ()=>Font);
+var _three = require("three");
+class FontLoader extends (0, _three.Loader) {
+    constructor(manager){
+        super(manager);
+    }
+    load(url, onLoad, onProgress, onError) {
+        const scope = this;
+        const loader = new (0, _three.FileLoader)(this.manager);
+        loader.setPath(this.path);
+        loader.setRequestHeader(this.requestHeader);
+        loader.setWithCredentials(this.withCredentials);
+        loader.load(url, function(text) {
+            const font = scope.parse(JSON.parse(text));
+            if (onLoad) onLoad(font);
+        }, onProgress, onError);
+    }
+    parse(json) {
+        return new Font(json);
+    }
+}
+//
+class Font {
+    constructor(data){
+        this.isFont = true;
+        this.type = "Font";
+        this.data = data;
+    }
+    generateShapes(text, size = 100) {
+        const shapes = [];
+        const paths = createPaths(text, size, this.data);
+        for(let p = 0, pl = paths.length; p < pl; p++)shapes.push(...paths[p].toShapes());
+        return shapes;
+    }
+}
+function createPaths(text, size, data) {
+    const chars = Array.from(text);
+    const scale = size / data.resolution;
+    const line_height = (data.boundingBox.yMax - data.boundingBox.yMin + data.underlineThickness) * scale;
+    const paths = [];
+    let offsetX = 0, offsetY = 0;
+    for(let i = 0; i < chars.length; i++){
+        const char = chars[i];
+        if (char === "\n") {
+            offsetX = 0;
+            offsetY -= line_height;
+        } else {
+            const ret = createPath(char, scale, offsetX, offsetY, data);
+            offsetX += ret.offsetX;
+            paths.push(ret.path);
+        }
+    }
+    return paths;
+}
+function createPath(char, scale, offsetX, offsetY, data) {
+    const glyph = data.glyphs[char] || data.glyphs["?"];
+    if (!glyph) {
+        console.error('THREE.Font: character "' + char + '" does not exists in font family ' + data.familyName + ".");
+        return;
+    }
+    const path = new (0, _three.ShapePath)();
+    let x, y, cpx, cpy, cpx1, cpy1, cpx2, cpy2;
+    if (glyph.o) {
+        const outline = glyph._cachedOutline || (glyph._cachedOutline = glyph.o.split(" "));
+        for(let i = 0, l = outline.length; i < l;){
+            const action = outline[i++];
+            switch(action){
+                case "m":
+                    x = outline[i++] * scale + offsetX;
+                    y = outline[i++] * scale + offsetY;
+                    path.moveTo(x, y);
+                    break;
+                case "l":
+                    x = outline[i++] * scale + offsetX;
+                    y = outline[i++] * scale + offsetY;
+                    path.lineTo(x, y);
+                    break;
+                case "q":
+                    cpx = outline[i++] * scale + offsetX;
+                    cpy = outline[i++] * scale + offsetY;
+                    cpx1 = outline[i++] * scale + offsetX;
+                    cpy1 = outline[i++] * scale + offsetY;
+                    path.quadraticCurveTo(cpx1, cpy1, cpx, cpy);
+                    break;
+                case "b":
+                    cpx = outline[i++] * scale + offsetX;
+                    cpy = outline[i++] * scale + offsetY;
+                    cpx1 = outline[i++] * scale + offsetX;
+                    cpy1 = outline[i++] * scale + offsetY;
+                    cpx2 = outline[i++] * scale + offsetX;
+                    cpy2 = outline[i++] * scale + offsetY;
+                    path.bezierCurveTo(cpx1, cpy1, cpx2, cpy2, cpx, cpy);
+                    break;
+            }
+        }
+    }
+    return {
+        offsetX: glyph.ha * scale,
+        path: path
+    };
+}
+
+},{"three":"ktPTu","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"iSJKe":[function(require,module,exports) {
+// Original src: https://github.com/zz85/threejs-path-flow
+var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
+parcelHelpers.defineInteropFlag(exports);
+/**
+ * Make a new DataTexture to store the descriptions of the curves.
+ *
+ * @param { number } numberOfCurves the number of curves needed to be described by this texture.
+ */ parcelHelpers.export(exports, "initSplineTexture", ()=>initSplineTexture);
+/**
+ * Write the curve description to the data texture
+ *
+ * @param { DataTexture } texture The DataTexture to write to
+ * @param { Curve } splineCurve The curve to describe
+ * @param { number } offset Which curve slot to write to
+ */ parcelHelpers.export(exports, "updateSplineTexture", ()=>updateSplineTexture);
+/**
+ * Create a new set of uniforms for describing the curve modifier
+ *
+ * @param { DataTexture } Texture which holds the curve description
+ */ parcelHelpers.export(exports, "getUniforms", ()=>getUniforms);
+parcelHelpers.export(exports, "modifyShader", ()=>modifyShader);
+/**
+ * A helper class for making meshes bend aroudn curves
+ */ parcelHelpers.export(exports, "Flow", ()=>Flow);
+/**
+ * A helper class for creating instanced versions of flow, where the instances are placed on the curve.
+ */ parcelHelpers.export(exports, "InstancedFlow", ()=>InstancedFlow);
+var _three = require("three");
+const CHANNELS = 4;
+const TEXTURE_WIDTH = 1024;
+const TEXTURE_HEIGHT = 4;
+function initSplineTexture(numberOfCurves = 1) {
+    const dataArray = new Float32Array(TEXTURE_WIDTH * TEXTURE_HEIGHT * numberOfCurves * CHANNELS);
+    const dataTexture = new (0, _three.DataTexture)(dataArray, TEXTURE_WIDTH, TEXTURE_HEIGHT * numberOfCurves, (0, _three.RGBAFormat), (0, _three.FloatType));
+    dataTexture.wrapS = (0, _three.RepeatWrapping);
+    dataTexture.wrapY = (0, _three.RepeatWrapping);
+    dataTexture.magFilter = (0, _three.NearestFilter);
+    dataTexture.needsUpdate = true;
+    return dataTexture;
+}
+function updateSplineTexture(texture, splineCurve, offset = 0) {
+    const numberOfPoints = Math.floor(TEXTURE_WIDTH * (TEXTURE_HEIGHT / 4));
+    splineCurve.arcLengthDivisions = numberOfPoints / 2;
+    splineCurve.updateArcLengths();
+    const points = splineCurve.getSpacedPoints(numberOfPoints);
+    const frenetFrames = splineCurve.computeFrenetFrames(numberOfPoints, true);
+    for(let i = 0; i < numberOfPoints; i++){
+        const rowOffset = Math.floor(i / TEXTURE_WIDTH);
+        const rowIndex = i % TEXTURE_WIDTH;
+        let pt = points[i];
+        setTextureValue(texture, rowIndex, pt.x, pt.y, pt.z, 0 + rowOffset + TEXTURE_HEIGHT * offset);
+        pt = frenetFrames.tangents[i];
+        setTextureValue(texture, rowIndex, pt.x, pt.y, pt.z, 1 + rowOffset + TEXTURE_HEIGHT * offset);
+        pt = frenetFrames.normals[i];
+        setTextureValue(texture, rowIndex, pt.x, pt.y, pt.z, 2 + rowOffset + TEXTURE_HEIGHT * offset);
+        pt = frenetFrames.binormals[i];
+        setTextureValue(texture, rowIndex, pt.x, pt.y, pt.z, 3 + rowOffset + TEXTURE_HEIGHT * offset);
+    }
+    texture.needsUpdate = true;
+}
+function setTextureValue(texture, index, x, y, z, o) {
+    const image = texture.image;
+    const { data  } = image;
+    const i = CHANNELS * TEXTURE_WIDTH * o; // Row Offset
+    data[index * CHANNELS + i + 0] = x;
+    data[index * CHANNELS + i + 1] = y;
+    data[index * CHANNELS + i + 2] = z;
+    data[index * CHANNELS + i + 3] = 1;
+}
+function getUniforms(splineTexture) {
+    const uniforms = {
+        spineTexture: {
+            value: splineTexture
+        },
+        pathOffset: {
+            type: "f",
+            value: 0
+        },
+        pathSegment: {
+            type: "f",
+            value: 1
+        },
+        spineOffset: {
+            type: "f",
+            value: 161
+        },
+        spineLength: {
+            type: "f",
+            value: 400
+        },
+        flow: {
+            type: "i",
+            value: 1
+        }
+    };
+    return uniforms;
+}
+function modifyShader(material, uniforms, numberOfCurves = 1) {
+    if (material.__ok) return;
+    material.__ok = true;
+    material.onBeforeCompile = (shader)=>{
+        if (shader.__modified) return;
+        shader.__modified = true;
+        Object.assign(shader.uniforms, uniforms);
+        const vertexShader = `
+		uniform sampler2D spineTexture;
+		uniform float pathOffset;
+		uniform float pathSegment;
+		uniform float spineOffset;
+		uniform float spineLength;
+		uniform int flow;
+
+		float textureLayers = ${TEXTURE_HEIGHT * numberOfCurves}.;
+		float textureStacks = ${TEXTURE_HEIGHT / 4}.;
+
+		${shader.vertexShader}
+		`// chunk import moved in front of modified shader below
+        .replace("#include <beginnormal_vertex>", "")// vec3 transformedNormal declaration overriden below
+        .replace("#include <defaultnormal_vertex>", "")// vec3 transformed declaration overriden below
+        .replace("#include <begin_vertex>", "")// shader override
+        .replace(/void\s*main\s*\(\)\s*\{/, `
+void main() {
+#include <beginnormal_vertex>
+
+vec4 worldPos = modelMatrix * vec4(position, 1.);
+
+bool bend = flow > 0;
+float xWeight = bend ? 0. : 1.;
+
+#ifdef USE_INSTANCING
+float pathOffsetFromInstanceMatrix = instanceMatrix[3][2];
+float spineLengthFromInstanceMatrix = instanceMatrix[3][0];
+float spinePortion = bend ? (worldPos.x + spineOffset) / spineLengthFromInstanceMatrix : 0.;
+float mt = (spinePortion * pathSegment + pathOffset + pathOffsetFromInstanceMatrix)*textureStacks;
+#else
+float spinePortion = bend ? (worldPos.x + spineOffset) / spineLength : 0.;
+float mt = (spinePortion * pathSegment + pathOffset)*textureStacks;
+#endif
+
+mt = mod(mt, textureStacks);
+float rowOffset = floor(mt);
+
+#ifdef USE_INSTANCING
+rowOffset += instanceMatrix[3][1] * ${TEXTURE_HEIGHT}.;
+#endif
+
+vec3 spinePos = texture2D(spineTexture, vec2(mt, (0. + rowOffset + 0.5) / textureLayers)).xyz;
+vec3 a =        texture2D(spineTexture, vec2(mt, (1. + rowOffset + 0.5) / textureLayers)).xyz;
+vec3 b =        texture2D(spineTexture, vec2(mt, (2. + rowOffset + 0.5) / textureLayers)).xyz;
+vec3 c =        texture2D(spineTexture, vec2(mt, (3. + rowOffset + 0.5) / textureLayers)).xyz;
+mat3 basis = mat3(a, b, c);
+
+vec3 transformed = basis
+	* vec3(worldPos.x * xWeight, worldPos.y * 1., worldPos.z * 1.)
+	+ spinePos;
+
+vec3 transformedNormal = normalMatrix * (basis * objectNormal);
+			`).replace("#include <project_vertex>", `vec4 mvPosition = modelViewMatrix * vec4( transformed, 1.0 );
+				gl_Position = projectionMatrix * mvPosition;`);
+        shader.vertexShader = vertexShader;
+    };
+}
+class Flow {
+    /**
+	 * @param {Mesh} mesh The mesh to clone and modify to bend around the curve
+	 * @param {number} numberOfCurves The amount of space that should preallocated for additional curves
+	 */ constructor(mesh, numberOfCurves = 1){
+        const obj3D = mesh.clone();
+        const splineTexure = initSplineTexture(numberOfCurves);
+        const uniforms = getUniforms(splineTexure);
+        obj3D.traverse(function(child) {
+            if (child instanceof (0, _three.Mesh) || child instanceof (0, _three.InstancedMesh)) {
+                child.material = child.material.clone();
+                modifyShader(child.material, uniforms, numberOfCurves);
+            }
+        });
+        this.curveArray = new Array(numberOfCurves);
+        this.curveLengthArray = new Array(numberOfCurves);
+        this.object3D = obj3D;
+        this.splineTexure = splineTexure;
+        this.uniforms = uniforms;
+    }
+    updateCurve(index, curve) {
+        if (index >= this.curveArray.length) throw Error("Index out of range for Flow");
+        const curveLength = curve.getLength();
+        this.uniforms.spineLength.value = curveLength;
+        this.curveLengthArray[index] = curveLength;
+        this.curveArray[index] = curve;
+        updateSplineTexture(this.splineTexure, curve, index);
+    }
+    moveAlongCurve(amount) {
+        this.uniforms.pathOffset.value += amount;
+    }
+}
+const matrix = new (0, _three.Matrix4)();
+class InstancedFlow extends Flow {
+    /**
+	 *
+	 * @param {number} count The number of instanced elements
+	 * @param {number} curveCount The number of curves to preallocate for
+	 * @param {Geometry} geometry The geometry to use for the instanced mesh
+	 * @param {Material} material The material to use for the instanced mesh
+	 */ constructor(count, curveCount, geometry, material){
+        const mesh = new (0, _three.InstancedMesh)(geometry, material, count);
+        mesh.instanceMatrix.setUsage((0, _three.DynamicDrawUsage));
+        super(mesh, curveCount);
+        this.offsets = new Array(count).fill(0);
+        this.whichCurve = new Array(count).fill(0);
+    }
+    /**
+	 * The extra information about which curve and curve position is stored in the translation components of the matrix for the instanced objects
+	 * This writes that information to the matrix and marks it as needing update.
+	 *
+	 * @param {number} index of the instanced element to update
+	 */ writeChanges(index) {
+        matrix.makeTranslation(this.curveLengthArray[this.whichCurve[index]], this.whichCurve[index], this.offsets[index]);
+        this.object3D.setMatrixAt(index, matrix);
+        this.object3D.instanceMatrix.needsUpdate = true;
+    }
+    /**
+	 * Move an individual element along the curve by a specific amount
+	 *
+	 * @param {number} index Which element to update
+	 * @param {number} offset Move by how much
+	 */ moveIndividualAlongCurve(index, offset) {
+        this.offsets[index] += offset;
+        this.writeChanges(index);
+    }
+    /**
+	 * Select which curve to use for an element
+	 *
+	 * @param {number} index the index of the instanced element to update
+	 * @param {number} curveNo the index of the curve it should use
+	 */ setCurve(index, curveNo) {
+        if (isNaN(curveNo)) throw Error("curve index being set is Not a Number (NaN)");
+        this.whichCurve[index] = curveNo;
+        this.writeChanges(index);
+    }
+}
+
+},{"three":"ktPTu","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"d5vi9":[function(require,module,exports) {
+/**
+ * Text = 3D Text
+ *
+ * parameters = {
+ *  font: <THREE.Font>, // font
+ *
+ *  size: <float>, // size of the text
+ *  height: <float>, // thickness to extrude text
+ *  curveSegments: <int>, // number of points on the curves
+ *
+ *  bevelEnabled: <bool>, // turn on bevel
+ *  bevelThickness: <float>, // how deep into text bevel goes
+ *  bevelSize: <float>, // how far from text outline (including bevelOffset) is bevel
+ *  bevelOffset: <float> // how far from text outline does bevel start
+ * }
+ */ var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
+parcelHelpers.defineInteropFlag(exports);
+parcelHelpers.export(exports, "TextGeometry", ()=>TextGeometry);
+var _three = require("three");
+class TextGeometry extends (0, _three.ExtrudeGeometry) {
+    constructor(text, parameters = {}){
+        const font = parameters.font;
+        if (font === undefined) super(); // generate default extrude geometry
+        else {
+            const shapes = font.generateShapes(text, parameters.size);
+            // translate parameters to ExtrudeGeometry API
+            parameters.depth = parameters.height !== undefined ? parameters.height : 50;
+            // defaults
+            if (parameters.bevelThickness === undefined) parameters.bevelThickness = 10;
+            if (parameters.bevelSize === undefined) parameters.bevelSize = 8;
+            if (parameters.bevelEnabled === undefined) parameters.bevelEnabled = false;
+            super(shapes, parameters);
+        }
+        this.type = "TextGeometry";
+    }
+}
+
+},{"three":"ktPTu","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"kgvYG":[function(require,module,exports) {
+var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
+parcelHelpers.defineInteropFlag(exports);
+parcelHelpers.export(exports, "Line2", ()=>Line2);
+var _lineSegments2Js = require("../lines/LineSegments2.js");
+var _lineGeometryJs = require("../lines/LineGeometry.js");
+var _lineMaterialJs = require("../lines/LineMaterial.js");
+class Line2 extends (0, _lineSegments2Js.LineSegments2) {
+    constructor(geometry = new (0, _lineGeometryJs.LineGeometry)(), material = new (0, _lineMaterialJs.LineMaterial)({
+        color: Math.random() * 0xffffff
+    })){
+        super(geometry, material);
+        this.isLine2 = true;
+        this.type = "Line2";
+    }
+}
+
+},{"../lines/LineSegments2.js":"9bg2f","../lines/LineGeometry.js":"5c0fE","../lines/LineMaterial.js":"insFK","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"9bg2f":[function(require,module,exports) {
+var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
+parcelHelpers.defineInteropFlag(exports);
+parcelHelpers.export(exports, "LineSegments2", ()=>LineSegments2);
+var _three = require("three");
+var _lineSegmentsGeometryJs = require("../lines/LineSegmentsGeometry.js");
+var _lineMaterialJs = require("../lines/LineMaterial.js");
+const _start = new (0, _three.Vector3)();
+const _end = new (0, _three.Vector3)();
+const _start4 = new (0, _three.Vector4)();
+const _end4 = new (0, _three.Vector4)();
+const _ssOrigin = new (0, _three.Vector4)();
+const _ssOrigin3 = new (0, _three.Vector3)();
+const _mvMatrix = new (0, _three.Matrix4)();
+const _line = new (0, _three.Line3)();
+const _closestPoint = new (0, _three.Vector3)();
+const _box = new (0, _three.Box3)();
+const _sphere = new (0, _three.Sphere)();
+const _clipToWorldVector = new (0, _three.Vector4)();
+let _ray, _instanceStart, _instanceEnd, _lineWidth;
+// Returns the margin required to expand by in world space given the distance from the camera,
+// line width, resolution, and camera projection
+function getWorldSpaceHalfWidth(camera, distance, resolution) {
+    // transform into clip space, adjust the x and y values by the pixel width offset, then
+    // transform back into world space to get world offset. Note clip space is [-1, 1] so full
+    // width does not need to be halved.
+    _clipToWorldVector.set(0, 0, -distance, 1.0).applyMatrix4(camera.projectionMatrix);
+    _clipToWorldVector.multiplyScalar(1.0 / _clipToWorldVector.w);
+    _clipToWorldVector.x = _lineWidth / resolution.width;
+    _clipToWorldVector.y = _lineWidth / resolution.height;
+    _clipToWorldVector.applyMatrix4(camera.projectionMatrixInverse);
+    _clipToWorldVector.multiplyScalar(1.0 / _clipToWorldVector.w);
+    return Math.abs(Math.max(_clipToWorldVector.x, _clipToWorldVector.y));
+}
+function raycastWorldUnits(lineSegments, intersects) {
+    for(let i = 0, l = _instanceStart.count; i < l; i++){
+        _line.start.fromBufferAttribute(_instanceStart, i);
+        _line.end.fromBufferAttribute(_instanceEnd, i);
+        const pointOnLine = new (0, _three.Vector3)();
+        const point = new (0, _three.Vector3)();
+        _ray.distanceSqToSegment(_line.start, _line.end, point, pointOnLine);
+        const isInside = point.distanceTo(pointOnLine) < _lineWidth * 0.5;
+        if (isInside) intersects.push({
+            point,
+            pointOnLine,
+            distance: _ray.origin.distanceTo(point),
+            object: lineSegments,
+            face: null,
+            faceIndex: i,
+            uv: null,
+            uv2: null
+        });
+    }
+}
+function raycastScreenSpace(lineSegments, camera, intersects) {
+    const projectionMatrix = camera.projectionMatrix;
+    const material = lineSegments.material;
+    const resolution = material.resolution;
+    const matrixWorld = lineSegments.matrixWorld;
+    const geometry = lineSegments.geometry;
+    const instanceStart = geometry.attributes.instanceStart;
+    const instanceEnd = geometry.attributes.instanceEnd;
+    const near = -camera.near;
+    //
+    // pick a point 1 unit out along the ray to avoid the ray origin
+    // sitting at the camera origin which will cause "w" to be 0 when
+    // applying the projection matrix.
+    _ray.at(1, _ssOrigin);
+    // ndc space [ - 1.0, 1.0 ]
+    _ssOrigin.w = 1;
+    _ssOrigin.applyMatrix4(camera.matrixWorldInverse);
+    _ssOrigin.applyMatrix4(projectionMatrix);
+    _ssOrigin.multiplyScalar(1 / _ssOrigin.w);
+    // screen space
+    _ssOrigin.x *= resolution.x / 2;
+    _ssOrigin.y *= resolution.y / 2;
+    _ssOrigin.z = 0;
+    _ssOrigin3.copy(_ssOrigin);
+    _mvMatrix.multiplyMatrices(camera.matrixWorldInverse, matrixWorld);
+    for(let i = 0, l = instanceStart.count; i < l; i++){
+        _start4.fromBufferAttribute(instanceStart, i);
+        _end4.fromBufferAttribute(instanceEnd, i);
+        _start4.w = 1;
+        _end4.w = 1;
+        // camera space
+        _start4.applyMatrix4(_mvMatrix);
+        _end4.applyMatrix4(_mvMatrix);
+        // skip the segment if it's entirely behind the camera
+        const isBehindCameraNear = _start4.z > near && _end4.z > near;
+        if (isBehindCameraNear) continue;
+        // trim the segment if it extends behind camera near
+        if (_start4.z > near) {
+            const deltaDist = _start4.z - _end4.z;
+            const t = (_start4.z - near) / deltaDist;
+            _start4.lerp(_end4, t);
+        } else if (_end4.z > near) {
+            const deltaDist1 = _end4.z - _start4.z;
+            const t1 = (_end4.z - near) / deltaDist1;
+            _end4.lerp(_start4, t1);
+        }
+        // clip space
+        _start4.applyMatrix4(projectionMatrix);
+        _end4.applyMatrix4(projectionMatrix);
+        // ndc space [ - 1.0, 1.0 ]
+        _start4.multiplyScalar(1 / _start4.w);
+        _end4.multiplyScalar(1 / _end4.w);
+        // screen space
+        _start4.x *= resolution.x / 2;
+        _start4.y *= resolution.y / 2;
+        _end4.x *= resolution.x / 2;
+        _end4.y *= resolution.y / 2;
+        // create 2d segment
+        _line.start.copy(_start4);
+        _line.start.z = 0;
+        _line.end.copy(_end4);
+        _line.end.z = 0;
+        // get closest point on ray to segment
+        const param = _line.closestPointToPointParameter(_ssOrigin3, true);
+        _line.at(param, _closestPoint);
+        // check if the intersection point is within clip space
+        const zPos = (0, _three.MathUtils).lerp(_start4.z, _end4.z, param);
+        const isInClipSpace = zPos >= -1 && zPos <= 1;
+        const isInside = _ssOrigin3.distanceTo(_closestPoint) < _lineWidth * 0.5;
+        if (isInClipSpace && isInside) {
+            _line.start.fromBufferAttribute(instanceStart, i);
+            _line.end.fromBufferAttribute(instanceEnd, i);
+            _line.start.applyMatrix4(matrixWorld);
+            _line.end.applyMatrix4(matrixWorld);
+            const pointOnLine = new (0, _three.Vector3)();
+            const point = new (0, _three.Vector3)();
+            _ray.distanceSqToSegment(_line.start, _line.end, point, pointOnLine);
+            intersects.push({
+                point: point,
+                pointOnLine: pointOnLine,
+                distance: _ray.origin.distanceTo(point),
+                object: lineSegments,
+                face: null,
+                faceIndex: i,
+                uv: null,
+                uv2: null
+            });
+        }
+    }
+}
+class LineSegments2 extends (0, _three.Mesh) {
+    constructor(geometry = new (0, _lineSegmentsGeometryJs.LineSegmentsGeometry)(), material = new (0, _lineMaterialJs.LineMaterial)({
+        color: Math.random() * 0xffffff
+    })){
+        super(geometry, material);
+        this.isLineSegments2 = true;
+        this.type = "LineSegments2";
+    }
+    // for backwards-compatibility, but could be a method of LineSegmentsGeometry...
+    computeLineDistances() {
+        const geometry = this.geometry;
+        const instanceStart = geometry.attributes.instanceStart;
+        const instanceEnd = geometry.attributes.instanceEnd;
+        const lineDistances = new Float32Array(2 * instanceStart.count);
+        for(let i = 0, j = 0, l = instanceStart.count; i < l; i++, j += 2){
+            _start.fromBufferAttribute(instanceStart, i);
+            _end.fromBufferAttribute(instanceEnd, i);
+            lineDistances[j] = j === 0 ? 0 : lineDistances[j - 1];
+            lineDistances[j + 1] = lineDistances[j] + _start.distanceTo(_end);
+        }
+        const instanceDistanceBuffer = new (0, _three.InstancedInterleavedBuffer)(lineDistances, 2, 1); // d0, d1
+        geometry.setAttribute("instanceDistanceStart", new (0, _three.InterleavedBufferAttribute)(instanceDistanceBuffer, 1, 0)); // d0
+        geometry.setAttribute("instanceDistanceEnd", new (0, _three.InterleavedBufferAttribute)(instanceDistanceBuffer, 1, 1)); // d1
+        return this;
+    }
+    raycast(raycaster, intersects) {
+        const worldUnits = this.material.worldUnits;
+        const camera = raycaster.camera;
+        if (camera === null && !worldUnits) console.error('LineSegments2: "Raycaster.camera" needs to be set in order to raycast against LineSegments2 while worldUnits is set to false.');
+        const threshold = raycaster.params.Line2 !== undefined ? raycaster.params.Line2.threshold || 0 : 0;
+        _ray = raycaster.ray;
+        const matrixWorld = this.matrixWorld;
+        const geometry = this.geometry;
+        const material = this.material;
+        _lineWidth = material.linewidth + threshold;
+        _instanceStart = geometry.attributes.instanceStart;
+        _instanceEnd = geometry.attributes.instanceEnd;
+        // check if we intersect the sphere bounds
+        if (geometry.boundingSphere === null) geometry.computeBoundingSphere();
+        _sphere.copy(geometry.boundingSphere).applyMatrix4(matrixWorld);
+        // increase the sphere bounds by the worst case line screen space width
+        let sphereMargin;
+        if (worldUnits) sphereMargin = _lineWidth * 0.5;
+        else {
+            const distanceToSphere = Math.max(camera.near, _sphere.distanceToPoint(_ray.origin));
+            sphereMargin = getWorldSpaceHalfWidth(camera, distanceToSphere, material.resolution);
+        }
+        _sphere.radius += sphereMargin;
+        if (_ray.intersectsSphere(_sphere) === false) return;
+        // check if we intersect the box bounds
+        if (geometry.boundingBox === null) geometry.computeBoundingBox();
+        _box.copy(geometry.boundingBox).applyMatrix4(matrixWorld);
+        // increase the box bounds by the worst case line width
+        let boxMargin;
+        if (worldUnits) boxMargin = _lineWidth * 0.5;
+        else {
+            const distanceToBox = Math.max(camera.near, _box.distanceToPoint(_ray.origin));
+            boxMargin = getWorldSpaceHalfWidth(camera, distanceToBox, material.resolution);
+        }
+        _box.expandByScalar(boxMargin);
+        if (_ray.intersectsBox(_box) === false) return;
+        if (worldUnits) raycastWorldUnits(this, intersects);
+        else raycastScreenSpace(this, camera, intersects);
+    }
+}
+
+},{"three":"ktPTu","../lines/LineSegmentsGeometry.js":"c91zC","../lines/LineMaterial.js":"insFK","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"c91zC":[function(require,module,exports) {
+var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
+parcelHelpers.defineInteropFlag(exports);
+parcelHelpers.export(exports, "LineSegmentsGeometry", ()=>LineSegmentsGeometry);
+var _three = require("three");
+const _box = new (0, _three.Box3)();
+const _vector = new (0, _three.Vector3)();
+class LineSegmentsGeometry extends (0, _three.InstancedBufferGeometry) {
+    constructor(){
+        super();
+        this.isLineSegmentsGeometry = true;
+        this.type = "LineSegmentsGeometry";
+        const positions = [
+            -1,
+            2,
+            0,
+            1,
+            2,
+            0,
+            -1,
+            1,
+            0,
+            1,
+            1,
+            0,
+            -1,
+            0,
+            0,
+            1,
+            0,
+            0,
+            -1,
+            -1,
+            0,
+            1,
+            -1,
+            0
+        ];
+        const uvs = [
+            -1,
+            2,
+            1,
+            2,
+            -1,
+            1,
+            1,
+            1,
+            -1,
+            -1,
+            1,
+            -1,
+            -1,
+            -2,
+            1,
+            -2
+        ];
+        const index = [
+            0,
+            2,
+            1,
+            2,
+            3,
+            1,
+            2,
+            4,
+            3,
+            4,
+            5,
+            3,
+            4,
+            6,
+            5,
+            6,
+            7,
+            5
+        ];
+        this.setIndex(index);
+        this.setAttribute("position", new (0, _three.Float32BufferAttribute)(positions, 3));
+        this.setAttribute("uv", new (0, _three.Float32BufferAttribute)(uvs, 2));
+    }
+    applyMatrix4(matrix) {
+        const start = this.attributes.instanceStart;
+        const end = this.attributes.instanceEnd;
+        if (start !== undefined) {
+            start.applyMatrix4(matrix);
+            end.applyMatrix4(matrix);
+            start.needsUpdate = true;
+        }
+        if (this.boundingBox !== null) this.computeBoundingBox();
+        if (this.boundingSphere !== null) this.computeBoundingSphere();
+        return this;
+    }
+    setPositions(array) {
+        let lineSegments;
+        if (array instanceof Float32Array) lineSegments = array;
+        else if (Array.isArray(array)) lineSegments = new Float32Array(array);
+        const instanceBuffer = new (0, _three.InstancedInterleavedBuffer)(lineSegments, 6, 1); // xyz, xyz
+        this.setAttribute("instanceStart", new (0, _three.InterleavedBufferAttribute)(instanceBuffer, 3, 0)); // xyz
+        this.setAttribute("instanceEnd", new (0, _three.InterleavedBufferAttribute)(instanceBuffer, 3, 3)); // xyz
+        //
+        this.computeBoundingBox();
+        this.computeBoundingSphere();
+        return this;
+    }
+    setColors(array) {
+        let colors;
+        if (array instanceof Float32Array) colors = array;
+        else if (Array.isArray(array)) colors = new Float32Array(array);
+        const instanceColorBuffer = new (0, _three.InstancedInterleavedBuffer)(colors, 6, 1); // rgb, rgb
+        this.setAttribute("instanceColorStart", new (0, _three.InterleavedBufferAttribute)(instanceColorBuffer, 3, 0)); // rgb
+        this.setAttribute("instanceColorEnd", new (0, _three.InterleavedBufferAttribute)(instanceColorBuffer, 3, 3)); // rgb
+        return this;
+    }
+    fromWireframeGeometry(geometry) {
+        this.setPositions(geometry.attributes.position.array);
+        return this;
+    }
+    fromEdgesGeometry(geometry) {
+        this.setPositions(geometry.attributes.position.array);
+        return this;
+    }
+    fromMesh(mesh) {
+        this.fromWireframeGeometry(new (0, _three.WireframeGeometry)(mesh.geometry));
+        // set colors, maybe
+        return this;
+    }
+    fromLineSegments(lineSegments) {
+        const geometry = lineSegments.geometry;
+        this.setPositions(geometry.attributes.position.array); // assumes non-indexed
+        // set colors, maybe
+        return this;
+    }
+    computeBoundingBox() {
+        if (this.boundingBox === null) this.boundingBox = new (0, _three.Box3)();
+        const start = this.attributes.instanceStart;
+        const end = this.attributes.instanceEnd;
+        if (start !== undefined && end !== undefined) {
+            this.boundingBox.setFromBufferAttribute(start);
+            _box.setFromBufferAttribute(end);
+            this.boundingBox.union(_box);
+        }
+    }
+    computeBoundingSphere() {
+        if (this.boundingSphere === null) this.boundingSphere = new (0, _three.Sphere)();
+        if (this.boundingBox === null) this.computeBoundingBox();
+        const start = this.attributes.instanceStart;
+        const end = this.attributes.instanceEnd;
+        if (start !== undefined && end !== undefined) {
+            const center = this.boundingSphere.center;
+            this.boundingBox.getCenter(center);
+            let maxRadiusSq = 0;
+            for(let i = 0, il = start.count; i < il; i++){
+                _vector.fromBufferAttribute(start, i);
+                maxRadiusSq = Math.max(maxRadiusSq, center.distanceToSquared(_vector));
+                _vector.fromBufferAttribute(end, i);
+                maxRadiusSq = Math.max(maxRadiusSq, center.distanceToSquared(_vector));
+            }
+            this.boundingSphere.radius = Math.sqrt(maxRadiusSq);
+            if (isNaN(this.boundingSphere.radius)) console.error("THREE.LineSegmentsGeometry.computeBoundingSphere(): Computed radius is NaN. The instanced position data is likely to have NaN values.", this);
+        }
+    }
+    toJSON() {
+    // todo
+    }
+    applyMatrix(matrix) {
+        console.warn("THREE.LineSegmentsGeometry: applyMatrix() has been renamed to applyMatrix4().");
+        return this.applyMatrix4(matrix);
+    }
+}
+
+},{"three":"ktPTu","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"insFK":[function(require,module,exports) {
+/**
+ * parameters = {
+ *  color: <hex>,
+ *  linewidth: <float>,
+ *  dashed: <boolean>,
+ *  dashScale: <float>,
+ *  dashSize: <float>,
+ *  dashOffset: <float>,
+ *  gapSize: <float>,
+ *  resolution: <Vector2>, // to be set by renderer
+ * }
+ */ var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
+parcelHelpers.defineInteropFlag(exports);
+parcelHelpers.export(exports, "LineMaterial", ()=>LineMaterial);
+var _three = require("three");
+(0, _three.UniformsLib).line = {
+    worldUnits: {
+        value: 1
+    },
+    linewidth: {
+        value: 1
+    },
+    resolution: {
+        value: new (0, _three.Vector2)(1, 1)
+    },
+    dashOffset: {
+        value: 0
+    },
+    dashScale: {
+        value: 1
+    },
+    dashSize: {
+        value: 1
+    },
+    gapSize: {
+        value: 1
+    } // todo FIX - maybe change to totalSize
+};
+(0, _three.ShaderLib)["line"] = {
+    uniforms: (0, _three.UniformsUtils).merge([
+        (0, _three.UniformsLib).common,
+        (0, _three.UniformsLib).fog,
+        (0, _three.UniformsLib).line
+    ]),
+    vertexShader: /* glsl */ `
+		#include <common>
+		#include <color_pars_vertex>
+		#include <fog_pars_vertex>
+		#include <logdepthbuf_pars_vertex>
+		#include <clipping_planes_pars_vertex>
+
+		uniform float linewidth;
+		uniform vec2 resolution;
+
+		attribute vec3 instanceStart;
+		attribute vec3 instanceEnd;
+
+		attribute vec3 instanceColorStart;
+		attribute vec3 instanceColorEnd;
+
+		#ifdef WORLD_UNITS
+
+			varying vec4 worldPos;
+			varying vec3 worldStart;
+			varying vec3 worldEnd;
+
+			#ifdef USE_DASH
+
+				varying vec2 vUv;
+
+			#endif
+
+		#else
+
+			varying vec2 vUv;
+
+		#endif
+
+		#ifdef USE_DASH
+
+			uniform float dashScale;
+			attribute float instanceDistanceStart;
+			attribute float instanceDistanceEnd;
+			varying float vLineDistance;
+
+		#endif
+
+		void trimSegment( const in vec4 start, inout vec4 end ) {
+
+			// trim end segment so it terminates between the camera plane and the near plane
+
+			// conservative estimate of the near plane
+			float a = projectionMatrix[ 2 ][ 2 ]; // 3nd entry in 3th column
+			float b = projectionMatrix[ 3 ][ 2 ]; // 3nd entry in 4th column
+			float nearEstimate = - 0.5 * b / a;
+
+			float alpha = ( nearEstimate - start.z ) / ( end.z - start.z );
+
+			end.xyz = mix( start.xyz, end.xyz, alpha );
+
+		}
+
+		void main() {
+
+			#ifdef USE_COLOR
+
+				vColor.xyz = ( position.y < 0.5 ) ? instanceColorStart : instanceColorEnd;
+
+			#endif
+
+			#ifdef USE_DASH
+
+				vLineDistance = ( position.y < 0.5 ) ? dashScale * instanceDistanceStart : dashScale * instanceDistanceEnd;
+				vUv = uv;
+
+			#endif
+
+			float aspect = resolution.x / resolution.y;
+
+			// camera space
+			vec4 start = modelViewMatrix * vec4( instanceStart, 1.0 );
+			vec4 end = modelViewMatrix * vec4( instanceEnd, 1.0 );
+
+			#ifdef WORLD_UNITS
+
+				worldStart = start.xyz;
+				worldEnd = end.xyz;
+
+			#else
+
+				vUv = uv;
+
+			#endif
+
+			// special case for perspective projection, and segments that terminate either in, or behind, the camera plane
+			// clearly the gpu firmware has a way of addressing this issue when projecting into ndc space
+			// but we need to perform ndc-space calculations in the shader, so we must address this issue directly
+			// perhaps there is a more elegant solution -- WestLangley
+
+			bool perspective = ( projectionMatrix[ 2 ][ 3 ] == - 1.0 ); // 4th entry in the 3rd column
+
+			if ( perspective ) {
+
+				if ( start.z < 0.0 && end.z >= 0.0 ) {
+
+					trimSegment( start, end );
+
+				} else if ( end.z < 0.0 && start.z >= 0.0 ) {
+
+					trimSegment( end, start );
+
+				}
+
+			}
+
+			// clip space
+			vec4 clipStart = projectionMatrix * start;
+			vec4 clipEnd = projectionMatrix * end;
+
+			// ndc space
+			vec3 ndcStart = clipStart.xyz / clipStart.w;
+			vec3 ndcEnd = clipEnd.xyz / clipEnd.w;
+
+			// direction
+			vec2 dir = ndcEnd.xy - ndcStart.xy;
+
+			// account for clip-space aspect ratio
+			dir.x *= aspect;
+			dir = normalize( dir );
+
+			#ifdef WORLD_UNITS
+
+				// get the offset direction as perpendicular to the view vector
+				vec3 worldDir = normalize( end.xyz - start.xyz );
+				vec3 offset;
+				if ( position.y < 0.5 ) {
+
+					offset = normalize( cross( start.xyz, worldDir ) );
+
+				} else {
+
+					offset = normalize( cross( end.xyz, worldDir ) );
+
+				}
+
+				// sign flip
+				if ( position.x < 0.0 ) offset *= - 1.0;
+
+				float forwardOffset = dot( worldDir, vec3( 0.0, 0.0, 1.0 ) );
+
+				// don't extend the line if we're rendering dashes because we
+				// won't be rendering the endcaps
+				#ifndef USE_DASH
+
+					// extend the line bounds to encompass  endcaps
+					start.xyz += - worldDir * linewidth * 0.5;
+					end.xyz += worldDir * linewidth * 0.5;
+
+					// shift the position of the quad so it hugs the forward edge of the line
+					offset.xy -= dir * forwardOffset;
+					offset.z += 0.5;
+
+				#endif
+
+				// endcaps
+				if ( position.y > 1.0 || position.y < 0.0 ) {
+
+					offset.xy += dir * 2.0 * forwardOffset;
+
+				}
+
+				// adjust for linewidth
+				offset *= linewidth * 0.5;
+
+				// set the world position
+				worldPos = ( position.y < 0.5 ) ? start : end;
+				worldPos.xyz += offset;
+
+				// project the worldpos
+				vec4 clip = projectionMatrix * worldPos;
+
+				// shift the depth of the projected points so the line
+				// segments overlap neatly
+				vec3 clipPose = ( position.y < 0.5 ) ? ndcStart : ndcEnd;
+				clip.z = clipPose.z * clip.w;
+
+			#else
+
+				vec2 offset = vec2( dir.y, - dir.x );
+				// undo aspect ratio adjustment
+				dir.x /= aspect;
+				offset.x /= aspect;
+
+				// sign flip
+				if ( position.x < 0.0 ) offset *= - 1.0;
+
+				// endcaps
+				if ( position.y < 0.0 ) {
+
+					offset += - dir;
+
+				} else if ( position.y > 1.0 ) {
+
+					offset += dir;
+
+				}
+
+				// adjust for linewidth
+				offset *= linewidth;
+
+				// adjust for clip-space to screen-space conversion // maybe resolution should be based on viewport ...
+				offset /= resolution.y;
+
+				// select end
+				vec4 clip = ( position.y < 0.5 ) ? clipStart : clipEnd;
+
+				// back to clip space
+				offset *= clip.w;
+
+				clip.xy += offset;
+
+			#endif
+
+			gl_Position = clip;
+
+			vec4 mvPosition = ( position.y < 0.5 ) ? start : end; // this is an approximation
+
+			#include <logdepthbuf_vertex>
+			#include <clipping_planes_vertex>
+			#include <fog_vertex>
+
+		}
+		`,
+    fragmentShader: /* glsl */ `
+		uniform vec3 diffuse;
+		uniform float opacity;
+		uniform float linewidth;
+
+		#ifdef USE_DASH
+
+			uniform float dashOffset;
+			uniform float dashSize;
+			uniform float gapSize;
+
+		#endif
+
+		varying float vLineDistance;
+
+		#ifdef WORLD_UNITS
+
+			varying vec4 worldPos;
+			varying vec3 worldStart;
+			varying vec3 worldEnd;
+
+			#ifdef USE_DASH
+
+				varying vec2 vUv;
+
+			#endif
+
+		#else
+
+			varying vec2 vUv;
+
+		#endif
+
+		#include <common>
+		#include <color_pars_fragment>
+		#include <fog_pars_fragment>
+		#include <logdepthbuf_pars_fragment>
+		#include <clipping_planes_pars_fragment>
+
+		vec2 closestLineToLine(vec3 p1, vec3 p2, vec3 p3, vec3 p4) {
+
+			float mua;
+			float mub;
+
+			vec3 p13 = p1 - p3;
+			vec3 p43 = p4 - p3;
+
+			vec3 p21 = p2 - p1;
+
+			float d1343 = dot( p13, p43 );
+			float d4321 = dot( p43, p21 );
+			float d1321 = dot( p13, p21 );
+			float d4343 = dot( p43, p43 );
+			float d2121 = dot( p21, p21 );
+
+			float denom = d2121 * d4343 - d4321 * d4321;
+
+			float numer = d1343 * d4321 - d1321 * d4343;
+
+			mua = numer / denom;
+			mua = clamp( mua, 0.0, 1.0 );
+			mub = ( d1343 + d4321 * ( mua ) ) / d4343;
+			mub = clamp( mub, 0.0, 1.0 );
+
+			return vec2( mua, mub );
+
+		}
+
+		void main() {
+
+			#include <clipping_planes_fragment>
+
+			#ifdef USE_DASH
+
+				if ( vUv.y < - 1.0 || vUv.y > 1.0 ) discard; // discard endcaps
+
+				if ( mod( vLineDistance + dashOffset, dashSize + gapSize ) > dashSize ) discard; // todo - FIX
+
+			#endif
+
+			float alpha = opacity;
+
+			#ifdef WORLD_UNITS
+
+				// Find the closest points on the view ray and the line segment
+				vec3 rayEnd = normalize( worldPos.xyz ) * 1e5;
+				vec3 lineDir = worldEnd - worldStart;
+				vec2 params = closestLineToLine( worldStart, worldEnd, vec3( 0.0, 0.0, 0.0 ), rayEnd );
+
+				vec3 p1 = worldStart + lineDir * params.x;
+				vec3 p2 = rayEnd * params.y;
+				vec3 delta = p1 - p2;
+				float len = length( delta );
+				float norm = len / linewidth;
+
+				#ifndef USE_DASH
+
+					#ifdef USE_ALPHA_TO_COVERAGE
+
+						float dnorm = fwidth( norm );
+						alpha = 1.0 - smoothstep( 0.5 - dnorm, 0.5 + dnorm, norm );
+
+					#else
+
+						if ( norm > 0.5 ) {
+
+							discard;
+
+						}
+
+					#endif
+
+				#endif
+
+			#else
+
+				#ifdef USE_ALPHA_TO_COVERAGE
+
+					// artifacts appear on some hardware if a derivative is taken within a conditional
+					float a = vUv.x;
+					float b = ( vUv.y > 0.0 ) ? vUv.y - 1.0 : vUv.y + 1.0;
+					float len2 = a * a + b * b;
+					float dlen = fwidth( len2 );
+
+					if ( abs( vUv.y ) > 1.0 ) {
+
+						alpha = 1.0 - smoothstep( 1.0 - dlen, 1.0 + dlen, len2 );
+
+					}
+
+				#else
+
+					if ( abs( vUv.y ) > 1.0 ) {
+
+						float a = vUv.x;
+						float b = ( vUv.y > 0.0 ) ? vUv.y - 1.0 : vUv.y + 1.0;
+						float len2 = a * a + b * b;
+
+						if ( len2 > 1.0 ) discard;
+
+					}
+
+				#endif
+
+			#endif
+
+			vec4 diffuseColor = vec4( diffuse, alpha );
+
+			#include <logdepthbuf_fragment>
+			#include <color_fragment>
+
+			gl_FragColor = vec4( diffuseColor.rgb, alpha );
+
+			#include <tonemapping_fragment>
+			#include <encodings_fragment>
+			#include <fog_fragment>
+			#include <premultiplied_alpha_fragment>
+
+		}
+		`
+};
+class LineMaterial extends (0, _three.ShaderMaterial) {
+    constructor(parameters){
+        super({
+            type: "LineMaterial",
+            uniforms: (0, _three.UniformsUtils).clone((0, _three.ShaderLib)["line"].uniforms),
+            vertexShader: (0, _three.ShaderLib)["line"].vertexShader,
+            fragmentShader: (0, _three.ShaderLib)["line"].fragmentShader,
+            clipping: true // required for clipping support
+        });
+        this.isLineMaterial = true;
+        Object.defineProperties(this, {
+            color: {
+                enumerable: true,
+                get: function() {
+                    return this.uniforms.diffuse.value;
+                },
+                set: function(value) {
+                    this.uniforms.diffuse.value = value;
+                }
+            },
+            worldUnits: {
+                enumerable: true,
+                get: function() {
+                    return "WORLD_UNITS" in this.defines;
+                },
+                set: function(value) {
+                    if (value === true) this.defines.WORLD_UNITS = "";
+                    else delete this.defines.WORLD_UNITS;
+                }
+            },
+            linewidth: {
+                enumerable: true,
+                get: function() {
+                    return this.uniforms.linewidth.value;
+                },
+                set: function(value) {
+                    this.uniforms.linewidth.value = value;
+                }
+            },
+            dashed: {
+                enumerable: true,
+                get: function() {
+                    return Boolean("USE_DASH" in this.defines);
+                },
+                set (value) {
+                    if (Boolean(value) !== Boolean("USE_DASH" in this.defines)) this.needsUpdate = true;
+                    if (value === true) this.defines.USE_DASH = "";
+                    else delete this.defines.USE_DASH;
+                }
+            },
+            dashScale: {
+                enumerable: true,
+                get: function() {
+                    return this.uniforms.dashScale.value;
+                },
+                set: function(value) {
+                    this.uniforms.dashScale.value = value;
+                }
+            },
+            dashSize: {
+                enumerable: true,
+                get: function() {
+                    return this.uniforms.dashSize.value;
+                },
+                set: function(value) {
+                    this.uniforms.dashSize.value = value;
+                }
+            },
+            dashOffset: {
+                enumerable: true,
+                get: function() {
+                    return this.uniforms.dashOffset.value;
+                },
+                set: function(value) {
+                    this.uniforms.dashOffset.value = value;
+                }
+            },
+            gapSize: {
+                enumerable: true,
+                get: function() {
+                    return this.uniforms.gapSize.value;
+                },
+                set: function(value) {
+                    this.uniforms.gapSize.value = value;
+                }
+            },
+            opacity: {
+                enumerable: true,
+                get: function() {
+                    return this.uniforms.opacity.value;
+                },
+                set: function(value) {
+                    this.uniforms.opacity.value = value;
+                }
+            },
+            resolution: {
+                enumerable: true,
+                get: function() {
+                    return this.uniforms.resolution.value;
+                },
+                set: function(value) {
+                    this.uniforms.resolution.value.copy(value);
+                }
+            },
+            alphaToCoverage: {
+                enumerable: true,
+                get: function() {
+                    return Boolean("USE_ALPHA_TO_COVERAGE" in this.defines);
+                },
+                set: function(value) {
+                    if (Boolean(value) !== Boolean("USE_ALPHA_TO_COVERAGE" in this.defines)) this.needsUpdate = true;
+                    if (value === true) {
+                        this.defines.USE_ALPHA_TO_COVERAGE = "";
+                        this.extensions.derivatives = true;
+                    } else {
+                        delete this.defines.USE_ALPHA_TO_COVERAGE;
+                        this.extensions.derivatives = false;
+                    }
+                }
+            }
+        });
+        this.setValues(parameters);
+    }
+}
+
+},{"three":"ktPTu","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"5c0fE":[function(require,module,exports) {
+var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
+parcelHelpers.defineInteropFlag(exports);
+parcelHelpers.export(exports, "LineGeometry", ()=>LineGeometry);
+var _lineSegmentsGeometryJs = require("../lines/LineSegmentsGeometry.js");
+class LineGeometry extends (0, _lineSegmentsGeometryJs.LineSegmentsGeometry) {
+    constructor(){
+        super();
+        this.isLineGeometry = true;
+        this.type = "LineGeometry";
+    }
+    setPositions(array) {
+        // converts [ x1, y1, z1,  x2, y2, z2, ... ] to pairs format
+        const length = array.length - 3;
+        const points = new Float32Array(2 * length);
+        for(let i = 0; i < length; i += 3){
+            points[2 * i] = array[i];
+            points[2 * i + 1] = array[i + 1];
+            points[2 * i + 2] = array[i + 2];
+            points[2 * i + 3] = array[i + 3];
+            points[2 * i + 4] = array[i + 4];
+            points[2 * i + 5] = array[i + 5];
+        }
+        super.setPositions(points);
+        return this;
+    }
+    setColors(array) {
+        // converts [ r1, g1, b1,  r2, g2, b2, ... ] to pairs format
+        const length = array.length - 3;
+        const colors = new Float32Array(2 * length);
+        for(let i = 0; i < length; i += 3){
+            colors[2 * i] = array[i];
+            colors[2 * i + 1] = array[i + 1];
+            colors[2 * i + 2] = array[i + 2];
+            colors[2 * i + 3] = array[i + 3];
+            colors[2 * i + 4] = array[i + 4];
+            colors[2 * i + 5] = array[i + 5];
+        }
+        super.setColors(colors);
+        return this;
+    }
+    fromLine(line) {
+        const geometry = line.geometry;
+        this.setPositions(geometry.attributes.position.array); // assumes non-indexed
+        // set colors, maybe
+        return this;
+    }
+}
+
+},{"../lines/LineSegmentsGeometry.js":"c91zC","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"bYvHP":[function(require,module,exports) {
+var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
+parcelHelpers.defineInteropFlag(exports);
+parcelHelpers.export(exports, "ActivateFirstPerson", ()=>ActivateFirstPerson);
+parcelHelpers.export(exports, "OnKeyDown", ()=>OnKeyDown);
+parcelHelpers.export(exports, "OnKeyUp", ()=>OnKeyUp);
+const ActivateFirstPerson = ()=>{
+    console.log("First Person is activated.");
+};
+const OnKeyDown = (event)=>{
+    // Check input codes.
+    //console.log("Pressed: " + event.code);
+    switch(event.code){
+        case "ArrowUp":
+        case "KeyW":
+            console.log("forward");
+            break;
+        case "ArrowDown":
+        case "KeyS":
+            console.log("backwards");
+            break;
+        case "ArrowLeft":
+        case "KeyA":
+            console.log("left");
+            break;
+        case "ArrowRight":
+        case "KeyD":
+            console.log("Right.");
+            break;
+        case "KeyE":
+            console.log("Upwards");
+            break;
+        case "KeyQ":
+            console.log("Downwards.");
+            break;
+    }
+};
+const OnKeyUp = (event)=>{
+    switch(event.code){
+        case "ArrowUp":
+        case "KeyW":
+            console.log("Stopped moving forward.");
+            break;
+        case "ArrowDown":
+        case "KeyS":
+            console.log("Stopped moving backwards.");
+            break;
+        case "ArrowLeft":
+        case "KeyA":
+            console.log("Stopped moving left.");
+            break;
+        case "ArrowRight":
+        case "KeyD":
+            console.log("Stopped moving right.");
+            break;
+        case "KeyE":
+            console.log("Stopped moving upwards.");
+            break;
+        case "KeyQ":
+            console.log("Stopped moving downwards.");
+    }
+};
+
+},{"@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"9P9c0":[function(require,module,exports) {
+//import { pointer, camera, referenceListOfOdysseys, scene } from "./index.js";
+var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
+parcelHelpers.defineInteropFlag(exports);
+parcelHelpers.export(exports, "HighlightHandleLookAt", ()=>HighlightHandleLookAt);
+parcelHelpers.export(exports, "load3DHighlight", ()=>load3DHighlight);
+parcelHelpers.export(exports, "doHighlightRayTrace", ()=>doHighlightRayTrace);
+parcelHelpers.export(exports, "calculateMouseOverLocation", ()=>calculateMouseOverLocation);
+parcelHelpers.export(exports, "highlightTarget", ()=>highlightTarget);
+parcelHelpers.export(exports, "setActiveOdyssey", ()=>setActiveOdyssey);
+parcelHelpers.export(exports, "renderOdysseyInformationPopup", ()=>renderOdysseyInformationPopup);
+var _three = require("three");
+var _gltfloaderJs = require("three/examples/jsm/loaders/GLTFLoader.js");
+var _fontLoaderJs = require("three/examples/jsm/loaders/FontLoader.js");
+var _textGeometryJs = require("three/examples/jsm/geometries/TextGeometry.js");
+/**
+     * Important variables.
+     */ let activeOdyssey, highlightTarget;
+let font;
+let odysseyName;
+let cameraObject;
+let rayDistance;
+/*
+    // Construct the highlight object
+    const mouseOverGeo = new THREE.PlaneGeometry(1,1);
+    const mouseOverTexture = new THREE.TextureLoader().load('./images/test3.png');
+    const mouseOverMat = new THREE.MeshBasicMaterial({color: 0xFFFFFF, transparent: true, map: mouseOverTexture});
+    const mouseOverMesh = new THREE.Mesh(mouseOverGeo, mouseOverMat);
+    */ /*
+    // Construct the information object to display Odyssey info.
+    const infoObjectGeo = new THREE.PlaneGeometry(3,3);
+    const infoObjectTexture = new THREE.TextureLoader().load('./images/Nearby.png');
+    const infoObjectMat = new THREE.MeshBasicMaterial({ side: THREE.DoubleSide, transparent: true, map: infoObjectTexture});
+    const infoObjectMesh = new THREE.Mesh(infoObjectGeo, infoObjectMat);
+    infoObjectMesh.visible = false;
+    */ /*
+    // Construct name sign
+    const namePlaneGeo = new THREE.PlaneGeometry(1, 0.5);
+    const namePlaneMat = new THREE.MeshStandardMaterial({transparent: true, side: THREE.DoubleSide});
+    const namePlaneMesh = new THREE.Mesh(namePlaneGeo, namePlaneMat);
+    mouseOverMesh.add(namePlaneMesh);
+    namePlaneMesh.position.set(0,-0.6,0); //Local position. Is attached to mouseOverMesh.
+    */ // Material for 3D highlight mesh.
+const mat3DHighlight = new _three.MeshBasicMaterial({
+    color: 0x01FFB3,
+    transparent: true,
+    opacity: 0.8
+});
+/*
+    const DrawNameOneCanvas = (name) =>
+    {
+        // Draw name texture
+        const odysseyNameCanvas = document.createElement('canvas');
+        const odysseyNameContent = odysseyNameCanvas.getContext('2d');
+        odysseyNameCanvas.width = 400;
+        odysseyNameCanvas.height = 120;
+        odysseyNameContent.font = "Bold 40px Trebuchet MS";
+
+
+        // fill it.
+        odysseyNameContent.fillStyle = "rgba(0, 0, 0, 0";
+        odysseyNameContent.fillRect(0, 0, odysseyNameContent.width, odysseyNameContent.height);
+
+        // Write name
+        odysseyNameContent.textBaseline = "middle";
+        odysseyNameContent.textAlign = "center";
+        odysseyNameContent.fillStyle = "rgba(1, 255, 179, 1";
+        odysseyNameContent.fillText(name, 200, 30);
+
+
+        const odysseyNameTexture= new THREE.Texture(odysseyNameCanvas);
+        odysseyNameTexture.needsUpdate = true;
+
+        namePlaneMesh.material.map = odysseyNameTexture;
+        //namePlaneMesh.material.map.wrapS = THREE.RepeatWrapping;
+    }
+    */ // Const Variables for Development.
+const mouseOverDistancefromCamera = 5;
+// set active Odyssey for the second highlight.
+const setActiveOdyssey = (Odyssey)=>{
+    activeOdyssey = Odyssey;
+};
+// Call every frame to do a raytrace for the mouse over effect.
+const doHighlightRayTrace = (pointer, camera, referenceListOfOdysseys, scene, Highlight3DModel)=>{
+    if (!cameraObject) cameraObject = camera;
+    // Create raycaster.
+    const highlightRaycaster = new _three.Raycaster();
+    // Set start en direction for raycast.
+    highlightRaycaster.setFromCamera(pointer, camera);
+    // Execute Raycast and respond only to objects in the referelist list.
+    const ray = highlightRaycaster.intersectObjects(referenceListOfOdysseys, false);
+    if (ray.length > 0) {
+        // Ignore the active Odyssey.
+        if (ray[0].object == activeOdyssey) return;
+        // if the ray hits the same Odyssey. Ignore it.
+        if (ray[0].object == highlightTarget) return;
+        else {
+            rayDistance = ray[0].distance;
+            // Set the new Odyssey as highlight target.
+            highlightTarget = ray[0].object;
+            if (!Highlight3DModel.visible) Highlight3DModel.visible = true;
+            // Set 3D highlight model on the oddyssey        
+            Highlight3DModel.position.set(highlightTarget.position.x, highlightTarget.position.y, highlightTarget.position.z);
+            // Set scale of highlight based on distance,.
+            if (ray[0].distance < 45) Highlight3DModel.scale.set(1.5, 1.5, 1.5);
+            else if (ray[0].distance < 100) Highlight3DModel.scale.set(2, 2, 2);
+            else Highlight3DModel.scale.set(2.5, 2.5, 2.5);
+            // if it is the center odyssey ( your own. Set bigger highlight);
+            const pos3D = highlightTarget.position;
+            if (highlightTarget.name == "My Odyssey" || pos3D.x === 0 && pos3D.y === 0 && pos3D.z === 0) Highlight3DModel.scale.set(3, 3, 3);
+            if (odysseyName) scene.remove(odysseyName);
+            odysseyName = generateOdysseyName(highlightTarget.name);
+            handleNamePlacement(odysseyName, camera);
+            scene.add(odysseyName);
+        }
+    }
+};
+const LoadFont = ()=>{
+    const loader = new (0, _fontLoaderJs.FontLoader)();
+    loader.load("fonts/Poppins_Regular.json", (response)=>{
+        font = response;
+    });
+};
+LoadFont(); // Get the font for the text
+const generateOdysseyName = (text)=>{
+    const print = text;
+    const size = 0.5;
+    if (font) {
+        const textGeometry = new (0, _textGeometryJs.TextGeometry)(print, {
+            font: font,
+            size: size,
+            height: 0.2,
+            curveSegments: 12,
+            bevelEnabled: false,
+            bevelThickness: 0.03,
+            bevelSize: 0.02,
+            bevelOffset: 0,
+            bevelSegments: 1
+        });
+        // Center the text
+        textGeometry.computeBoundingBox();
+        textGeometry.translate(-textGeometry.boundingBox.max.x * 0.5, -textGeometry.boundingBox.max.y * 0.5, -textGeometry.boundingBox.max.z * 0.5);
+        const textMaterial = new _three.MeshBasicMaterial({
+            color: 0x01FFB3
+        });
+        const text1 = new _three.Mesh(textGeometry, textMaterial);
+        return text1;
+    }
+};
+const handleNamePlacement = (nameObject)=>{
+    // Set object scale based on distance.
+    let offsetNameLocationVertical;
+    if (highlightTarget.position.x == 0 && highlightTarget.position.y == 0 && highlightTarget.position.z == 0) {
+        nameObject.scale.set(1.2, 1.2, 1.2);
+        offsetNameLocationVertical = 6;
+        console.log(`Main`);
+    } else if (rayDistance < 45) {
+        nameObject.scale.set(1.2, 1.2, 1.2);
+        offsetNameLocationVertical = 3;
+    } else if (rayDistance < 80) {
+        nameObject.scale.set(2, 2, 2);
+        offsetNameLocationVertical = 3;
+    } else if (rayDistance < 120) {
+        nameObject.scale.set(2.5, 2.5, 2.5);
+        offsetNameLocationVertical = 4;
+    } else {
+        nameObject.scale.set(3, 3, 3);
+        offsetNameLocationVertical = 5;
+    }
+    const pos = new (0, _three.Vector3)(highlightTarget.position.x, highlightTarget.position.y, highlightTarget.position.z);
+    nameObject.position.set(pos.x, pos.y + offsetNameLocationVertical, pos.z);
+    HighlightHandleLookAt();
+};
+const HighlightHandleLookAt = ()=>{
+    if (odysseyName) odysseyName.lookAt(cameraObject.position);
+};
+const renderOdysseyInformationPopup = (odyssey)=>{
+/*
+        if(!infoObjectMesh.visible)
+        {
+            infoObjectMesh.visible = true;
+        }
+
+        // added a small offset +0.01 to prevent conflict with avatar image on the exact same position and orientation
+        infoObjectMesh.position.set(odyssey.position.x , odyssey.position.y, odyssey.position.z);
+        */ };
+/**
+     * Prepare 3D highlight.
+     */ const highlighd3DMaterial = new _three.MeshBasicMaterial({
+    color: 0x01FFB3,
+    transparent: true,
+    opacity: 0.8
+});
+// let testModel = new THREE.Object3D;
+const load3DHighlight = (scene)=>{
+    const gltfLoader = new (0, _gltfloaderJs.GLTFLoader)();
+    const highlightModel = new _three.Group();
+    const test = gltfLoader.load("./images/highlight.glb", (gltf)=>{
+        gltf.scene.traverse((child)=>{
+            child.material = mat3DHighlight;
+        });
+        const children = [
+            ...gltf.scene.children
+        ];
+        for (const child of children)highlightModel.add(child);
+        scene.add(highlightModel);
+    });
+    return highlightModel;
+};
+
+},{"three":"ktPTu","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3","three/examples/jsm/loaders/GLTFLoader.js":"dVRsF","three/examples/jsm/loaders/FontLoader.js":"h0CPK","three/examples/jsm/geometries/TextGeometry.js":"d5vi9"}],"dVRsF":[function(require,module,exports) {
+var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
+parcelHelpers.defineInteropFlag(exports);
+parcelHelpers.export(exports, "GLTFLoader", ()=>GLTFLoader);
+var _three = require("three");
+class GLTFLoader extends (0, _three.Loader) {
+    constructor(manager){
+        super(manager);
+        this.dracoLoader = null;
+        this.ktx2Loader = null;
+        this.meshoptDecoder = null;
+        this.pluginCallbacks = [];
+        this.register(function(parser) {
+            return new GLTFMaterialsClearcoatExtension(parser);
+        });
+        this.register(function(parser) {
+            return new GLTFTextureBasisUExtension(parser);
+        });
+        this.register(function(parser) {
+            return new GLTFTextureWebPExtension(parser);
+        });
+        this.register(function(parser) {
+            return new GLTFMaterialsSheenExtension(parser);
+        });
+        this.register(function(parser) {
+            return new GLTFMaterialsTransmissionExtension(parser);
+        });
+        this.register(function(parser) {
+            return new GLTFMaterialsVolumeExtension(parser);
+        });
+        this.register(function(parser) {
+            return new GLTFMaterialsIorExtension(parser);
+        });
+        this.register(function(parser) {
+            return new GLTFMaterialsEmissiveStrengthExtension(parser);
+        });
+        this.register(function(parser) {
+            return new GLTFMaterialsSpecularExtension(parser);
+        });
+        this.register(function(parser) {
+            return new GLTFMaterialsIridescenceExtension(parser);
+        });
+        this.register(function(parser) {
+            return new GLTFLightsExtension(parser);
+        });
+        this.register(function(parser) {
+            return new GLTFMeshoptCompression(parser);
+        });
+        this.register(function(parser) {
+            return new GLTFMeshGpuInstancing(parser);
+        });
+    }
+    load(url, onLoad, onProgress, onError) {
+        const scope = this;
+        let resourcePath;
+        if (this.resourcePath !== "") resourcePath = this.resourcePath;
+        else if (this.path !== "") resourcePath = this.path;
+        else resourcePath = (0, _three.LoaderUtils).extractUrlBase(url);
+        // Tells the LoadingManager to track an extra item, which resolves after
+        // the model is fully loaded. This means the count of items loaded will
+        // be incorrect, but ensures manager.onLoad() does not fire early.
+        this.manager.itemStart(url);
+        const _onError = function(e) {
+            if (onError) onError(e);
+            else console.error(e);
+            scope.manager.itemError(url);
+            scope.manager.itemEnd(url);
+        };
+        const loader = new (0, _three.FileLoader)(this.manager);
+        loader.setPath(this.path);
+        loader.setResponseType("arraybuffer");
+        loader.setRequestHeader(this.requestHeader);
+        loader.setWithCredentials(this.withCredentials);
+        loader.load(url, function(data) {
+            try {
+                scope.parse(data, resourcePath, function(gltf) {
+                    onLoad(gltf);
+                    scope.manager.itemEnd(url);
+                }, _onError);
+            } catch (e) {
+                _onError(e);
+            }
+        }, onProgress, _onError);
+    }
+    setDRACOLoader(dracoLoader) {
+        this.dracoLoader = dracoLoader;
+        return this;
+    }
+    setDDSLoader() {
+        throw new Error('THREE.GLTFLoader: "MSFT_texture_dds" no longer supported. Please update to "KHR_texture_basisu".');
+    }
+    setKTX2Loader(ktx2Loader) {
+        this.ktx2Loader = ktx2Loader;
+        return this;
+    }
+    setMeshoptDecoder(meshoptDecoder) {
+        this.meshoptDecoder = meshoptDecoder;
+        return this;
+    }
+    register(callback) {
+        if (this.pluginCallbacks.indexOf(callback) === -1) this.pluginCallbacks.push(callback);
+        return this;
+    }
+    unregister(callback) {
+        if (this.pluginCallbacks.indexOf(callback) !== -1) this.pluginCallbacks.splice(this.pluginCallbacks.indexOf(callback), 1);
+        return this;
+    }
+    parse(data, path, onLoad, onError) {
+        let json;
+        const extensions = {};
+        const plugins = {};
+        if (typeof data === "string") json = JSON.parse(data);
+        else if (data instanceof ArrayBuffer) {
+            const magic = (0, _three.LoaderUtils).decodeText(new Uint8Array(data, 0, 4));
+            if (magic === BINARY_EXTENSION_HEADER_MAGIC) {
+                try {
+                    extensions[EXTENSIONS.KHR_BINARY_GLTF] = new GLTFBinaryExtension(data);
+                } catch (error) {
+                    if (onError) onError(error);
+                    return;
+                }
+                json = JSON.parse(extensions[EXTENSIONS.KHR_BINARY_GLTF].content);
+            } else json = JSON.parse((0, _three.LoaderUtils).decodeText(new Uint8Array(data)));
+        } else json = data;
+        if (json.asset === undefined || json.asset.version[0] < 2) {
+            if (onError) onError(new Error("THREE.GLTFLoader: Unsupported asset. glTF versions >=2.0 are supported."));
+            return;
+        }
+        const parser = new GLTFParser(json, {
+            path: path || this.resourcePath || "",
+            crossOrigin: this.crossOrigin,
+            requestHeader: this.requestHeader,
+            manager: this.manager,
+            ktx2Loader: this.ktx2Loader,
+            meshoptDecoder: this.meshoptDecoder
+        });
+        parser.fileLoader.setRequestHeader(this.requestHeader);
+        for(let i = 0; i < this.pluginCallbacks.length; i++){
+            const plugin = this.pluginCallbacks[i](parser);
+            plugins[plugin.name] = plugin;
+            // Workaround to avoid determining as unknown extension
+            // in addUnknownExtensionsToUserData().
+            // Remove this workaround if we move all the existing
+            // extension handlers to plugin system
+            extensions[plugin.name] = true;
+        }
+        if (json.extensionsUsed) for(let i1 = 0; i1 < json.extensionsUsed.length; ++i1){
+            const extensionName = json.extensionsUsed[i1];
+            const extensionsRequired = json.extensionsRequired || [];
+            switch(extensionName){
+                case EXTENSIONS.KHR_MATERIALS_UNLIT:
+                    extensions[extensionName] = new GLTFMaterialsUnlitExtension();
+                    break;
+                case EXTENSIONS.KHR_MATERIALS_PBR_SPECULAR_GLOSSINESS:
+                    extensions[extensionName] = new GLTFMaterialsPbrSpecularGlossinessExtension();
+                    break;
+                case EXTENSIONS.KHR_DRACO_MESH_COMPRESSION:
+                    extensions[extensionName] = new GLTFDracoMeshCompressionExtension(json, this.dracoLoader);
+                    break;
+                case EXTENSIONS.KHR_TEXTURE_TRANSFORM:
+                    extensions[extensionName] = new GLTFTextureTransformExtension();
+                    break;
+                case EXTENSIONS.KHR_MESH_QUANTIZATION:
+                    extensions[extensionName] = new GLTFMeshQuantizationExtension();
+                    break;
+                default:
+                    if (extensionsRequired.indexOf(extensionName) >= 0 && plugins[extensionName] === undefined) console.warn('THREE.GLTFLoader: Unknown extension "' + extensionName + '".');
+            }
+        }
+        parser.setExtensions(extensions);
+        parser.setPlugins(plugins);
+        parser.parse(onLoad, onError);
+    }
+    parseAsync(data, path) {
+        const scope = this;
+        return new Promise(function(resolve, reject) {
+            scope.parse(data, path, resolve, reject);
+        });
+    }
+}
+/* GLTFREGISTRY */ function GLTFRegistry() {
+    let objects = {};
+    return {
+        get: function(key) {
+            return objects[key];
+        },
+        add: function(key, object) {
+            objects[key] = object;
+        },
+        remove: function(key) {
+            delete objects[key];
+        },
+        removeAll: function() {
+            objects = {};
+        }
+    };
+}
+/*********************************/ /********** EXTENSIONS ***********/ /*********************************/ const EXTENSIONS = {
+    KHR_BINARY_GLTF: "KHR_binary_glTF",
+    KHR_DRACO_MESH_COMPRESSION: "KHR_draco_mesh_compression",
+    KHR_LIGHTS_PUNCTUAL: "KHR_lights_punctual",
+    KHR_MATERIALS_CLEARCOAT: "KHR_materials_clearcoat",
+    KHR_MATERIALS_IOR: "KHR_materials_ior",
+    KHR_MATERIALS_PBR_SPECULAR_GLOSSINESS: "KHR_materials_pbrSpecularGlossiness",
+    KHR_MATERIALS_SHEEN: "KHR_materials_sheen",
+    KHR_MATERIALS_SPECULAR: "KHR_materials_specular",
+    KHR_MATERIALS_TRANSMISSION: "KHR_materials_transmission",
+    KHR_MATERIALS_IRIDESCENCE: "KHR_materials_iridescence",
+    KHR_MATERIALS_UNLIT: "KHR_materials_unlit",
+    KHR_MATERIALS_VOLUME: "KHR_materials_volume",
+    KHR_TEXTURE_BASISU: "KHR_texture_basisu",
+    KHR_TEXTURE_TRANSFORM: "KHR_texture_transform",
+    KHR_MESH_QUANTIZATION: "KHR_mesh_quantization",
+    KHR_MATERIALS_EMISSIVE_STRENGTH: "KHR_materials_emissive_strength",
+    EXT_TEXTURE_WEBP: "EXT_texture_webp",
+    EXT_MESHOPT_COMPRESSION: "EXT_meshopt_compression",
+    EXT_MESH_GPU_INSTANCING: "EXT_mesh_gpu_instancing"
+};
+/**
+ * Punctual Lights Extension
+ *
+ * Specification: https://github.com/KhronosGroup/glTF/tree/master/extensions/2.0/Khronos/KHR_lights_punctual
+ */ class GLTFLightsExtension {
+    constructor(parser){
+        this.parser = parser;
+        this.name = EXTENSIONS.KHR_LIGHTS_PUNCTUAL;
+        // Object3D instance caches
+        this.cache = {
+            refs: {},
+            uses: {}
+        };
+    }
+    _markDefs() {
+        const parser = this.parser;
+        const nodeDefs = this.parser.json.nodes || [];
+        for(let nodeIndex = 0, nodeLength = nodeDefs.length; nodeIndex < nodeLength; nodeIndex++){
+            const nodeDef = nodeDefs[nodeIndex];
+            if (nodeDef.extensions && nodeDef.extensions[this.name] && nodeDef.extensions[this.name].light !== undefined) parser._addNodeRef(this.cache, nodeDef.extensions[this.name].light);
+        }
+    }
+    _loadLight(lightIndex) {
+        const parser = this.parser;
+        const cacheKey = "light:" + lightIndex;
+        let dependency = parser.cache.get(cacheKey);
+        if (dependency) return dependency;
+        const json = parser.json;
+        const extensions = json.extensions && json.extensions[this.name] || {};
+        const lightDefs = extensions.lights || [];
+        const lightDef = lightDefs[lightIndex];
+        let lightNode;
+        const color = new (0, _three.Color)(0xffffff);
+        if (lightDef.color !== undefined) color.fromArray(lightDef.color);
+        const range = lightDef.range !== undefined ? lightDef.range : 0;
+        switch(lightDef.type){
+            case "directional":
+                lightNode = new (0, _three.DirectionalLight)(color);
+                lightNode.target.position.set(0, 0, -1);
+                lightNode.add(lightNode.target);
+                break;
+            case "point":
+                lightNode = new (0, _three.PointLight)(color);
+                lightNode.distance = range;
+                break;
+            case "spot":
+                lightNode = new (0, _three.SpotLight)(color);
+                lightNode.distance = range;
+                // Handle spotlight properties.
+                lightDef.spot = lightDef.spot || {};
+                lightDef.spot.innerConeAngle = lightDef.spot.innerConeAngle !== undefined ? lightDef.spot.innerConeAngle : 0;
+                lightDef.spot.outerConeAngle = lightDef.spot.outerConeAngle !== undefined ? lightDef.spot.outerConeAngle : Math.PI / 4.0;
+                lightNode.angle = lightDef.spot.outerConeAngle;
+                lightNode.penumbra = 1.0 - lightDef.spot.innerConeAngle / lightDef.spot.outerConeAngle;
+                lightNode.target.position.set(0, 0, -1);
+                lightNode.add(lightNode.target);
+                break;
+            default:
+                throw new Error("THREE.GLTFLoader: Unexpected light type: " + lightDef.type);
+        }
+        // Some lights (e.g. spot) default to a position other than the origin. Reset the position
+        // here, because node-level parsing will only override position if explicitly specified.
+        lightNode.position.set(0, 0, 0);
+        lightNode.decay = 2;
+        if (lightDef.intensity !== undefined) lightNode.intensity = lightDef.intensity;
+        lightNode.name = parser.createUniqueName(lightDef.name || "light_" + lightIndex);
+        dependency = Promise.resolve(lightNode);
+        parser.cache.add(cacheKey, dependency);
+        return dependency;
+    }
+    createNodeAttachment(nodeIndex) {
+        const self1 = this;
+        const parser = this.parser;
+        const json = parser.json;
+        const nodeDef = json.nodes[nodeIndex];
+        const lightDef = nodeDef.extensions && nodeDef.extensions[this.name] || {};
+        const lightIndex = lightDef.light;
+        if (lightIndex === undefined) return null;
+        return this._loadLight(lightIndex).then(function(light) {
+            return parser._getNodeRef(self1.cache, lightIndex, light);
+        });
+    }
+}
+/**
+ * Unlit Materials Extension
+ *
+ * Specification: https://github.com/KhronosGroup/glTF/tree/master/extensions/2.0/Khronos/KHR_materials_unlit
+ */ class GLTFMaterialsUnlitExtension {
+    constructor(){
+        this.name = EXTENSIONS.KHR_MATERIALS_UNLIT;
+    }
+    getMaterialType() {
+        return 0, _three.MeshBasicMaterial;
+    }
+    extendParams(materialParams, materialDef, parser) {
+        const pending = [];
+        materialParams.color = new (0, _three.Color)(1.0, 1.0, 1.0);
+        materialParams.opacity = 1.0;
+        const metallicRoughness = materialDef.pbrMetallicRoughness;
+        if (metallicRoughness) {
+            if (Array.isArray(metallicRoughness.baseColorFactor)) {
+                const array = metallicRoughness.baseColorFactor;
+                materialParams.color.fromArray(array);
+                materialParams.opacity = array[3];
+            }
+            if (metallicRoughness.baseColorTexture !== undefined) pending.push(parser.assignTexture(materialParams, "map", metallicRoughness.baseColorTexture, (0, _three.sRGBEncoding)));
+        }
+        return Promise.all(pending);
+    }
+}
+/**
+ * Materials Emissive Strength Extension
+ *
+ * Specification: https://github.com/KhronosGroup/glTF/blob/5768b3ce0ef32bc39cdf1bef10b948586635ead3/extensions/2.0/Khronos/KHR_materials_emissive_strength/README.md
+ */ class GLTFMaterialsEmissiveStrengthExtension {
+    constructor(parser){
+        this.parser = parser;
+        this.name = EXTENSIONS.KHR_MATERIALS_EMISSIVE_STRENGTH;
+    }
+    extendMaterialParams(materialIndex, materialParams) {
+        const parser = this.parser;
+        const materialDef = parser.json.materials[materialIndex];
+        if (!materialDef.extensions || !materialDef.extensions[this.name]) return Promise.resolve();
+        const emissiveStrength = materialDef.extensions[this.name].emissiveStrength;
+        if (emissiveStrength !== undefined) materialParams.emissiveIntensity = emissiveStrength;
+        return Promise.resolve();
+    }
+}
+/**
+ * Clearcoat Materials Extension
+ *
+ * Specification: https://github.com/KhronosGroup/glTF/tree/master/extensions/2.0/Khronos/KHR_materials_clearcoat
+ */ class GLTFMaterialsClearcoatExtension {
+    constructor(parser){
+        this.parser = parser;
+        this.name = EXTENSIONS.KHR_MATERIALS_CLEARCOAT;
+    }
+    getMaterialType(materialIndex) {
+        const parser = this.parser;
+        const materialDef = parser.json.materials[materialIndex];
+        if (!materialDef.extensions || !materialDef.extensions[this.name]) return null;
+        return 0, _three.MeshPhysicalMaterial;
+    }
+    extendMaterialParams(materialIndex, materialParams) {
+        const parser = this.parser;
+        const materialDef = parser.json.materials[materialIndex];
+        if (!materialDef.extensions || !materialDef.extensions[this.name]) return Promise.resolve();
+        const pending = [];
+        const extension = materialDef.extensions[this.name];
+        if (extension.clearcoatFactor !== undefined) materialParams.clearcoat = extension.clearcoatFactor;
+        if (extension.clearcoatTexture !== undefined) pending.push(parser.assignTexture(materialParams, "clearcoatMap", extension.clearcoatTexture));
+        if (extension.clearcoatRoughnessFactor !== undefined) materialParams.clearcoatRoughness = extension.clearcoatRoughnessFactor;
+        if (extension.clearcoatRoughnessTexture !== undefined) pending.push(parser.assignTexture(materialParams, "clearcoatRoughnessMap", extension.clearcoatRoughnessTexture));
+        if (extension.clearcoatNormalTexture !== undefined) {
+            pending.push(parser.assignTexture(materialParams, "clearcoatNormalMap", extension.clearcoatNormalTexture));
+            if (extension.clearcoatNormalTexture.scale !== undefined) {
+                const scale = extension.clearcoatNormalTexture.scale;
+                materialParams.clearcoatNormalScale = new (0, _three.Vector2)(scale, scale);
+            }
+        }
+        return Promise.all(pending);
+    }
+}
+/**
+ * Iridescence Materials Extension
+ *
+ * Specification: https://github.com/KhronosGroup/glTF/tree/master/extensions/2.0/Khronos/KHR_materials_iridescence
+ */ class GLTFMaterialsIridescenceExtension {
+    constructor(parser){
+        this.parser = parser;
+        this.name = EXTENSIONS.KHR_MATERIALS_IRIDESCENCE;
+    }
+    getMaterialType(materialIndex) {
+        const parser = this.parser;
+        const materialDef = parser.json.materials[materialIndex];
+        if (!materialDef.extensions || !materialDef.extensions[this.name]) return null;
+        return 0, _three.MeshPhysicalMaterial;
+    }
+    extendMaterialParams(materialIndex, materialParams) {
+        const parser = this.parser;
+        const materialDef = parser.json.materials[materialIndex];
+        if (!materialDef.extensions || !materialDef.extensions[this.name]) return Promise.resolve();
+        const pending = [];
+        const extension = materialDef.extensions[this.name];
+        if (extension.iridescenceFactor !== undefined) materialParams.iridescence = extension.iridescenceFactor;
+        if (extension.iridescenceTexture !== undefined) pending.push(parser.assignTexture(materialParams, "iridescenceMap", extension.iridescenceTexture));
+        if (extension.iridescenceIor !== undefined) materialParams.iridescenceIOR = extension.iridescenceIor;
+        if (materialParams.iridescenceThicknessRange === undefined) materialParams.iridescenceThicknessRange = [
+            100,
+            400
+        ];
+        if (extension.iridescenceThicknessMinimum !== undefined) materialParams.iridescenceThicknessRange[0] = extension.iridescenceThicknessMinimum;
+        if (extension.iridescenceThicknessMaximum !== undefined) materialParams.iridescenceThicknessRange[1] = extension.iridescenceThicknessMaximum;
+        if (extension.iridescenceThicknessTexture !== undefined) pending.push(parser.assignTexture(materialParams, "iridescenceThicknessMap", extension.iridescenceThicknessTexture));
+        return Promise.all(pending);
+    }
+}
+/**
+ * Sheen Materials Extension
+ *
+ * Specification: https://github.com/KhronosGroup/glTF/tree/main/extensions/2.0/Khronos/KHR_materials_sheen
+ */ class GLTFMaterialsSheenExtension {
+    constructor(parser){
+        this.parser = parser;
+        this.name = EXTENSIONS.KHR_MATERIALS_SHEEN;
+    }
+    getMaterialType(materialIndex) {
+        const parser = this.parser;
+        const materialDef = parser.json.materials[materialIndex];
+        if (!materialDef.extensions || !materialDef.extensions[this.name]) return null;
+        return 0, _three.MeshPhysicalMaterial;
+    }
+    extendMaterialParams(materialIndex, materialParams) {
+        const parser = this.parser;
+        const materialDef = parser.json.materials[materialIndex];
+        if (!materialDef.extensions || !materialDef.extensions[this.name]) return Promise.resolve();
+        const pending = [];
+        materialParams.sheenColor = new (0, _three.Color)(0, 0, 0);
+        materialParams.sheenRoughness = 0;
+        materialParams.sheen = 1;
+        const extension = materialDef.extensions[this.name];
+        if (extension.sheenColorFactor !== undefined) materialParams.sheenColor.fromArray(extension.sheenColorFactor);
+        if (extension.sheenRoughnessFactor !== undefined) materialParams.sheenRoughness = extension.sheenRoughnessFactor;
+        if (extension.sheenColorTexture !== undefined) pending.push(parser.assignTexture(materialParams, "sheenColorMap", extension.sheenColorTexture, (0, _three.sRGBEncoding)));
+        if (extension.sheenRoughnessTexture !== undefined) pending.push(parser.assignTexture(materialParams, "sheenRoughnessMap", extension.sheenRoughnessTexture));
+        return Promise.all(pending);
+    }
+}
+/**
+ * Transmission Materials Extension
+ *
+ * Specification: https://github.com/KhronosGroup/glTF/tree/master/extensions/2.0/Khronos/KHR_materials_transmission
+ * Draft: https://github.com/KhronosGroup/glTF/pull/1698
+ */ class GLTFMaterialsTransmissionExtension {
+    constructor(parser){
+        this.parser = parser;
+        this.name = EXTENSIONS.KHR_MATERIALS_TRANSMISSION;
+    }
+    getMaterialType(materialIndex) {
+        const parser = this.parser;
+        const materialDef = parser.json.materials[materialIndex];
+        if (!materialDef.extensions || !materialDef.extensions[this.name]) return null;
+        return 0, _three.MeshPhysicalMaterial;
+    }
+    extendMaterialParams(materialIndex, materialParams) {
+        const parser = this.parser;
+        const materialDef = parser.json.materials[materialIndex];
+        if (!materialDef.extensions || !materialDef.extensions[this.name]) return Promise.resolve();
+        const pending = [];
+        const extension = materialDef.extensions[this.name];
+        if (extension.transmissionFactor !== undefined) materialParams.transmission = extension.transmissionFactor;
+        if (extension.transmissionTexture !== undefined) pending.push(parser.assignTexture(materialParams, "transmissionMap", extension.transmissionTexture));
+        return Promise.all(pending);
+    }
+}
+/**
+ * Materials Volume Extension
+ *
+ * Specification: https://github.com/KhronosGroup/glTF/tree/master/extensions/2.0/Khronos/KHR_materials_volume
+ */ class GLTFMaterialsVolumeExtension {
+    constructor(parser){
+        this.parser = parser;
+        this.name = EXTENSIONS.KHR_MATERIALS_VOLUME;
+    }
+    getMaterialType(materialIndex) {
+        const parser = this.parser;
+        const materialDef = parser.json.materials[materialIndex];
+        if (!materialDef.extensions || !materialDef.extensions[this.name]) return null;
+        return 0, _three.MeshPhysicalMaterial;
+    }
+    extendMaterialParams(materialIndex, materialParams) {
+        const parser = this.parser;
+        const materialDef = parser.json.materials[materialIndex];
+        if (!materialDef.extensions || !materialDef.extensions[this.name]) return Promise.resolve();
+        const pending = [];
+        const extension = materialDef.extensions[this.name];
+        materialParams.thickness = extension.thicknessFactor !== undefined ? extension.thicknessFactor : 0;
+        if (extension.thicknessTexture !== undefined) pending.push(parser.assignTexture(materialParams, "thicknessMap", extension.thicknessTexture));
+        materialParams.attenuationDistance = extension.attenuationDistance || Infinity;
+        const colorArray = extension.attenuationColor || [
+            1,
+            1,
+            1
+        ];
+        materialParams.attenuationColor = new (0, _three.Color)(colorArray[0], colorArray[1], colorArray[2]);
+        return Promise.all(pending);
+    }
+}
+/**
+ * Materials ior Extension
+ *
+ * Specification: https://github.com/KhronosGroup/glTF/tree/master/extensions/2.0/Khronos/KHR_materials_ior
+ */ class GLTFMaterialsIorExtension {
+    constructor(parser){
+        this.parser = parser;
+        this.name = EXTENSIONS.KHR_MATERIALS_IOR;
+    }
+    getMaterialType(materialIndex) {
+        const parser = this.parser;
+        const materialDef = parser.json.materials[materialIndex];
+        if (!materialDef.extensions || !materialDef.extensions[this.name]) return null;
+        return 0, _three.MeshPhysicalMaterial;
+    }
+    extendMaterialParams(materialIndex, materialParams) {
+        const parser = this.parser;
+        const materialDef = parser.json.materials[materialIndex];
+        if (!materialDef.extensions || !materialDef.extensions[this.name]) return Promise.resolve();
+        const extension = materialDef.extensions[this.name];
+        materialParams.ior = extension.ior !== undefined ? extension.ior : 1.5;
+        return Promise.resolve();
+    }
+}
+/**
+ * Materials specular Extension
+ *
+ * Specification: https://github.com/KhronosGroup/glTF/tree/master/extensions/2.0/Khronos/KHR_materials_specular
+ */ class GLTFMaterialsSpecularExtension {
+    constructor(parser){
+        this.parser = parser;
+        this.name = EXTENSIONS.KHR_MATERIALS_SPECULAR;
+    }
+    getMaterialType(materialIndex) {
+        const parser = this.parser;
+        const materialDef = parser.json.materials[materialIndex];
+        if (!materialDef.extensions || !materialDef.extensions[this.name]) return null;
+        return 0, _three.MeshPhysicalMaterial;
+    }
+    extendMaterialParams(materialIndex, materialParams) {
+        const parser = this.parser;
+        const materialDef = parser.json.materials[materialIndex];
+        if (!materialDef.extensions || !materialDef.extensions[this.name]) return Promise.resolve();
+        const pending = [];
+        const extension = materialDef.extensions[this.name];
+        materialParams.specularIntensity = extension.specularFactor !== undefined ? extension.specularFactor : 1.0;
+        if (extension.specularTexture !== undefined) pending.push(parser.assignTexture(materialParams, "specularIntensityMap", extension.specularTexture));
+        const colorArray = extension.specularColorFactor || [
+            1,
+            1,
+            1
+        ];
+        materialParams.specularColor = new (0, _three.Color)(colorArray[0], colorArray[1], colorArray[2]);
+        if (extension.specularColorTexture !== undefined) pending.push(parser.assignTexture(materialParams, "specularColorMap", extension.specularColorTexture, (0, _three.sRGBEncoding)));
+        return Promise.all(pending);
+    }
+}
+/**
+ * BasisU Texture Extension
+ *
+ * Specification: https://github.com/KhronosGroup/glTF/tree/master/extensions/2.0/Khronos/KHR_texture_basisu
+ */ class GLTFTextureBasisUExtension {
+    constructor(parser){
+        this.parser = parser;
+        this.name = EXTENSIONS.KHR_TEXTURE_BASISU;
+    }
+    loadTexture(textureIndex) {
+        const parser = this.parser;
+        const json = parser.json;
+        const textureDef = json.textures[textureIndex];
+        if (!textureDef.extensions || !textureDef.extensions[this.name]) return null;
+        const extension = textureDef.extensions[this.name];
+        const loader = parser.options.ktx2Loader;
+        if (!loader) {
+            if (json.extensionsRequired && json.extensionsRequired.indexOf(this.name) >= 0) throw new Error("THREE.GLTFLoader: setKTX2Loader must be called before loading KTX2 textures");
+            else // Assumes that the extension is optional and that a fallback texture is present
+            return null;
+        }
+        return parser.loadTextureImage(textureIndex, extension.source, loader);
+    }
+}
+/**
+ * WebP Texture Extension
+ *
+ * Specification: https://github.com/KhronosGroup/glTF/tree/master/extensions/2.0/Vendor/EXT_texture_webp
+ */ class GLTFTextureWebPExtension {
+    constructor(parser){
+        this.parser = parser;
+        this.name = EXTENSIONS.EXT_TEXTURE_WEBP;
+        this.isSupported = null;
+    }
+    loadTexture(textureIndex) {
+        const name = this.name;
+        const parser = this.parser;
+        const json = parser.json;
+        const textureDef = json.textures[textureIndex];
+        if (!textureDef.extensions || !textureDef.extensions[name]) return null;
+        const extension = textureDef.extensions[name];
+        const source = json.images[extension.source];
+        let loader = parser.textureLoader;
+        if (source.uri) {
+            const handler = parser.options.manager.getHandler(source.uri);
+            if (handler !== null) loader = handler;
+        }
+        return this.detectSupport().then(function(isSupported) {
+            if (isSupported) return parser.loadTextureImage(textureIndex, extension.source, loader);
+            if (json.extensionsRequired && json.extensionsRequired.indexOf(name) >= 0) throw new Error("THREE.GLTFLoader: WebP required by asset but unsupported.");
+            // Fall back to PNG or JPEG.
+            return parser.loadTexture(textureIndex);
+        });
+    }
+    detectSupport() {
+        if (!this.isSupported) this.isSupported = new Promise(function(resolve) {
+            const image = new Image();
+            // Lossy test image. Support for lossy images doesn't guarantee support for all
+            // WebP images, unfortunately.
+            image.src = "data:image/webp;base64,UklGRiIAAABXRUJQVlA4IBYAAAAwAQCdASoBAAEADsD+JaQAA3AAAAAA";
+            image.onload = image.onerror = function() {
+                resolve(image.height === 1);
+            };
+        });
+        return this.isSupported;
+    }
+}
+/**
+ * meshopt BufferView Compression Extension
+ *
+ * Specification: https://github.com/KhronosGroup/glTF/tree/master/extensions/2.0/Vendor/EXT_meshopt_compression
+ */ class GLTFMeshoptCompression {
+    constructor(parser){
+        this.name = EXTENSIONS.EXT_MESHOPT_COMPRESSION;
+        this.parser = parser;
+    }
+    loadBufferView(index) {
+        const json = this.parser.json;
+        const bufferView = json.bufferViews[index];
+        if (bufferView.extensions && bufferView.extensions[this.name]) {
+            const extensionDef = bufferView.extensions[this.name];
+            const buffer = this.parser.getDependency("buffer", extensionDef.buffer);
+            const decoder = this.parser.options.meshoptDecoder;
+            if (!decoder || !decoder.supported) {
+                if (json.extensionsRequired && json.extensionsRequired.indexOf(this.name) >= 0) throw new Error("THREE.GLTFLoader: setMeshoptDecoder must be called before loading compressed files");
+                else // Assumes that the extension is optional and that fallback buffer data is present
+                return null;
+            }
+            return buffer.then(function(res) {
+                const byteOffset = extensionDef.byteOffset || 0;
+                const byteLength = extensionDef.byteLength || 0;
+                const count = extensionDef.count;
+                const stride = extensionDef.byteStride;
+                const source = new Uint8Array(res, byteOffset, byteLength);
+                if (decoder.decodeGltfBufferAsync) return decoder.decodeGltfBufferAsync(count, stride, source, extensionDef.mode, extensionDef.filter).then(function(res) {
+                    return res.buffer;
+                });
+                else // Support for MeshoptDecoder 0.18 or earlier, without decodeGltfBufferAsync
+                return decoder.ready.then(function() {
+                    const result = new ArrayBuffer(count * stride);
+                    decoder.decodeGltfBuffer(new Uint8Array(result), count, stride, source, extensionDef.mode, extensionDef.filter);
+                    return result;
+                });
+            });
+        } else return null;
+    }
+}
+/**
+ * GPU Instancing Extension
+ *
+ * Specification: https://github.com/KhronosGroup/glTF/tree/master/extensions/2.0/Vendor/EXT_mesh_gpu_instancing
+ *
+ */ class GLTFMeshGpuInstancing {
+    constructor(parser){
+        this.name = EXTENSIONS.EXT_MESH_GPU_INSTANCING;
+        this.parser = parser;
+    }
+    createNodeMesh(nodeIndex) {
+        const json = this.parser.json;
+        const nodeDef = json.nodes[nodeIndex];
+        if (!nodeDef.extensions || !nodeDef.extensions[this.name] || nodeDef.mesh === undefined) return null;
+        const meshDef = json.meshes[nodeDef.mesh];
+        // No Points or Lines + Instancing support yet
+        for (const primitive of meshDef.primitives){
+            if (primitive.mode !== WEBGL_CONSTANTS.TRIANGLES && primitive.mode !== WEBGL_CONSTANTS.TRIANGLE_STRIP && primitive.mode !== WEBGL_CONSTANTS.TRIANGLE_FAN && primitive.mode !== undefined) return null;
+        }
+        const extensionDef = nodeDef.extensions[this.name];
+        const attributesDef = extensionDef.attributes;
+        // @TODO: Can we support InstancedMesh + SkinnedMesh?
+        const pending = [];
+        const attributes = {};
+        for(const key in attributesDef)pending.push(this.parser.getDependency("accessor", attributesDef[key]).then((accessor)=>{
+            attributes[key] = accessor;
+            return attributes[key];
+        }));
+        if (pending.length < 1) return null;
+        pending.push(this.parser.createNodeMesh(nodeIndex));
+        return Promise.all(pending).then((results)=>{
+            const nodeObject = results.pop();
+            const meshes = nodeObject.isGroup ? nodeObject.children : [
+                nodeObject
+            ];
+            const count = results[0].count; // All attribute counts should be same
+            const instancedMeshes = [];
+            for (const mesh of meshes){
+                // Temporal variables
+                const m = new (0, _three.Matrix4)();
+                const p = new (0, _three.Vector3)();
+                const q = new (0, _three.Quaternion)();
+                const s = new (0, _three.Vector3)(1, 1, 1);
+                const instancedMesh = new (0, _three.InstancedMesh)(mesh.geometry, mesh.material, count);
+                for(let i = 0; i < count; i++){
+                    if (attributes.TRANSLATION) p.fromBufferAttribute(attributes.TRANSLATION, i);
+                    if (attributes.ROTATION) q.fromBufferAttribute(attributes.ROTATION, i);
+                    if (attributes.SCALE) s.fromBufferAttribute(attributes.SCALE, i);
+                    instancedMesh.setMatrixAt(i, m.compose(p, q, s));
+                }
+                // Add instance attributes to the geometry, excluding TRS.
+                for(const attributeName in attributes)if (attributeName !== "TRANSLATION" && attributeName !== "ROTATION" && attributeName !== "SCALE") mesh.geometry.setAttribute(attributeName, attributes[attributeName]);
+                // Just in case
+                (0, _three.Object3D).prototype.copy.call(instancedMesh, mesh);
+                // https://github.com/mrdoob/three.js/issues/18334
+                instancedMesh.frustumCulled = false;
+                this.parser.assignFinalMaterial(instancedMesh);
+                instancedMeshes.push(instancedMesh);
+            }
+            if (nodeObject.isGroup) {
+                nodeObject.clear();
+                nodeObject.add(...instancedMeshes);
+                return nodeObject;
+            }
+            return instancedMeshes[0];
+        });
+    }
+}
+/* BINARY EXTENSION */ const BINARY_EXTENSION_HEADER_MAGIC = "glTF";
+const BINARY_EXTENSION_HEADER_LENGTH = 12;
+const BINARY_EXTENSION_CHUNK_TYPES = {
+    JSON: 0x4E4F534A,
+    BIN: 0x004E4942
+};
+class GLTFBinaryExtension {
+    constructor(data){
+        this.name = EXTENSIONS.KHR_BINARY_GLTF;
+        this.content = null;
+        this.body = null;
+        const headerView = new DataView(data, 0, BINARY_EXTENSION_HEADER_LENGTH);
+        this.header = {
+            magic: (0, _three.LoaderUtils).decodeText(new Uint8Array(data.slice(0, 4))),
+            version: headerView.getUint32(4, true),
+            length: headerView.getUint32(8, true)
+        };
+        if (this.header.magic !== BINARY_EXTENSION_HEADER_MAGIC) throw new Error("THREE.GLTFLoader: Unsupported glTF-Binary header.");
+        else if (this.header.version < 2.0) throw new Error("THREE.GLTFLoader: Legacy binary file detected.");
+        const chunkContentsLength = this.header.length - BINARY_EXTENSION_HEADER_LENGTH;
+        const chunkView = new DataView(data, BINARY_EXTENSION_HEADER_LENGTH);
+        let chunkIndex = 0;
+        while(chunkIndex < chunkContentsLength){
+            const chunkLength = chunkView.getUint32(chunkIndex, true);
+            chunkIndex += 4;
+            const chunkType = chunkView.getUint32(chunkIndex, true);
+            chunkIndex += 4;
+            if (chunkType === BINARY_EXTENSION_CHUNK_TYPES.JSON) {
+                const contentArray = new Uint8Array(data, BINARY_EXTENSION_HEADER_LENGTH + chunkIndex, chunkLength);
+                this.content = (0, _three.LoaderUtils).decodeText(contentArray);
+            } else if (chunkType === BINARY_EXTENSION_CHUNK_TYPES.BIN) {
+                const byteOffset = BINARY_EXTENSION_HEADER_LENGTH + chunkIndex;
+                this.body = data.slice(byteOffset, byteOffset + chunkLength);
+            }
+            // Clients must ignore chunks with unknown types.
+            chunkIndex += chunkLength;
+        }
+        if (this.content === null) throw new Error("THREE.GLTFLoader: JSON content not found.");
+    }
+}
+/**
+ * DRACO Mesh Compression Extension
+ *
+ * Specification: https://github.com/KhronosGroup/glTF/tree/master/extensions/2.0/Khronos/KHR_draco_mesh_compression
+ */ class GLTFDracoMeshCompressionExtension {
+    constructor(json, dracoLoader){
+        if (!dracoLoader) throw new Error("THREE.GLTFLoader: No DRACOLoader instance provided.");
+        this.name = EXTENSIONS.KHR_DRACO_MESH_COMPRESSION;
+        this.json = json;
+        this.dracoLoader = dracoLoader;
+        this.dracoLoader.preload();
+    }
+    decodePrimitive(primitive, parser) {
+        const json = this.json;
+        const dracoLoader = this.dracoLoader;
+        const bufferViewIndex = primitive.extensions[this.name].bufferView;
+        const gltfAttributeMap = primitive.extensions[this.name].attributes;
+        const threeAttributeMap = {};
+        const attributeNormalizedMap = {};
+        const attributeTypeMap = {};
+        for(const attributeName in gltfAttributeMap){
+            const threeAttributeName = ATTRIBUTES[attributeName] || attributeName.toLowerCase();
+            threeAttributeMap[threeAttributeName] = gltfAttributeMap[attributeName];
+        }
+        for(const attributeName1 in primitive.attributes){
+            const threeAttributeName1 = ATTRIBUTES[attributeName1] || attributeName1.toLowerCase();
+            if (gltfAttributeMap[attributeName1] !== undefined) {
+                const accessorDef = json.accessors[primitive.attributes[attributeName1]];
+                const componentType = WEBGL_COMPONENT_TYPES[accessorDef.componentType];
+                attributeTypeMap[threeAttributeName1] = componentType.name;
+                attributeNormalizedMap[threeAttributeName1] = accessorDef.normalized === true;
+            }
+        }
+        return parser.getDependency("bufferView", bufferViewIndex).then(function(bufferView) {
+            return new Promise(function(resolve) {
+                dracoLoader.decodeDracoFile(bufferView, function(geometry) {
+                    for(const attributeName in geometry.attributes){
+                        const attribute = geometry.attributes[attributeName];
+                        const normalized = attributeNormalizedMap[attributeName];
+                        if (normalized !== undefined) attribute.normalized = normalized;
+                    }
+                    resolve(geometry);
+                }, threeAttributeMap, attributeTypeMap);
+            });
+        });
+    }
+}
+/**
+ * Texture Transform Extension
+ *
+ * Specification: https://github.com/KhronosGroup/glTF/tree/master/extensions/2.0/Khronos/KHR_texture_transform
+ */ class GLTFTextureTransformExtension {
+    constructor(){
+        this.name = EXTENSIONS.KHR_TEXTURE_TRANSFORM;
+    }
+    extendTexture(texture, transform) {
+        if (transform.texCoord !== undefined) console.warn('THREE.GLTFLoader: Custom UV sets in "' + this.name + '" extension not yet supported.');
+        if (transform.offset === undefined && transform.rotation === undefined && transform.scale === undefined) // See https://github.com/mrdoob/three.js/issues/21819.
+        return texture;
+        texture = texture.clone();
+        if (transform.offset !== undefined) texture.offset.fromArray(transform.offset);
+        if (transform.rotation !== undefined) texture.rotation = transform.rotation;
+        if (transform.scale !== undefined) texture.repeat.fromArray(transform.scale);
+        texture.needsUpdate = true;
+        return texture;
+    }
+}
+/**
+ * Specular-Glossiness Extension
+ *
+ * Specification: https://github.com/KhronosGroup/glTF/tree/main/extensions/2.0/Archived/KHR_materials_pbrSpecularGlossiness
+ */ /**
+ * A sub class of StandardMaterial with some of the functionality
+ * changed via the `onBeforeCompile` callback
+ * @pailhead
+ */ class GLTFMeshStandardSGMaterial extends (0, _three.MeshStandardMaterial) {
+    constructor(params){
+        super();
+        this.isGLTFSpecularGlossinessMaterial = true;
+        //various chunks that need replacing
+        const specularMapParsFragmentChunk = [
+            "#ifdef USE_SPECULARMAP",
+            "	uniform sampler2D specularMap;",
+            "#endif"
+        ].join("\n");
+        const glossinessMapParsFragmentChunk = [
+            "#ifdef USE_GLOSSINESSMAP",
+            "	uniform sampler2D glossinessMap;",
+            "#endif"
+        ].join("\n");
+        const specularMapFragmentChunk = [
+            "vec3 specularFactor = specular;",
+            "#ifdef USE_SPECULARMAP",
+            "	vec4 texelSpecular = texture2D( specularMap, vUv );",
+            "	// reads channel RGB, compatible with a glTF Specular-Glossiness (RGBA) texture",
+            "	specularFactor *= texelSpecular.rgb;",
+            "#endif"
+        ].join("\n");
+        const glossinessMapFragmentChunk = [
+            "float glossinessFactor = glossiness;",
+            "#ifdef USE_GLOSSINESSMAP",
+            "	vec4 texelGlossiness = texture2D( glossinessMap, vUv );",
+            "	// reads channel A, compatible with a glTF Specular-Glossiness (RGBA) texture",
+            "	glossinessFactor *= texelGlossiness.a;",
+            "#endif"
+        ].join("\n");
+        const lightPhysicalFragmentChunk = [
+            "PhysicalMaterial material;",
+            "material.diffuseColor = diffuseColor.rgb * ( 1. - max( specularFactor.r, max( specularFactor.g, specularFactor.b ) ) );",
+            "vec3 dxy = max( abs( dFdx( geometryNormal ) ), abs( dFdy( geometryNormal ) ) );",
+            "float geometryRoughness = max( max( dxy.x, dxy.y ), dxy.z );",
+            "material.roughness = max( 1.0 - glossinessFactor, 0.0525 ); // 0.0525 corresponds to the base mip of a 256 cubemap.",
+            "material.roughness += geometryRoughness;",
+            "material.roughness = min( material.roughness, 1.0 );",
+            "material.specularColor = specularFactor;"
+        ].join("\n");
+        const uniforms = {
+            specular: {
+                value: new (0, _three.Color)().setHex(0xffffff)
+            },
+            glossiness: {
+                value: 1
+            },
+            specularMap: {
+                value: null
+            },
+            glossinessMap: {
+                value: null
+            }
+        };
+        this._extraUniforms = uniforms;
+        this.onBeforeCompile = function(shader) {
+            for(const uniformName in uniforms)shader.uniforms[uniformName] = uniforms[uniformName];
+            shader.fragmentShader = shader.fragmentShader.replace("uniform float roughness;", "uniform vec3 specular;").replace("uniform float metalness;", "uniform float glossiness;").replace("#include <roughnessmap_pars_fragment>", specularMapParsFragmentChunk).replace("#include <metalnessmap_pars_fragment>", glossinessMapParsFragmentChunk).replace("#include <roughnessmap_fragment>", specularMapFragmentChunk).replace("#include <metalnessmap_fragment>", glossinessMapFragmentChunk).replace("#include <lights_physical_fragment>", lightPhysicalFragmentChunk);
+        };
+        Object.defineProperties(this, {
+            specular: {
+                get: function() {
+                    return uniforms.specular.value;
+                },
+                set: function(v) {
+                    uniforms.specular.value = v;
+                }
+            },
+            specularMap: {
+                get: function() {
+                    return uniforms.specularMap.value;
+                },
+                set: function(v) {
+                    uniforms.specularMap.value = v;
+                    if (v) this.defines.USE_SPECULARMAP = ""; // USE_UV is set by the renderer for specular maps
+                    else delete this.defines.USE_SPECULARMAP;
+                }
+            },
+            glossiness: {
+                get: function() {
+                    return uniforms.glossiness.value;
+                },
+                set: function(v) {
+                    uniforms.glossiness.value = v;
+                }
+            },
+            glossinessMap: {
+                get: function() {
+                    return uniforms.glossinessMap.value;
+                },
+                set: function(v) {
+                    uniforms.glossinessMap.value = v;
+                    if (v) {
+                        this.defines.USE_GLOSSINESSMAP = "";
+                        this.defines.USE_UV = "";
+                    } else {
+                        delete this.defines.USE_GLOSSINESSMAP;
+                        delete this.defines.USE_UV;
+                    }
+                }
+            }
+        });
+        delete this.metalness;
+        delete this.roughness;
+        delete this.metalnessMap;
+        delete this.roughnessMap;
+        this.setValues(params);
+    }
+    copy(source) {
+        super.copy(source);
+        this.specularMap = source.specularMap;
+        this.specular.copy(source.specular);
+        this.glossinessMap = source.glossinessMap;
+        this.glossiness = source.glossiness;
+        delete this.metalness;
+        delete this.roughness;
+        delete this.metalnessMap;
+        delete this.roughnessMap;
+        return this;
+    }
+}
+class GLTFMaterialsPbrSpecularGlossinessExtension {
+    constructor(){
+        this.name = EXTENSIONS.KHR_MATERIALS_PBR_SPECULAR_GLOSSINESS;
+        this.specularGlossinessParams = [
+            "color",
+            "map",
+            "lightMap",
+            "lightMapIntensity",
+            "aoMap",
+            "aoMapIntensity",
+            "emissive",
+            "emissiveIntensity",
+            "emissiveMap",
+            "bumpMap",
+            "bumpScale",
+            "normalMap",
+            "normalMapType",
+            "displacementMap",
+            "displacementScale",
+            "displacementBias",
+            "specularMap",
+            "specular",
+            "glossinessMap",
+            "glossiness",
+            "alphaMap",
+            "envMap",
+            "envMapIntensity"
+        ];
+    }
+    getMaterialType() {
+        return GLTFMeshStandardSGMaterial;
+    }
+    extendParams(materialParams, materialDef, parser) {
+        const pbrSpecularGlossiness = materialDef.extensions[this.name];
+        materialParams.color = new (0, _three.Color)(1.0, 1.0, 1.0);
+        materialParams.opacity = 1.0;
+        const pending = [];
+        if (Array.isArray(pbrSpecularGlossiness.diffuseFactor)) {
+            const array = pbrSpecularGlossiness.diffuseFactor;
+            materialParams.color.fromArray(array);
+            materialParams.opacity = array[3];
+        }
+        if (pbrSpecularGlossiness.diffuseTexture !== undefined) pending.push(parser.assignTexture(materialParams, "map", pbrSpecularGlossiness.diffuseTexture, (0, _three.sRGBEncoding)));
+        materialParams.emissive = new (0, _three.Color)(0.0, 0.0, 0.0);
+        materialParams.glossiness = pbrSpecularGlossiness.glossinessFactor !== undefined ? pbrSpecularGlossiness.glossinessFactor : 1.0;
+        materialParams.specular = new (0, _three.Color)(1.0, 1.0, 1.0);
+        if (Array.isArray(pbrSpecularGlossiness.specularFactor)) materialParams.specular.fromArray(pbrSpecularGlossiness.specularFactor);
+        if (pbrSpecularGlossiness.specularGlossinessTexture !== undefined) {
+            const specGlossMapDef = pbrSpecularGlossiness.specularGlossinessTexture;
+            pending.push(parser.assignTexture(materialParams, "glossinessMap", specGlossMapDef));
+            pending.push(parser.assignTexture(materialParams, "specularMap", specGlossMapDef, (0, _three.sRGBEncoding)));
+        }
+        return Promise.all(pending);
+    }
+    createMaterial(materialParams) {
+        const material = new GLTFMeshStandardSGMaterial(materialParams);
+        material.fog = true;
+        material.color = materialParams.color;
+        material.map = materialParams.map === undefined ? null : materialParams.map;
+        material.lightMap = null;
+        material.lightMapIntensity = 1.0;
+        material.aoMap = materialParams.aoMap === undefined ? null : materialParams.aoMap;
+        material.aoMapIntensity = 1.0;
+        material.emissive = materialParams.emissive;
+        material.emissiveIntensity = materialParams.emissiveIntensity === undefined ? 1.0 : materialParams.emissiveIntensity;
+        material.emissiveMap = materialParams.emissiveMap === undefined ? null : materialParams.emissiveMap;
+        material.bumpMap = materialParams.bumpMap === undefined ? null : materialParams.bumpMap;
+        material.bumpScale = 1;
+        material.normalMap = materialParams.normalMap === undefined ? null : materialParams.normalMap;
+        material.normalMapType = (0, _three.TangentSpaceNormalMap);
+        if (materialParams.normalScale) material.normalScale = materialParams.normalScale;
+        material.displacementMap = null;
+        material.displacementScale = 1;
+        material.displacementBias = 0;
+        material.specularMap = materialParams.specularMap === undefined ? null : materialParams.specularMap;
+        material.specular = materialParams.specular;
+        material.glossinessMap = materialParams.glossinessMap === undefined ? null : materialParams.glossinessMap;
+        material.glossiness = materialParams.glossiness;
+        material.alphaMap = null;
+        material.envMap = materialParams.envMap === undefined ? null : materialParams.envMap;
+        material.envMapIntensity = 1.0;
+        return material;
+    }
+}
+/**
+ * Mesh Quantization Extension
+ *
+ * Specification: https://github.com/KhronosGroup/glTF/tree/master/extensions/2.0/Khronos/KHR_mesh_quantization
+ */ class GLTFMeshQuantizationExtension {
+    constructor(){
+        this.name = EXTENSIONS.KHR_MESH_QUANTIZATION;
+    }
+}
+/*********************************/ /********** INTERPOLATION ********/ /*********************************/ // Spline Interpolation
+// Specification: https://github.com/KhronosGroup/glTF/blob/master/specification/2.0/README.md#appendix-c-spline-interpolation
+class GLTFCubicSplineInterpolant extends (0, _three.Interpolant) {
+    constructor(parameterPositions, sampleValues, sampleSize, resultBuffer){
+        super(parameterPositions, sampleValues, sampleSize, resultBuffer);
+    }
+    copySampleValue_(index) {
+        // Copies a sample value to the result buffer. See description of glTF
+        // CUBICSPLINE values layout in interpolate_() function below.
+        const result = this.resultBuffer, values = this.sampleValues, valueSize = this.valueSize, offset = index * valueSize * 3 + valueSize;
+        for(let i = 0; i !== valueSize; i++)result[i] = values[offset + i];
+        return result;
+    }
+    interpolate_(i1, t0, t, t1) {
+        const result = this.resultBuffer;
+        const values = this.sampleValues;
+        const stride = this.valueSize;
+        const stride2 = stride * 2;
+        const stride3 = stride * 3;
+        const td = t1 - t0;
+        const p = (t - t0) / td;
+        const pp = p * p;
+        const ppp = pp * p;
+        const offset1 = i1 * stride3;
+        const offset0 = offset1 - stride3;
+        const s2 = -2 * ppp + 3 * pp;
+        const s3 = ppp - pp;
+        const s0 = 1 - s2;
+        const s1 = s3 - pp + p;
+        // Layout of keyframe output values for CUBICSPLINE animations:
+        //   [ inTangent_1, splineVertex_1, outTangent_1, inTangent_2, splineVertex_2, ... ]
+        for(let i = 0; i !== stride; i++){
+            const p0 = values[offset0 + i + stride]; // splineVertex_k
+            const m0 = values[offset0 + i + stride2] * td; // outTangent_k * (t_k+1 - t_k)
+            const p1 = values[offset1 + i + stride]; // splineVertex_k+1
+            const m1 = values[offset1 + i] * td; // inTangent_k+1 * (t_k+1 - t_k)
+            result[i] = s0 * p0 + s1 * m0 + s2 * p1 + s3 * m1;
+        }
+        return result;
+    }
+}
+const _q = new (0, _three.Quaternion)();
+class GLTFCubicSplineQuaternionInterpolant extends GLTFCubicSplineInterpolant {
+    interpolate_(i1, t0, t, t1) {
+        const result = super.interpolate_(i1, t0, t, t1);
+        _q.fromArray(result).normalize().toArray(result);
+        return result;
+    }
+}
+/*********************************/ /********** INTERNALS ************/ /*********************************/ /* CONSTANTS */ const WEBGL_CONSTANTS = {
+    FLOAT: 5126,
+    //FLOAT_MAT2: 35674,
+    FLOAT_MAT3: 35675,
+    FLOAT_MAT4: 35676,
+    FLOAT_VEC2: 35664,
+    FLOAT_VEC3: 35665,
+    FLOAT_VEC4: 35666,
+    LINEAR: 9729,
+    REPEAT: 10497,
+    SAMPLER_2D: 35678,
+    POINTS: 0,
+    LINES: 1,
+    LINE_LOOP: 2,
+    LINE_STRIP: 3,
+    TRIANGLES: 4,
+    TRIANGLE_STRIP: 5,
+    TRIANGLE_FAN: 6,
+    UNSIGNED_BYTE: 5121,
+    UNSIGNED_SHORT: 5123
+};
+const WEBGL_COMPONENT_TYPES = {
+    5120: Int8Array,
+    5121: Uint8Array,
+    5122: Int16Array,
+    5123: Uint16Array,
+    5125: Uint32Array,
+    5126: Float32Array
+};
+const WEBGL_FILTERS = {
+    9728: (0, _three.NearestFilter),
+    9729: (0, _three.LinearFilter),
+    9984: (0, _three.NearestMipmapNearestFilter),
+    9985: (0, _three.LinearMipmapNearestFilter),
+    9986: (0, _three.NearestMipmapLinearFilter),
+    9987: (0, _three.LinearMipmapLinearFilter)
+};
+const WEBGL_WRAPPINGS = {
+    33071: (0, _three.ClampToEdgeWrapping),
+    33648: (0, _three.MirroredRepeatWrapping),
+    10497: (0, _three.RepeatWrapping)
+};
+const WEBGL_TYPE_SIZES = {
+    "SCALAR": 1,
+    "VEC2": 2,
+    "VEC3": 3,
+    "VEC4": 4,
+    "MAT2": 4,
+    "MAT3": 9,
+    "MAT4": 16
+};
+const ATTRIBUTES = {
+    POSITION: "position",
+    NORMAL: "normal",
+    TANGENT: "tangent",
+    TEXCOORD_0: "uv",
+    TEXCOORD_1: "uv2",
+    COLOR_0: "color",
+    WEIGHTS_0: "skinWeight",
+    JOINTS_0: "skinIndex"
+};
+const PATH_PROPERTIES = {
+    scale: "scale",
+    translation: "position",
+    rotation: "quaternion",
+    weights: "morphTargetInfluences"
+};
+const INTERPOLATION = {
+    CUBICSPLINE: undefined,
+    // keyframe track will be initialized with a default interpolation type, then modified.
+    LINEAR: (0, _three.InterpolateLinear),
+    STEP: (0, _three.InterpolateDiscrete)
+};
+const ALPHA_MODES = {
+    OPAQUE: "OPAQUE",
+    MASK: "MASK",
+    BLEND: "BLEND"
+};
+/**
+ * Specification: https://github.com/KhronosGroup/glTF/blob/master/specification/2.0/README.md#default-material
+ */ function createDefaultMaterial(cache) {
+    if (cache["DefaultMaterial"] === undefined) cache["DefaultMaterial"] = new (0, _three.MeshStandardMaterial)({
+        color: 0xFFFFFF,
+        emissive: 0x000000,
+        metalness: 1,
+        roughness: 1,
+        transparent: false,
+        depthTest: true,
+        side: (0, _three.FrontSide)
+    });
+    return cache["DefaultMaterial"];
+}
+function addUnknownExtensionsToUserData(knownExtensions, object, objectDef) {
+    // Add unknown glTF extensions to an object's userData.
+    for(const name in objectDef.extensions)if (knownExtensions[name] === undefined) {
+        object.userData.gltfExtensions = object.userData.gltfExtensions || {};
+        object.userData.gltfExtensions[name] = objectDef.extensions[name];
+    }
+}
+/**
+ * @param {Object3D|Material|BufferGeometry} object
+ * @param {GLTF.definition} gltfDef
+ */ function assignExtrasToUserData(object, gltfDef) {
+    if (gltfDef.extras !== undefined) {
+        if (typeof gltfDef.extras === "object") Object.assign(object.userData, gltfDef.extras);
+        else console.warn("THREE.GLTFLoader: Ignoring primitive type .extras, " + gltfDef.extras);
+    }
+}
+/**
+ * Specification: https://github.com/KhronosGroup/glTF/blob/master/specification/2.0/README.md#morph-targets
+ *
+ * @param {BufferGeometry} geometry
+ * @param {Array<GLTF.Target>} targets
+ * @param {GLTFParser} parser
+ * @return {Promise<BufferGeometry>}
+ */ function addMorphTargets(geometry, targets, parser) {
+    let hasMorphPosition = false;
+    let hasMorphNormal = false;
+    let hasMorphColor = false;
+    for(let i = 0, il = targets.length; i < il; i++){
+        const target = targets[i];
+        if (target.POSITION !== undefined) hasMorphPosition = true;
+        if (target.NORMAL !== undefined) hasMorphNormal = true;
+        if (target.COLOR_0 !== undefined) hasMorphColor = true;
+        if (hasMorphPosition && hasMorphNormal && hasMorphColor) break;
+    }
+    if (!hasMorphPosition && !hasMorphNormal && !hasMorphColor) return Promise.resolve(geometry);
+    const pendingPositionAccessors = [];
+    const pendingNormalAccessors = [];
+    const pendingColorAccessors = [];
+    for(let i1 = 0, il1 = targets.length; i1 < il1; i1++){
+        const target1 = targets[i1];
+        if (hasMorphPosition) {
+            const pendingAccessor = target1.POSITION !== undefined ? parser.getDependency("accessor", target1.POSITION) : geometry.attributes.position;
+            pendingPositionAccessors.push(pendingAccessor);
+        }
+        if (hasMorphNormal) {
+            const pendingAccessor1 = target1.NORMAL !== undefined ? parser.getDependency("accessor", target1.NORMAL) : geometry.attributes.normal;
+            pendingNormalAccessors.push(pendingAccessor1);
+        }
+        if (hasMorphColor) {
+            const pendingAccessor2 = target1.COLOR_0 !== undefined ? parser.getDependency("accessor", target1.COLOR_0) : geometry.attributes.color;
+            pendingColorAccessors.push(pendingAccessor2);
+        }
+    }
+    return Promise.all([
+        Promise.all(pendingPositionAccessors),
+        Promise.all(pendingNormalAccessors),
+        Promise.all(pendingColorAccessors)
+    ]).then(function(accessors) {
+        const morphPositions = accessors[0];
+        const morphNormals = accessors[1];
+        const morphColors = accessors[2];
+        if (hasMorphPosition) geometry.morphAttributes.position = morphPositions;
+        if (hasMorphNormal) geometry.morphAttributes.normal = morphNormals;
+        if (hasMorphColor) geometry.morphAttributes.color = morphColors;
+        geometry.morphTargetsRelative = true;
+        return geometry;
+    });
+}
+/**
+ * @param {Mesh} mesh
+ * @param {GLTF.Mesh} meshDef
+ */ function updateMorphTargets(mesh, meshDef) {
+    mesh.updateMorphTargets();
+    if (meshDef.weights !== undefined) for(let i = 0, il = meshDef.weights.length; i < il; i++)mesh.morphTargetInfluences[i] = meshDef.weights[i];
+    // .extras has user-defined data, so check that .extras.targetNames is an array.
+    if (meshDef.extras && Array.isArray(meshDef.extras.targetNames)) {
+        const targetNames = meshDef.extras.targetNames;
+        if (mesh.morphTargetInfluences.length === targetNames.length) {
+            mesh.morphTargetDictionary = {};
+            for(let i1 = 0, il1 = targetNames.length; i1 < il1; i1++)mesh.morphTargetDictionary[targetNames[i1]] = i1;
+        } else console.warn("THREE.GLTFLoader: Invalid extras.targetNames length. Ignoring names.");
+    }
+}
+function createPrimitiveKey(primitiveDef) {
+    const dracoExtension = primitiveDef.extensions && primitiveDef.extensions[EXTENSIONS.KHR_DRACO_MESH_COMPRESSION];
+    let geometryKey;
+    if (dracoExtension) geometryKey = "draco:" + dracoExtension.bufferView + ":" + dracoExtension.indices + ":" + createAttributesKey(dracoExtension.attributes);
+    else geometryKey = primitiveDef.indices + ":" + createAttributesKey(primitiveDef.attributes) + ":" + primitiveDef.mode;
+    return geometryKey;
+}
+function createAttributesKey(attributes) {
+    let attributesKey = "";
+    const keys = Object.keys(attributes).sort();
+    for(let i = 0, il = keys.length; i < il; i++)attributesKey += keys[i] + ":" + attributes[keys[i]] + ";";
+    return attributesKey;
+}
+function getNormalizedComponentScale(constructor) {
+    // Reference:
+    // https://github.com/KhronosGroup/glTF/tree/master/extensions/2.0/Khronos/KHR_mesh_quantization#encoding-quantized-data
+    switch(constructor){
+        case Int8Array:
+            return 1 / 127;
+        case Uint8Array:
+            return 1 / 255;
+        case Int16Array:
+            return 1 / 32767;
+        case Uint16Array:
+            return 1 / 65535;
+        default:
+            throw new Error("THREE.GLTFLoader: Unsupported normalized accessor component type.");
+    }
+}
+function getImageURIMimeType(uri) {
+    if (uri.search(/\.jpe?g($|\?)/i) > 0 || uri.search(/^data\:image\/jpeg/) === 0) return "image/jpeg";
+    if (uri.search(/\.webp($|\?)/i) > 0 || uri.search(/^data\:image\/webp/) === 0) return "image/webp";
+    return "image/png";
+}
+/* GLTF PARSER */ class GLTFParser {
+    constructor(json = {}, options = {}){
+        this.json = json;
+        this.extensions = {};
+        this.plugins = {};
+        this.options = options;
+        // loader object cache
+        this.cache = new GLTFRegistry();
+        // associations between Three.js objects and glTF elements
+        this.associations = new Map();
+        // BufferGeometry caching
+        this.primitiveCache = {};
+        // Object3D instance caches
+        this.meshCache = {
+            refs: {},
+            uses: {}
+        };
+        this.cameraCache = {
+            refs: {},
+            uses: {}
+        };
+        this.lightCache = {
+            refs: {},
+            uses: {}
+        };
+        this.sourceCache = {};
+        this.textureCache = {};
+        // Track node names, to ensure no duplicates
+        this.nodeNamesUsed = {};
+        // Use an ImageBitmapLoader if imageBitmaps are supported. Moves much of the
+        // expensive work of uploading a texture to the GPU off the main thread.
+        const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent) === true;
+        const isFirefox = navigator.userAgent.indexOf("Firefox") > -1;
+        const firefoxVersion = isFirefox ? navigator.userAgent.match(/Firefox\/([0-9]+)\./)[1] : -1;
+        if (typeof createImageBitmap === "undefined" || isSafari || isFirefox && firefoxVersion < 98) this.textureLoader = new (0, _three.TextureLoader)(this.options.manager);
+        else this.textureLoader = new (0, _three.ImageBitmapLoader)(this.options.manager);
+        this.textureLoader.setCrossOrigin(this.options.crossOrigin);
+        this.textureLoader.setRequestHeader(this.options.requestHeader);
+        this.fileLoader = new (0, _three.FileLoader)(this.options.manager);
+        this.fileLoader.setResponseType("arraybuffer");
+        if (this.options.crossOrigin === "use-credentials") this.fileLoader.setWithCredentials(true);
+    }
+    setExtensions(extensions) {
+        this.extensions = extensions;
+    }
+    setPlugins(plugins) {
+        this.plugins = plugins;
+    }
+    parse(onLoad, onError) {
+        const parser = this;
+        const json = this.json;
+        const extensions = this.extensions;
+        // Clear the loader cache
+        this.cache.removeAll();
+        // Mark the special nodes/meshes in json for efficient parse
+        this._invokeAll(function(ext) {
+            return ext._markDefs && ext._markDefs();
+        });
+        Promise.all(this._invokeAll(function(ext) {
+            return ext.beforeRoot && ext.beforeRoot();
+        })).then(function() {
+            return Promise.all([
+                parser.getDependencies("scene"),
+                parser.getDependencies("animation"),
+                parser.getDependencies("camera")
+            ]);
+        }).then(function(dependencies) {
+            const result = {
+                scene: dependencies[0][json.scene || 0],
+                scenes: dependencies[0],
+                animations: dependencies[1],
+                cameras: dependencies[2],
+                asset: json.asset,
+                parser: parser,
+                userData: {}
+            };
+            addUnknownExtensionsToUserData(extensions, result, json);
+            assignExtrasToUserData(result, json);
+            Promise.all(parser._invokeAll(function(ext) {
+                return ext.afterRoot && ext.afterRoot(result);
+            })).then(function() {
+                onLoad(result);
+            });
+        }).catch(onError);
+    }
+    /**
+	 * Marks the special nodes/meshes in json for efficient parse.
+	 */ _markDefs() {
+        const nodeDefs = this.json.nodes || [];
+        const skinDefs = this.json.skins || [];
+        const meshDefs = this.json.meshes || [];
+        // Nothing in the node definition indicates whether it is a Bone or an
+        // Object3D. Use the skins' joint references to mark bones.
+        for(let skinIndex = 0, skinLength = skinDefs.length; skinIndex < skinLength; skinIndex++){
+            const joints = skinDefs[skinIndex].joints;
+            for(let i = 0, il = joints.length; i < il; i++)nodeDefs[joints[i]].isBone = true;
+        }
+        // Iterate over all nodes, marking references to shared resources,
+        // as well as skeleton joints.
+        for(let nodeIndex = 0, nodeLength = nodeDefs.length; nodeIndex < nodeLength; nodeIndex++){
+            const nodeDef = nodeDefs[nodeIndex];
+            if (nodeDef.mesh !== undefined) {
+                this._addNodeRef(this.meshCache, nodeDef.mesh);
+                // Nothing in the mesh definition indicates whether it is
+                // a SkinnedMesh or Mesh. Use the node's mesh reference
+                // to mark SkinnedMesh if node has skin.
+                if (nodeDef.skin !== undefined) meshDefs[nodeDef.mesh].isSkinnedMesh = true;
+            }
+            if (nodeDef.camera !== undefined) this._addNodeRef(this.cameraCache, nodeDef.camera);
+        }
+    }
+    /**
+	 * Counts references to shared node / Object3D resources. These resources
+	 * can be reused, or "instantiated", at multiple nodes in the scene
+	 * hierarchy. Mesh, Camera, and Light instances are instantiated and must
+	 * be marked. Non-scenegraph resources (like Materials, Geometries, and
+	 * Textures) can be reused directly and are not marked here.
+	 *
+	 * Example: CesiumMilkTruck sample model reuses "Wheel" meshes.
+	 */ _addNodeRef(cache, index) {
+        if (index === undefined) return;
+        if (cache.refs[index] === undefined) cache.refs[index] = cache.uses[index] = 0;
+        cache.refs[index]++;
+    }
+    /** Returns a reference to a shared resource, cloning it if necessary. */ _getNodeRef(cache, index, object) {
+        if (cache.refs[index] <= 1) return object;
+        const ref = object.clone();
+        // Propagates mappings to the cloned object, prevents mappings on the
+        // original object from being lost.
+        const updateMappings = (original, clone)=>{
+            const mappings = this.associations.get(original);
+            if (mappings != null) this.associations.set(clone, mappings);
+            for (const [i, child] of original.children.entries())updateMappings(child, clone.children[i]);
+        };
+        updateMappings(object, ref);
+        ref.name += "_instance_" + cache.uses[index]++;
+        return ref;
+    }
+    _invokeOne(func) {
+        const extensions = Object.values(this.plugins);
+        extensions.push(this);
+        for(let i = 0; i < extensions.length; i++){
+            const result = func(extensions[i]);
+            if (result) return result;
+        }
+        return null;
+    }
+    _invokeAll(func) {
+        const extensions = Object.values(this.plugins);
+        extensions.unshift(this);
+        const pending = [];
+        for(let i = 0; i < extensions.length; i++){
+            const result = func(extensions[i]);
+            if (result) pending.push(result);
+        }
+        return pending;
+    }
+    /**
+	 * Requests the specified dependency asynchronously, with caching.
+	 * @param {string} type
+	 * @param {number} index
+	 * @return {Promise<Object3D|Material|THREE.Texture|AnimationClip|ArrayBuffer|Object>}
+	 */ getDependency(type, index) {
+        const cacheKey = type + ":" + index;
+        let dependency = this.cache.get(cacheKey);
+        if (!dependency) {
+            switch(type){
+                case "scene":
+                    dependency = this.loadScene(index);
+                    break;
+                case "node":
+                    dependency = this.loadNode(index);
+                    break;
+                case "mesh":
+                    dependency = this._invokeOne(function(ext) {
+                        return ext.loadMesh && ext.loadMesh(index);
+                    });
+                    break;
+                case "accessor":
+                    dependency = this.loadAccessor(index);
+                    break;
+                case "bufferView":
+                    dependency = this._invokeOne(function(ext) {
+                        return ext.loadBufferView && ext.loadBufferView(index);
+                    });
+                    break;
+                case "buffer":
+                    dependency = this.loadBuffer(index);
+                    break;
+                case "material":
+                    dependency = this._invokeOne(function(ext) {
+                        return ext.loadMaterial && ext.loadMaterial(index);
+                    });
+                    break;
+                case "texture":
+                    dependency = this._invokeOne(function(ext) {
+                        return ext.loadTexture && ext.loadTexture(index);
+                    });
+                    break;
+                case "skin":
+                    dependency = this.loadSkin(index);
+                    break;
+                case "animation":
+                    dependency = this._invokeOne(function(ext) {
+                        return ext.loadAnimation && ext.loadAnimation(index);
+                    });
+                    break;
+                case "camera":
+                    dependency = this.loadCamera(index);
+                    break;
+                default:
+                    throw new Error("Unknown type: " + type);
+            }
+            this.cache.add(cacheKey, dependency);
+        }
+        return dependency;
+    }
+    /**
+	 * Requests all dependencies of the specified type asynchronously, with caching.
+	 * @param {string} type
+	 * @return {Promise<Array<Object>>}
+	 */ getDependencies(type) {
+        let dependencies = this.cache.get(type);
+        if (!dependencies) {
+            const parser = this;
+            const defs = this.json[type + (type === "mesh" ? "es" : "s")] || [];
+            dependencies = Promise.all(defs.map(function(def, index) {
+                return parser.getDependency(type, index);
+            }));
+            this.cache.add(type, dependencies);
+        }
+        return dependencies;
+    }
+    /**
+	 * Specification: https://github.com/KhronosGroup/glTF/blob/master/specification/2.0/README.md#buffers-and-buffer-views
+	 * @param {number} bufferIndex
+	 * @return {Promise<ArrayBuffer>}
+	 */ loadBuffer(bufferIndex) {
+        const bufferDef = this.json.buffers[bufferIndex];
+        const loader = this.fileLoader;
+        if (bufferDef.type && bufferDef.type !== "arraybuffer") throw new Error("THREE.GLTFLoader: " + bufferDef.type + " buffer type is not supported.");
+        // If present, GLB container is required to be the first buffer.
+        if (bufferDef.uri === undefined && bufferIndex === 0) return Promise.resolve(this.extensions[EXTENSIONS.KHR_BINARY_GLTF].body);
+        const options = this.options;
+        return new Promise(function(resolve, reject) {
+            loader.load((0, _three.LoaderUtils).resolveURL(bufferDef.uri, options.path), resolve, undefined, function() {
+                reject(new Error('THREE.GLTFLoader: Failed to load buffer "' + bufferDef.uri + '".'));
+            });
+        });
+    }
+    /**
+	 * Specification: https://github.com/KhronosGroup/glTF/blob/master/specification/2.0/README.md#buffers-and-buffer-views
+	 * @param {number} bufferViewIndex
+	 * @return {Promise<ArrayBuffer>}
+	 */ loadBufferView(bufferViewIndex) {
+        const bufferViewDef = this.json.bufferViews[bufferViewIndex];
+        return this.getDependency("buffer", bufferViewDef.buffer).then(function(buffer) {
+            const byteLength = bufferViewDef.byteLength || 0;
+            const byteOffset = bufferViewDef.byteOffset || 0;
+            return buffer.slice(byteOffset, byteOffset + byteLength);
+        });
+    }
+    /**
+	 * Specification: https://github.com/KhronosGroup/glTF/blob/master/specification/2.0/README.md#accessors
+	 * @param {number} accessorIndex
+	 * @return {Promise<BufferAttribute|InterleavedBufferAttribute>}
+	 */ loadAccessor(accessorIndex) {
+        const parser = this;
+        const json = this.json;
+        const accessorDef = this.json.accessors[accessorIndex];
+        if (accessorDef.bufferView === undefined && accessorDef.sparse === undefined) // Ignore empty accessors, which may be used to declare runtime
+        // information about attributes coming from another source (e.g. Draco
+        // compression extension).
+        return Promise.resolve(null);
+        const pendingBufferViews = [];
+        if (accessorDef.bufferView !== undefined) pendingBufferViews.push(this.getDependency("bufferView", accessorDef.bufferView));
+        else pendingBufferViews.push(null);
+        if (accessorDef.sparse !== undefined) {
+            pendingBufferViews.push(this.getDependency("bufferView", accessorDef.sparse.indices.bufferView));
+            pendingBufferViews.push(this.getDependency("bufferView", accessorDef.sparse.values.bufferView));
+        }
+        return Promise.all(pendingBufferViews).then(function(bufferViews) {
+            const bufferView = bufferViews[0];
+            const itemSize = WEBGL_TYPE_SIZES[accessorDef.type];
+            const TypedArray = WEBGL_COMPONENT_TYPES[accessorDef.componentType];
+            // For VEC3: itemSize is 3, elementBytes is 4, itemBytes is 12.
+            const elementBytes = TypedArray.BYTES_PER_ELEMENT;
+            const itemBytes = elementBytes * itemSize;
+            const byteOffset = accessorDef.byteOffset || 0;
+            const byteStride = accessorDef.bufferView !== undefined ? json.bufferViews[accessorDef.bufferView].byteStride : undefined;
+            const normalized = accessorDef.normalized === true;
+            let array, bufferAttribute;
+            // The buffer is not interleaved if the stride is the item size in bytes.
+            if (byteStride && byteStride !== itemBytes) {
+                // Each "slice" of the buffer, as defined by 'count' elements of 'byteStride' bytes, gets its own InterleavedBuffer
+                // This makes sure that IBA.count reflects accessor.count properly
+                const ibSlice = Math.floor(byteOffset / byteStride);
+                const ibCacheKey = "InterleavedBuffer:" + accessorDef.bufferView + ":" + accessorDef.componentType + ":" + ibSlice + ":" + accessorDef.count;
+                let ib = parser.cache.get(ibCacheKey);
+                if (!ib) {
+                    array = new TypedArray(bufferView, ibSlice * byteStride, accessorDef.count * byteStride / elementBytes);
+                    // Integer parameters to IB/IBA are in array elements, not bytes.
+                    ib = new (0, _three.InterleavedBuffer)(array, byteStride / elementBytes);
+                    parser.cache.add(ibCacheKey, ib);
+                }
+                bufferAttribute = new (0, _three.InterleavedBufferAttribute)(ib, itemSize, byteOffset % byteStride / elementBytes, normalized);
+            } else {
+                if (bufferView === null) array = new TypedArray(accessorDef.count * itemSize);
+                else array = new TypedArray(bufferView, byteOffset, accessorDef.count * itemSize);
+                bufferAttribute = new (0, _three.BufferAttribute)(array, itemSize, normalized);
+            }
+            // https://github.com/KhronosGroup/glTF/blob/master/specification/2.0/README.md#sparse-accessors
+            if (accessorDef.sparse !== undefined) {
+                const itemSizeIndices = WEBGL_TYPE_SIZES.SCALAR;
+                const TypedArrayIndices = WEBGL_COMPONENT_TYPES[accessorDef.sparse.indices.componentType];
+                const byteOffsetIndices = accessorDef.sparse.indices.byteOffset || 0;
+                const byteOffsetValues = accessorDef.sparse.values.byteOffset || 0;
+                const sparseIndices = new TypedArrayIndices(bufferViews[1], byteOffsetIndices, accessorDef.sparse.count * itemSizeIndices);
+                const sparseValues = new TypedArray(bufferViews[2], byteOffsetValues, accessorDef.sparse.count * itemSize);
+                if (bufferView !== null) // Avoid modifying the original ArrayBuffer, if the bufferView wasn't initialized with zeroes.
+                bufferAttribute = new (0, _three.BufferAttribute)(bufferAttribute.array.slice(), bufferAttribute.itemSize, bufferAttribute.normalized);
+                for(let i = 0, il = sparseIndices.length; i < il; i++){
+                    const index = sparseIndices[i];
+                    bufferAttribute.setX(index, sparseValues[i * itemSize]);
+                    if (itemSize >= 2) bufferAttribute.setY(index, sparseValues[i * itemSize + 1]);
+                    if (itemSize >= 3) bufferAttribute.setZ(index, sparseValues[i * itemSize + 2]);
+                    if (itemSize >= 4) bufferAttribute.setW(index, sparseValues[i * itemSize + 3]);
+                    if (itemSize >= 5) throw new Error("THREE.GLTFLoader: Unsupported itemSize in sparse BufferAttribute.");
+                }
+            }
+            return bufferAttribute;
+        });
+    }
+    /**
+	 * Specification: https://github.com/KhronosGroup/glTF/tree/master/specification/2.0#textures
+	 * @param {number} textureIndex
+	 * @return {Promise<THREE.Texture>}
+	 */ loadTexture(textureIndex) {
+        const json = this.json;
+        const options = this.options;
+        const textureDef = json.textures[textureIndex];
+        const sourceIndex = textureDef.source;
+        const sourceDef = json.images[sourceIndex];
+        let loader = this.textureLoader;
+        if (sourceDef.uri) {
+            const handler = options.manager.getHandler(sourceDef.uri);
+            if (handler !== null) loader = handler;
+        }
+        return this.loadTextureImage(textureIndex, sourceIndex, loader);
+    }
+    loadTextureImage(textureIndex, sourceIndex, loader) {
+        const parser = this;
+        const json = this.json;
+        const textureDef = json.textures[textureIndex];
+        const sourceDef = json.images[sourceIndex];
+        const cacheKey = (sourceDef.uri || sourceDef.bufferView) + ":" + textureDef.sampler;
+        if (this.textureCache[cacheKey]) // See https://github.com/mrdoob/three.js/issues/21559.
+        return this.textureCache[cacheKey];
+        const promise = this.loadImageSource(sourceIndex, loader).then(function(texture) {
+            texture.flipY = false;
+            texture.name = textureDef.name || sourceDef.name || "";
+            const samplers = json.samplers || {};
+            const sampler = samplers[textureDef.sampler] || {};
+            texture.magFilter = WEBGL_FILTERS[sampler.magFilter] || (0, _three.LinearFilter);
+            texture.minFilter = WEBGL_FILTERS[sampler.minFilter] || (0, _three.LinearMipmapLinearFilter);
+            texture.wrapS = WEBGL_WRAPPINGS[sampler.wrapS] || (0, _three.RepeatWrapping);
+            texture.wrapT = WEBGL_WRAPPINGS[sampler.wrapT] || (0, _three.RepeatWrapping);
+            parser.associations.set(texture, {
+                textures: textureIndex
+            });
+            return texture;
+        }).catch(function() {
+            return null;
+        });
+        this.textureCache[cacheKey] = promise;
+        return promise;
+    }
+    loadImageSource(sourceIndex, loader) {
+        const parser = this;
+        const json = this.json;
+        const options = this.options;
+        if (this.sourceCache[sourceIndex] !== undefined) return this.sourceCache[sourceIndex].then((texture)=>texture.clone());
+        const sourceDef = json.images[sourceIndex];
+        const URL = self.URL || self.webkitURL;
+        let sourceURI = sourceDef.uri || "";
+        let isObjectURL = false;
+        if (sourceDef.bufferView !== undefined) // Load binary image data from bufferView, if provided.
+        sourceURI = parser.getDependency("bufferView", sourceDef.bufferView).then(function(bufferView) {
+            isObjectURL = true;
+            const blob = new Blob([
+                bufferView
+            ], {
+                type: sourceDef.mimeType
+            });
+            sourceURI = URL.createObjectURL(blob);
+            return sourceURI;
+        });
+        else if (sourceDef.uri === undefined) throw new Error("THREE.GLTFLoader: Image " + sourceIndex + " is missing URI and bufferView");
+        const promise = Promise.resolve(sourceURI).then(function(sourceURI) {
+            return new Promise(function(resolve, reject) {
+                let onLoad = resolve;
+                if (loader.isImageBitmapLoader === true) onLoad = function(imageBitmap) {
+                    const texture = new (0, _three.Texture)(imageBitmap);
+                    texture.needsUpdate = true;
+                    resolve(texture);
+                };
+                loader.load((0, _three.LoaderUtils).resolveURL(sourceURI, options.path), onLoad, undefined, reject);
+            });
+        }).then(function(texture) {
+            // Clean up resources and configure Texture.
+            if (isObjectURL === true) URL.revokeObjectURL(sourceURI);
+            texture.userData.mimeType = sourceDef.mimeType || getImageURIMimeType(sourceDef.uri);
+            return texture;
+        }).catch(function(error) {
+            console.error("THREE.GLTFLoader: Couldn't load texture", sourceURI);
+            throw error;
+        });
+        this.sourceCache[sourceIndex] = promise;
+        return promise;
+    }
+    /**
+	 * Asynchronously assigns a texture to the given material parameters.
+	 * @param {Object} materialParams
+	 * @param {string} mapName
+	 * @param {Object} mapDef
+	 * @return {Promise<Texture>}
+	 */ assignTexture(materialParams, mapName, mapDef, encoding) {
+        const parser = this;
+        return this.getDependency("texture", mapDef.index).then(function(texture) {
+            // Materials sample aoMap from UV set 1 and other maps from UV set 0 - this can't be configured
+            // However, we will copy UV set 0 to UV set 1 on demand for aoMap
+            if (mapDef.texCoord !== undefined && mapDef.texCoord != 0 && !(mapName === "aoMap" && mapDef.texCoord == 1)) console.warn("THREE.GLTFLoader: Custom UV set " + mapDef.texCoord + " for texture " + mapName + " not yet supported.");
+            if (parser.extensions[EXTENSIONS.KHR_TEXTURE_TRANSFORM]) {
+                const transform = mapDef.extensions !== undefined ? mapDef.extensions[EXTENSIONS.KHR_TEXTURE_TRANSFORM] : undefined;
+                if (transform) {
+                    const gltfReference = parser.associations.get(texture);
+                    texture = parser.extensions[EXTENSIONS.KHR_TEXTURE_TRANSFORM].extendTexture(texture, transform);
+                    parser.associations.set(texture, gltfReference);
+                }
+            }
+            if (encoding !== undefined) texture.encoding = encoding;
+            materialParams[mapName] = texture;
+            return texture;
+        });
+    }
+    /**
+	 * Assigns final material to a Mesh, Line, or Points instance. The instance
+	 * already has a material (generated from the glTF material options alone)
+	 * but reuse of the same glTF material may require multiple threejs materials
+	 * to accommodate different primitive types, defines, etc. New materials will
+	 * be created if necessary, and reused from a cache.
+	 * @param  {Object3D} mesh Mesh, Line, or Points instance.
+	 */ assignFinalMaterial(mesh) {
+        const geometry = mesh.geometry;
+        let material = mesh.material;
+        const useDerivativeTangents = geometry.attributes.tangent === undefined;
+        const useVertexColors = geometry.attributes.color !== undefined;
+        const useFlatShading = geometry.attributes.normal === undefined;
+        if (mesh.isPoints) {
+            const cacheKey = "PointsMaterial:" + material.uuid;
+            let pointsMaterial = this.cache.get(cacheKey);
+            if (!pointsMaterial) {
+                pointsMaterial = new (0, _three.PointsMaterial)();
+                (0, _three.Material).prototype.copy.call(pointsMaterial, material);
+                pointsMaterial.color.copy(material.color);
+                pointsMaterial.map = material.map;
+                pointsMaterial.sizeAttenuation = false; // glTF spec says points should be 1px
+                this.cache.add(cacheKey, pointsMaterial);
+            }
+            material = pointsMaterial;
+        } else if (mesh.isLine) {
+            const cacheKey1 = "LineBasicMaterial:" + material.uuid;
+            let lineMaterial = this.cache.get(cacheKey1);
+            if (!lineMaterial) {
+                lineMaterial = new (0, _three.LineBasicMaterial)();
+                (0, _three.Material).prototype.copy.call(lineMaterial, material);
+                lineMaterial.color.copy(material.color);
+                this.cache.add(cacheKey1, lineMaterial);
+            }
+            material = lineMaterial;
+        }
+        // Clone the material if it will be modified
+        if (useDerivativeTangents || useVertexColors || useFlatShading) {
+            let cacheKey2 = "ClonedMaterial:" + material.uuid + ":";
+            if (material.isGLTFSpecularGlossinessMaterial) cacheKey2 += "specular-glossiness:";
+            if (useDerivativeTangents) cacheKey2 += "derivative-tangents:";
+            if (useVertexColors) cacheKey2 += "vertex-colors:";
+            if (useFlatShading) cacheKey2 += "flat-shading:";
+            let cachedMaterial = this.cache.get(cacheKey2);
+            if (!cachedMaterial) {
+                cachedMaterial = material.clone();
+                if (useVertexColors) cachedMaterial.vertexColors = true;
+                if (useFlatShading) cachedMaterial.flatShading = true;
+                if (useDerivativeTangents) {
+                    // https://github.com/mrdoob/three.js/issues/11438#issuecomment-507003995
+                    if (cachedMaterial.normalScale) cachedMaterial.normalScale.y *= -1;
+                    if (cachedMaterial.clearcoatNormalScale) cachedMaterial.clearcoatNormalScale.y *= -1;
+                }
+                this.cache.add(cacheKey2, cachedMaterial);
+                this.associations.set(cachedMaterial, this.associations.get(material));
+            }
+            material = cachedMaterial;
+        }
+        // workarounds for mesh and geometry
+        if (material.aoMap && geometry.attributes.uv2 === undefined && geometry.attributes.uv !== undefined) geometry.setAttribute("uv2", geometry.attributes.uv);
+        mesh.material = material;
+    }
+    getMaterialType() {
+        return 0, _three.MeshStandardMaterial;
+    }
+    /**
+	 * Specification: https://github.com/KhronosGroup/glTF/blob/master/specification/2.0/README.md#materials
+	 * @param {number} materialIndex
+	 * @return {Promise<Material>}
+	 */ loadMaterial(materialIndex) {
+        const parser = this;
+        const json = this.json;
+        const extensions = this.extensions;
+        const materialDef = json.materials[materialIndex];
+        let materialType;
+        const materialParams = {};
+        const materialExtensions = materialDef.extensions || {};
+        const pending = [];
+        if (materialExtensions[EXTENSIONS.KHR_MATERIALS_PBR_SPECULAR_GLOSSINESS]) {
+            const sgExtension = extensions[EXTENSIONS.KHR_MATERIALS_PBR_SPECULAR_GLOSSINESS];
+            materialType = sgExtension.getMaterialType();
+            pending.push(sgExtension.extendParams(materialParams, materialDef, parser));
+        } else if (materialExtensions[EXTENSIONS.KHR_MATERIALS_UNLIT]) {
+            const kmuExtension = extensions[EXTENSIONS.KHR_MATERIALS_UNLIT];
+            materialType = kmuExtension.getMaterialType();
+            pending.push(kmuExtension.extendParams(materialParams, materialDef, parser));
+        } else {
+            // Specification:
+            // https://github.com/KhronosGroup/glTF/tree/master/specification/2.0#metallic-roughness-material
+            const metallicRoughness = materialDef.pbrMetallicRoughness || {};
+            materialParams.color = new (0, _three.Color)(1.0, 1.0, 1.0);
+            materialParams.opacity = 1.0;
+            if (Array.isArray(metallicRoughness.baseColorFactor)) {
+                const array = metallicRoughness.baseColorFactor;
+                materialParams.color.fromArray(array);
+                materialParams.opacity = array[3];
+            }
+            if (metallicRoughness.baseColorTexture !== undefined) pending.push(parser.assignTexture(materialParams, "map", metallicRoughness.baseColorTexture, (0, _three.sRGBEncoding)));
+            materialParams.metalness = metallicRoughness.metallicFactor !== undefined ? metallicRoughness.metallicFactor : 1.0;
+            materialParams.roughness = metallicRoughness.roughnessFactor !== undefined ? metallicRoughness.roughnessFactor : 1.0;
+            if (metallicRoughness.metallicRoughnessTexture !== undefined) {
+                pending.push(parser.assignTexture(materialParams, "metalnessMap", metallicRoughness.metallicRoughnessTexture));
+                pending.push(parser.assignTexture(materialParams, "roughnessMap", metallicRoughness.metallicRoughnessTexture));
+            }
+            materialType = this._invokeOne(function(ext) {
+                return ext.getMaterialType && ext.getMaterialType(materialIndex);
+            });
+            pending.push(Promise.all(this._invokeAll(function(ext) {
+                return ext.extendMaterialParams && ext.extendMaterialParams(materialIndex, materialParams);
+            })));
+        }
+        if (materialDef.doubleSided === true) materialParams.side = (0, _three.DoubleSide);
+        const alphaMode = materialDef.alphaMode || ALPHA_MODES.OPAQUE;
+        if (alphaMode === ALPHA_MODES.BLEND) {
+            materialParams.transparent = true;
+            // See: https://github.com/mrdoob/three.js/issues/17706
+            materialParams.depthWrite = false;
+        } else {
+            materialParams.transparent = false;
+            if (alphaMode === ALPHA_MODES.MASK) materialParams.alphaTest = materialDef.alphaCutoff !== undefined ? materialDef.alphaCutoff : 0.5;
+        }
+        if (materialDef.normalTexture !== undefined && materialType !== (0, _three.MeshBasicMaterial)) {
+            pending.push(parser.assignTexture(materialParams, "normalMap", materialDef.normalTexture));
+            materialParams.normalScale = new (0, _three.Vector2)(1, 1);
+            if (materialDef.normalTexture.scale !== undefined) {
+                const scale = materialDef.normalTexture.scale;
+                materialParams.normalScale.set(scale, scale);
+            }
+        }
+        if (materialDef.occlusionTexture !== undefined && materialType !== (0, _three.MeshBasicMaterial)) {
+            pending.push(parser.assignTexture(materialParams, "aoMap", materialDef.occlusionTexture));
+            if (materialDef.occlusionTexture.strength !== undefined) materialParams.aoMapIntensity = materialDef.occlusionTexture.strength;
+        }
+        if (materialDef.emissiveFactor !== undefined && materialType !== (0, _three.MeshBasicMaterial)) materialParams.emissive = new (0, _three.Color)().fromArray(materialDef.emissiveFactor);
+        if (materialDef.emissiveTexture !== undefined && materialType !== (0, _three.MeshBasicMaterial)) pending.push(parser.assignTexture(materialParams, "emissiveMap", materialDef.emissiveTexture, (0, _three.sRGBEncoding)));
+        return Promise.all(pending).then(function() {
+            let material;
+            if (materialType === GLTFMeshStandardSGMaterial) material = extensions[EXTENSIONS.KHR_MATERIALS_PBR_SPECULAR_GLOSSINESS].createMaterial(materialParams);
+            else material = new materialType(materialParams);
+            if (materialDef.name) material.name = materialDef.name;
+            assignExtrasToUserData(material, materialDef);
+            parser.associations.set(material, {
+                materials: materialIndex
+            });
+            if (materialDef.extensions) addUnknownExtensionsToUserData(extensions, material, materialDef);
+            return material;
+        });
+    }
+    /** When Object3D instances are targeted by animation, they need unique names. */ createUniqueName(originalName) {
+        const sanitizedName = (0, _three.PropertyBinding).sanitizeNodeName(originalName || "");
+        let name = sanitizedName;
+        for(let i = 1; this.nodeNamesUsed[name]; ++i)name = sanitizedName + "_" + i;
+        this.nodeNamesUsed[name] = true;
+        return name;
+    }
+    /**
+	 * Specification: https://github.com/KhronosGroup/glTF/blob/master/specification/2.0/README.md#geometry
+	 *
+	 * Creates BufferGeometries from primitives.
+	 *
+	 * @param {Array<GLTF.Primitive>} primitives
+	 * @return {Promise<Array<BufferGeometry>>}
+	 */ loadGeometries(primitives) {
+        const parser = this;
+        const extensions = this.extensions;
+        const cache = this.primitiveCache;
+        function createDracoPrimitive(primitive) {
+            return extensions[EXTENSIONS.KHR_DRACO_MESH_COMPRESSION].decodePrimitive(primitive, parser).then(function(geometry) {
+                return addPrimitiveAttributes(geometry, primitive, parser);
+            });
+        }
+        const pending = [];
+        for(let i = 0, il = primitives.length; i < il; i++){
+            const primitive = primitives[i];
+            const cacheKey = createPrimitiveKey(primitive);
+            // See if we've already created this geometry
+            const cached = cache[cacheKey];
+            if (cached) // Use the cached geometry if it exists
+            pending.push(cached.promise);
+            else {
+                let geometryPromise;
+                if (primitive.extensions && primitive.extensions[EXTENSIONS.KHR_DRACO_MESH_COMPRESSION]) // Use DRACO geometry if available
+                geometryPromise = createDracoPrimitive(primitive);
+                else // Otherwise create a new geometry
+                geometryPromise = addPrimitiveAttributes(new (0, _three.BufferGeometry)(), primitive, parser);
+                // Cache this geometry
+                cache[cacheKey] = {
+                    primitive: primitive,
+                    promise: geometryPromise
+                };
+                pending.push(geometryPromise);
+            }
+        }
+        return Promise.all(pending);
+    }
+    /**
+	 * Specification: https://github.com/KhronosGroup/glTF/blob/master/specification/2.0/README.md#meshes
+	 * @param {number} meshIndex
+	 * @return {Promise<Group|Mesh|SkinnedMesh>}
+	 */ loadMesh(meshIndex) {
+        const parser = this;
+        const json = this.json;
+        const extensions = this.extensions;
+        const meshDef = json.meshes[meshIndex];
+        const primitives = meshDef.primitives;
+        const pending = [];
+        for(let i = 0, il = primitives.length; i < il; i++){
+            const material = primitives[i].material === undefined ? createDefaultMaterial(this.cache) : this.getDependency("material", primitives[i].material);
+            pending.push(material);
+        }
+        pending.push(parser.loadGeometries(primitives));
+        return Promise.all(pending).then(function(results) {
+            const materials = results.slice(0, results.length - 1);
+            const geometries = results[results.length - 1];
+            const meshes = [];
+            for(let i = 0, il = geometries.length; i < il; i++){
+                const geometry = geometries[i];
+                const primitive = primitives[i];
+                // 1. create Mesh
+                let mesh;
+                const material = materials[i];
+                if (primitive.mode === WEBGL_CONSTANTS.TRIANGLES || primitive.mode === WEBGL_CONSTANTS.TRIANGLE_STRIP || primitive.mode === WEBGL_CONSTANTS.TRIANGLE_FAN || primitive.mode === undefined) {
+                    // .isSkinnedMesh isn't in glTF spec. See ._markDefs()
+                    mesh = meshDef.isSkinnedMesh === true ? new (0, _three.SkinnedMesh)(geometry, material) : new (0, _three.Mesh)(geometry, material);
+                    if (mesh.isSkinnedMesh === true && !mesh.geometry.attributes.skinWeight.normalized) // we normalize floating point skin weight array to fix malformed assets (see #15319)
+                    // it's important to skip this for non-float32 data since normalizeSkinWeights assumes non-normalized inputs
+                    mesh.normalizeSkinWeights();
+                    if (primitive.mode === WEBGL_CONSTANTS.TRIANGLE_STRIP) mesh.geometry = toTrianglesDrawMode(mesh.geometry, (0, _three.TriangleStripDrawMode));
+                    else if (primitive.mode === WEBGL_CONSTANTS.TRIANGLE_FAN) mesh.geometry = toTrianglesDrawMode(mesh.geometry, (0, _three.TriangleFanDrawMode));
+                } else if (primitive.mode === WEBGL_CONSTANTS.LINES) mesh = new (0, _three.LineSegments)(geometry, material);
+                else if (primitive.mode === WEBGL_CONSTANTS.LINE_STRIP) mesh = new (0, _three.Line)(geometry, material);
+                else if (primitive.mode === WEBGL_CONSTANTS.LINE_LOOP) mesh = new (0, _three.LineLoop)(geometry, material);
+                else if (primitive.mode === WEBGL_CONSTANTS.POINTS) mesh = new (0, _three.Points)(geometry, material);
+                else throw new Error("THREE.GLTFLoader: Primitive mode unsupported: " + primitive.mode);
+                if (Object.keys(mesh.geometry.morphAttributes).length > 0) updateMorphTargets(mesh, meshDef);
+                mesh.name = parser.createUniqueName(meshDef.name || "mesh_" + meshIndex);
+                assignExtrasToUserData(mesh, meshDef);
+                if (primitive.extensions) addUnknownExtensionsToUserData(extensions, mesh, primitive);
+                parser.assignFinalMaterial(mesh);
+                meshes.push(mesh);
+            }
+            for(let i1 = 0, il1 = meshes.length; i1 < il1; i1++)parser.associations.set(meshes[i1], {
+                meshes: meshIndex,
+                primitives: i1
+            });
+            if (meshes.length === 1) return meshes[0];
+            const group = new (0, _three.Group)();
+            parser.associations.set(group, {
+                meshes: meshIndex
+            });
+            for(let i2 = 0, il2 = meshes.length; i2 < il2; i2++)group.add(meshes[i2]);
+            return group;
+        });
+    }
+    /**
+	 * Specification: https://github.com/KhronosGroup/glTF/tree/master/specification/2.0#cameras
+	 * @param {number} cameraIndex
+	 * @return {Promise<THREE.Camera>}
+	 */ loadCamera(cameraIndex) {
+        let camera;
+        const cameraDef = this.json.cameras[cameraIndex];
+        const params = cameraDef[cameraDef.type];
+        if (!params) {
+            console.warn("THREE.GLTFLoader: Missing camera parameters.");
+            return;
+        }
+        if (cameraDef.type === "perspective") camera = new (0, _three.PerspectiveCamera)((0, _three.MathUtils).radToDeg(params.yfov), params.aspectRatio || 1, params.znear || 1, params.zfar || 2e6);
+        else if (cameraDef.type === "orthographic") camera = new (0, _three.OrthographicCamera)(-params.xmag, params.xmag, params.ymag, -params.ymag, params.znear, params.zfar);
+        if (cameraDef.name) camera.name = this.createUniqueName(cameraDef.name);
+        assignExtrasToUserData(camera, cameraDef);
+        return Promise.resolve(camera);
+    }
+    /**
+	 * Specification: https://github.com/KhronosGroup/glTF/tree/master/specification/2.0#skins
+	 * @param {number} skinIndex
+	 * @return {Promise<Object>}
+	 */ loadSkin(skinIndex) {
+        const skinDef = this.json.skins[skinIndex];
+        const skinEntry = {
+            joints: skinDef.joints
+        };
+        if (skinDef.inverseBindMatrices === undefined) return Promise.resolve(skinEntry);
+        return this.getDependency("accessor", skinDef.inverseBindMatrices).then(function(accessor) {
+            skinEntry.inverseBindMatrices = accessor;
+            return skinEntry;
+        });
+    }
+    /**
+	 * Specification: https://github.com/KhronosGroup/glTF/tree/master/specification/2.0#animations
+	 * @param {number} animationIndex
+	 * @return {Promise<AnimationClip>}
+	 */ loadAnimation(animationIndex) {
+        const json = this.json;
+        const animationDef = json.animations[animationIndex];
+        const pendingNodes = [];
+        const pendingInputAccessors = [];
+        const pendingOutputAccessors = [];
+        const pendingSamplers = [];
+        const pendingTargets = [];
+        for(let i = 0, il = animationDef.channels.length; i < il; i++){
+            const channel = animationDef.channels[i];
+            const sampler = animationDef.samplers[channel.sampler];
+            const target = channel.target;
+            const name = target.node;
+            const input = animationDef.parameters !== undefined ? animationDef.parameters[sampler.input] : sampler.input;
+            const output = animationDef.parameters !== undefined ? animationDef.parameters[sampler.output] : sampler.output;
+            pendingNodes.push(this.getDependency("node", name));
+            pendingInputAccessors.push(this.getDependency("accessor", input));
+            pendingOutputAccessors.push(this.getDependency("accessor", output));
+            pendingSamplers.push(sampler);
+            pendingTargets.push(target);
+        }
+        return Promise.all([
+            Promise.all(pendingNodes),
+            Promise.all(pendingInputAccessors),
+            Promise.all(pendingOutputAccessors),
+            Promise.all(pendingSamplers),
+            Promise.all(pendingTargets)
+        ]).then(function(dependencies) {
+            const nodes = dependencies[0];
+            const inputAccessors = dependencies[1];
+            const outputAccessors = dependencies[2];
+            const samplers = dependencies[3];
+            const targets = dependencies[4];
+            const tracks = [];
+            for(let i = 0, il = nodes.length; i < il; i++){
+                const node = nodes[i];
+                const inputAccessor = inputAccessors[i];
+                const outputAccessor = outputAccessors[i];
+                const sampler = samplers[i];
+                const target = targets[i];
+                if (node === undefined) continue;
+                node.updateMatrix();
+                let TypedKeyframeTrack;
+                switch(PATH_PROPERTIES[target.path]){
+                    case PATH_PROPERTIES.weights:
+                        TypedKeyframeTrack = (0, _three.NumberKeyframeTrack);
+                        break;
+                    case PATH_PROPERTIES.rotation:
+                        TypedKeyframeTrack = (0, _three.QuaternionKeyframeTrack);
+                        break;
+                    case PATH_PROPERTIES.position:
+                    case PATH_PROPERTIES.scale:
+                    default:
+                        TypedKeyframeTrack = (0, _three.VectorKeyframeTrack);
+                        break;
+                }
+                const targetName = node.name ? node.name : node.uuid;
+                const interpolation = sampler.interpolation !== undefined ? INTERPOLATION[sampler.interpolation] : (0, _three.InterpolateLinear);
+                const targetNames = [];
+                if (PATH_PROPERTIES[target.path] === PATH_PROPERTIES.weights) node.traverse(function(object) {
+                    if (object.morphTargetInfluences) targetNames.push(object.name ? object.name : object.uuid);
+                });
+                else targetNames.push(targetName);
+                let outputArray = outputAccessor.array;
+                if (outputAccessor.normalized) {
+                    const scale = getNormalizedComponentScale(outputArray.constructor);
+                    const scaled = new Float32Array(outputArray.length);
+                    for(let j = 0, jl = outputArray.length; j < jl; j++)scaled[j] = outputArray[j] * scale;
+                    outputArray = scaled;
+                }
+                for(let j1 = 0, jl1 = targetNames.length; j1 < jl1; j1++){
+                    const track = new TypedKeyframeTrack(targetNames[j1] + "." + PATH_PROPERTIES[target.path], inputAccessor.array, outputArray, interpolation);
+                    // Override interpolation with custom factory method.
+                    if (sampler.interpolation === "CUBICSPLINE") {
+                        track.createInterpolant = function InterpolantFactoryMethodGLTFCubicSpline(result) {
+                            // A CUBICSPLINE keyframe in glTF has three output values for each input value,
+                            // representing inTangent, splineVertex, and outTangent. As a result, track.getValueSize()
+                            // must be divided by three to get the interpolant's sampleSize argument.
+                            const interpolantType = this instanceof (0, _three.QuaternionKeyframeTrack) ? GLTFCubicSplineQuaternionInterpolant : GLTFCubicSplineInterpolant;
+                            return new interpolantType(this.times, this.values, this.getValueSize() / 3, result);
+                        };
+                        // Mark as CUBICSPLINE. `track.getInterpolation()` doesn't support custom interpolants.
+                        track.createInterpolant.isInterpolantFactoryMethodGLTFCubicSpline = true;
+                    }
+                    tracks.push(track);
+                }
+            }
+            const name = animationDef.name ? animationDef.name : "animation_" + animationIndex;
+            return new (0, _three.AnimationClip)(name, undefined, tracks);
+        });
+    }
+    createNodeMesh(nodeIndex) {
+        const json = this.json;
+        const parser = this;
+        const nodeDef = json.nodes[nodeIndex];
+        if (nodeDef.mesh === undefined) return null;
+        return parser.getDependency("mesh", nodeDef.mesh).then(function(mesh) {
+            const node = parser._getNodeRef(parser.meshCache, nodeDef.mesh, mesh);
+            // if weights are provided on the node, override weights on the mesh.
+            if (nodeDef.weights !== undefined) node.traverse(function(o) {
+                if (!o.isMesh) return;
+                for(let i = 0, il = nodeDef.weights.length; i < il; i++)o.morphTargetInfluences[i] = nodeDef.weights[i];
+            });
+            return node;
+        });
+    }
+    /**
+	 * Specification: https://github.com/KhronosGroup/glTF/tree/master/specification/2.0#nodes-and-hierarchy
+	 * @param {number} nodeIndex
+	 * @return {Promise<Object3D>}
+	 */ loadNode(nodeIndex) {
+        const json = this.json;
+        const extensions = this.extensions;
+        const parser = this;
+        const nodeDef = json.nodes[nodeIndex];
+        // reserve node's name before its dependencies, so the root has the intended name.
+        const nodeName = nodeDef.name ? parser.createUniqueName(nodeDef.name) : "";
+        return (function() {
+            const pending = [];
+            const meshPromise = parser._invokeOne(function(ext) {
+                return ext.createNodeMesh && ext.createNodeMesh(nodeIndex);
+            });
+            if (meshPromise) pending.push(meshPromise);
+            if (nodeDef.camera !== undefined) pending.push(parser.getDependency("camera", nodeDef.camera).then(function(camera) {
+                return parser._getNodeRef(parser.cameraCache, nodeDef.camera, camera);
+            }));
+            parser._invokeAll(function(ext) {
+                return ext.createNodeAttachment && ext.createNodeAttachment(nodeIndex);
+            }).forEach(function(promise) {
+                pending.push(promise);
+            });
+            return Promise.all(pending);
+        })().then(function(objects) {
+            let node;
+            // .isBone isn't in glTF spec. See ._markDefs
+            if (nodeDef.isBone === true) node = new (0, _three.Bone)();
+            else if (objects.length > 1) node = new (0, _three.Group)();
+            else if (objects.length === 1) node = objects[0];
+            else node = new (0, _three.Object3D)();
+            if (node !== objects[0]) for(let i = 0, il = objects.length; i < il; i++)node.add(objects[i]);
+            if (nodeDef.name) {
+                node.userData.name = nodeDef.name;
+                node.name = nodeName;
+            }
+            assignExtrasToUserData(node, nodeDef);
+            if (nodeDef.extensions) addUnknownExtensionsToUserData(extensions, node, nodeDef);
+            if (nodeDef.matrix !== undefined) {
+                const matrix = new (0, _three.Matrix4)();
+                matrix.fromArray(nodeDef.matrix);
+                node.applyMatrix4(matrix);
+            } else {
+                if (nodeDef.translation !== undefined) node.position.fromArray(nodeDef.translation);
+                if (nodeDef.rotation !== undefined) node.quaternion.fromArray(nodeDef.rotation);
+                if (nodeDef.scale !== undefined) node.scale.fromArray(nodeDef.scale);
+            }
+            if (!parser.associations.has(node)) parser.associations.set(node, {});
+            parser.associations.get(node).nodes = nodeIndex;
+            return node;
+        });
+    }
+    /**
+	 * Specification: https://github.com/KhronosGroup/glTF/tree/master/specification/2.0#scenes
+	 * @param {number} sceneIndex
+	 * @return {Promise<Group>}
+	 */ loadScene(sceneIndex) {
+        const json = this.json;
+        const extensions = this.extensions;
+        const sceneDef = this.json.scenes[sceneIndex];
+        const parser = this;
+        // Loader returns Group, not Scene.
+        // See: https://github.com/mrdoob/three.js/issues/18342#issuecomment-578981172
+        const scene = new (0, _three.Group)();
+        if (sceneDef.name) scene.name = parser.createUniqueName(sceneDef.name);
+        assignExtrasToUserData(scene, sceneDef);
+        if (sceneDef.extensions) addUnknownExtensionsToUserData(extensions, scene, sceneDef);
+        const nodeIds = sceneDef.nodes || [];
+        const pending = [];
+        for(let i = 0, il = nodeIds.length; i < il; i++)pending.push(buildNodeHierarchy(nodeIds[i], scene, json, parser));
+        return Promise.all(pending).then(function() {
+            // Removes dangling associations, associations that reference a node that
+            // didn't make it into the scene.
+            const reduceAssociations = (node)=>{
+                const reducedAssociations = new Map();
+                for (const [key, value] of parser.associations)if (key instanceof (0, _three.Material) || key instanceof (0, _three.Texture)) reducedAssociations.set(key, value);
+                node.traverse((node)=>{
+                    const mappings = parser.associations.get(node);
+                    if (mappings != null) reducedAssociations.set(node, mappings);
+                });
+                return reducedAssociations;
+            };
+            parser.associations = reduceAssociations(scene);
+            return scene;
+        });
+    }
+}
+function buildNodeHierarchy(nodeId, parentObject, json, parser) {
+    const nodeDef = json.nodes[nodeId];
+    return parser.getDependency("node", nodeId).then(function(node) {
+        if (nodeDef.skin === undefined) return node;
+        // build skeleton here as well
+        let skinEntry;
+        return parser.getDependency("skin", nodeDef.skin).then(function(skin) {
+            skinEntry = skin;
+            const pendingJoints = [];
+            for(let i = 0, il = skinEntry.joints.length; i < il; i++)pendingJoints.push(parser.getDependency("node", skinEntry.joints[i]));
+            return Promise.all(pendingJoints);
+        }).then(function(jointNodes) {
+            node.traverse(function(mesh) {
+                if (!mesh.isMesh) return;
+                const bones = [];
+                const boneInverses = [];
+                for(let j = 0, jl = jointNodes.length; j < jl; j++){
+                    const jointNode = jointNodes[j];
+                    if (jointNode) {
+                        bones.push(jointNode);
+                        const mat = new (0, _three.Matrix4)();
+                        if (skinEntry.inverseBindMatrices !== undefined) mat.fromArray(skinEntry.inverseBindMatrices.array, j * 16);
+                        boneInverses.push(mat);
+                    } else console.warn('THREE.GLTFLoader: Joint "%s" could not be found.', skinEntry.joints[j]);
+                }
+                mesh.bind(new (0, _three.Skeleton)(bones, boneInverses), mesh.matrixWorld);
+            });
+            return node;
+        });
+    }).then(function(node) {
+        // build node hierachy
+        parentObject.add(node);
+        const pending = [];
+        if (nodeDef.children) {
+            const children = nodeDef.children;
+            for(let i = 0, il = children.length; i < il; i++){
+                const child = children[i];
+                pending.push(buildNodeHierarchy(child, node, json, parser));
+            }
+        }
+        return Promise.all(pending);
+    });
+}
+/**
+ * @param {BufferGeometry} geometry
+ * @param {GLTF.Primitive} primitiveDef
+ * @param {GLTFParser} parser
+ */ function computeBounds(geometry, primitiveDef, parser) {
+    const attributes = primitiveDef.attributes;
+    const box = new (0, _three.Box3)();
+    if (attributes.POSITION !== undefined) {
+        const accessor = parser.json.accessors[attributes.POSITION];
+        const min = accessor.min;
+        const max = accessor.max;
+        // glTF requires 'min' and 'max', but VRM (which extends glTF) currently ignores that requirement.
+        if (min !== undefined && max !== undefined) {
+            box.set(new (0, _three.Vector3)(min[0], min[1], min[2]), new (0, _three.Vector3)(max[0], max[1], max[2]));
+            if (accessor.normalized) {
+                const boxScale = getNormalizedComponentScale(WEBGL_COMPONENT_TYPES[accessor.componentType]);
+                box.min.multiplyScalar(boxScale);
+                box.max.multiplyScalar(boxScale);
+            }
+        } else {
+            console.warn("THREE.GLTFLoader: Missing min/max properties for accessor POSITION.");
+            return;
+        }
+    } else return;
+    const targets = primitiveDef.targets;
+    if (targets !== undefined) {
+        const maxDisplacement = new (0, _three.Vector3)();
+        const vector = new (0, _three.Vector3)();
+        for(let i = 0, il = targets.length; i < il; i++){
+            const target = targets[i];
+            if (target.POSITION !== undefined) {
+                const accessor1 = parser.json.accessors[target.POSITION];
+                const min1 = accessor1.min;
+                const max1 = accessor1.max;
+                // glTF requires 'min' and 'max', but VRM (which extends glTF) currently ignores that requirement.
+                if (min1 !== undefined && max1 !== undefined) {
+                    // we need to get max of absolute components because target weight is [-1,1]
+                    vector.setX(Math.max(Math.abs(min1[0]), Math.abs(max1[0])));
+                    vector.setY(Math.max(Math.abs(min1[1]), Math.abs(max1[1])));
+                    vector.setZ(Math.max(Math.abs(min1[2]), Math.abs(max1[2])));
+                    if (accessor1.normalized) {
+                        const boxScale1 = getNormalizedComponentScale(WEBGL_COMPONENT_TYPES[accessor1.componentType]);
+                        vector.multiplyScalar(boxScale1);
+                    }
+                    // Note: this assumes that the sum of all weights is at most 1. This isn't quite correct - it's more conservative
+                    // to assume that each target can have a max weight of 1. However, for some use cases - notably, when morph targets
+                    // are used to implement key-frame animations and as such only two are active at a time - this results in very large
+                    // boxes. So for now we make a box that's sometimes a touch too small but is hopefully mostly of reasonable size.
+                    maxDisplacement.max(vector);
+                } else console.warn("THREE.GLTFLoader: Missing min/max properties for accessor POSITION.");
+            }
+        }
+        // As per comment above this box isn't conservative, but has a reasonable size for a very large number of morph targets.
+        box.expandByVector(maxDisplacement);
+    }
+    geometry.boundingBox = box;
+    const sphere = new (0, _three.Sphere)();
+    box.getCenter(sphere.center);
+    sphere.radius = box.min.distanceTo(box.max) / 2;
+    geometry.boundingSphere = sphere;
+}
+/**
+ * @param {BufferGeometry} geometry
+ * @param {GLTF.Primitive} primitiveDef
+ * @param {GLTFParser} parser
+ * @return {Promise<BufferGeometry>}
+ */ function addPrimitiveAttributes(geometry, primitiveDef, parser) {
+    const attributes = primitiveDef.attributes;
+    const pending = [];
+    function assignAttributeAccessor(accessorIndex, attributeName) {
+        return parser.getDependency("accessor", accessorIndex).then(function(accessor) {
+            geometry.setAttribute(attributeName, accessor);
+        });
+    }
+    for(const gltfAttributeName in attributes){
+        const threeAttributeName = ATTRIBUTES[gltfAttributeName] || gltfAttributeName.toLowerCase();
+        // Skip attributes already provided by e.g. Draco extension.
+        if (threeAttributeName in geometry.attributes) continue;
+        pending.push(assignAttributeAccessor(attributes[gltfAttributeName], threeAttributeName));
+    }
+    if (primitiveDef.indices !== undefined && !geometry.index) {
+        const accessor = parser.getDependency("accessor", primitiveDef.indices).then(function(accessor) {
+            geometry.setIndex(accessor);
+        });
+        pending.push(accessor);
+    }
+    assignExtrasToUserData(geometry, primitiveDef);
+    computeBounds(geometry, primitiveDef, parser);
+    return Promise.all(pending).then(function() {
+        return primitiveDef.targets !== undefined ? addMorphTargets(geometry, primitiveDef.targets, parser) : geometry;
+    });
+}
+/**
+ * @param {BufferGeometry} geometry
+ * @param {Number} drawMode
+ * @return {BufferGeometry}
+ */ function toTrianglesDrawMode(geometry, drawMode) {
+    let index = geometry.getIndex();
+    // generate index if not present
+    if (index === null) {
+        const indices = [];
+        const position = geometry.getAttribute("position");
+        if (position !== undefined) {
+            for(let i = 0; i < position.count; i++)indices.push(i);
+            geometry.setIndex(indices);
+            index = geometry.getIndex();
+        } else {
+            console.error("THREE.GLTFLoader.toTrianglesDrawMode(): Undefined position attribute. Processing not possible.");
+            return geometry;
+        }
+    }
+    //
+    const numberOfTriangles = index.count - 2;
+    const newIndices = [];
+    if (drawMode === (0, _three.TriangleFanDrawMode)) // gl.TRIANGLE_FAN
+    for(let i1 = 1; i1 <= numberOfTriangles; i1++){
+        newIndices.push(index.getX(0));
+        newIndices.push(index.getX(i1));
+        newIndices.push(index.getX(i1 + 1));
+    }
+    else {
+        // gl.TRIANGLE_STRIP
+        for(let i2 = 0; i2 < numberOfTriangles; i2++)if (i2 % 2 === 0) {
+            newIndices.push(index.getX(i2));
+            newIndices.push(index.getX(i2 + 1));
+            newIndices.push(index.getX(i2 + 2));
+        } else {
+            newIndices.push(index.getX(i2 + 2));
+            newIndices.push(index.getX(i2 + 1));
+            newIndices.push(index.getX(i2));
+        }
+    }
+    if (newIndices.length / 3 !== numberOfTriangles) console.error("THREE.GLTFLoader.toTrianglesDrawMode(): Unable to generate correct amount of triangles.");
+    // build final geometry
+    const newGeometry = geometry.clone();
+    newGeometry.setIndex(newIndices);
+    return newGeometry;
+}
+
+},{"three":"ktPTu","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"2Qgse":[function(require,module,exports) {
+var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
+parcelHelpers.defineInteropFlag(exports);
+parcelHelpers.export(exports, "placeOdysseyInUniverse", ()=>placeOdysseyInUniverse);
+var _gsap = require("gsap");
+var _three = require("three");
+// Define rules for placements of Odysseys.
+let stakedCircleRadius = 10;
+let standardCircleRadius = 30;
+let circleRadiusIncreaseValue = 10;
+let amountOfRandomOdysseysInNextCircle = 10;
+let amountOfStakedOdysseysInNextRound = 5;
+let ringCounter = 1;
+let odysseyGroups = []; // This is for both staked and non-staked.
+const equatorMaxHeight = 5;
+const minimalDistanceToEquator = 8;
+const randomOdysseyMaxSpawnHeight = 20;
+const placeOdysseyInUniverse = (myOdyssey, listOfOddyseys)=>{
+    // Combine all arrays related to staking.
+    let allStakedOdysseys = [
+        ...myOdyssey.iStakedInConnections,
+        ...myOdyssey.mutualStakedConnections,
+        ...myOdyssey.stakedInMeConnections
+    ];
+    // Shuffle the array. So the planets will be randomly mixed. 
+    allStakedOdysseys = shuffleArray(allStakedOdysseys);
+    // Collect all actually Odyssey objects in an array.
+    const stakedOdysseysObject = [];
+    for(let i = 0; i < allStakedOdysseys.length; i++){
+        // Locate the actual Odyssey based on its ID number.
+        const found = listOfOddyseys.find((item)=>item.number == allStakedOdysseys[i]);
+        stakedOdysseysObject.push(found);
+    }
+    // Remove all StakedOdysseys from the ALL Odysseys array. To prevent duplications
+    stakedOdysseysObject.map((item)=>{
+        const found = listOfOddyseys.find((odyssey)=>odyssey == item);
+        if (found) {
+            // Remove duplicated Odyssey.
+            const index = listOfOddyseys.indexOf(found);
+            listOfOddyseys.splice(index, 1);
+        }
+    });
+    // Process and place the staked Odysseys.
+    while(stakedOdysseysObject.length > 0)ProcessStakedOdysseys(myOdyssey, stakedOdysseysObject);
+    // Process and place the Random Odysseys.
+    while(listOfOddyseys.length > 0)ProcessRandomOdysseys(listOfOddyseys);
+    // the final object for the Universe. Must be returned and added to the scene in the index.js
+    let theUniverse = new _three.Group();
+    // Add all circles to the Universe group.
+    odysseyGroups.map((ring)=>{
+        theUniverse.add(ring);
+    });
+    return theUniverse;
+};
+// Process given array of Odysseys
+const ProcessStakedOdysseys = (myOddysey, stakedOdysseysObject)=>{
+    // If there are less Odysseys available than set for next round. Adapt the amount.
+    if (stakedOdysseysObject.length < amountOfStakedOdysseysInNextRound) amountOfStakedOdysseysInNextRound = stakedOdysseysObject.length;
+    // Define the amount of Odyssey required to be placed.
+    // Then define the space between them for a perfect circle. (offset)
+    const amount = amountOfStakedOdysseysInNextRound;
+    const distanceBetweenOdyssey = 360 / amount;
+    // Offset will define how far along the circle the odyssey will be placed. 
+    let offset = 0;
+    // Define a circle
+    let circle = new _three.Group();
+    circle.name = "circle" + ringCounter;
+    // Process the Odyssey location and add them to a ring.
+    for(let i = 0; i < amount; i++){
+        const currentOdyssey = stakedOdysseysObject[i];
+        // Calculate radian on circle.
+        const radian = offset * (Math.PI / 180);
+        // Create var for XZY. Generated below.
+        let placementXYZ = new _three.Vector3();
+        // Define what type of stake it is and calculate position..
+        if (myOddysey.mutualStakedConnections.includes(currentOdyssey.number)) {
+            // on the equator.
+            placementXYZ.x = Math.cos(radian) * stakedCircleRadius;
+            placementXYZ.y = -5;
+            placementXYZ.z = Math.sin(radian) * stakedCircleRadius;
+        } else if (myOddysey.iStakedInConnections.includes(currentOdyssey.number)) {
+            // Above the equator
+            placementXYZ.x = Math.cos(radian) * stakedCircleRadius;
+            placementXYZ.y = -10 //minimalDistanceToEquator; //(Math.random() * equatorMaxHeight) + minimalDistanceToEquator;
+            ;
+            placementXYZ.z = Math.sin(radian) * stakedCircleRadius;
+        } else if (myOddysey.stakedInMeConnections.includes(currentOdyssey.number)) {
+            // Below the equator.
+            placementXYZ.x = Math.cos(radian) * stakedCircleRadius;
+            placementXYZ.y = -15 //-minimalDistanceToEquator; //(Math.random() * -equatorMaxHeight) - minimalDistanceToEquator;
+            ;
+            placementXYZ.z = Math.sin(radian) * stakedCircleRadius;
+        } else {
+            // Random placement
+            placementXYZ.x = Math.cos(radian) * stakedCircleRadius;
+            placementXYZ.y = Math.random() * equatorMaxHeight - minimalDistanceToEquator;
+            placementXYZ.z = Math.sin(radian) * stakedCircleRadius;
+        }
+        // Set offset for the next odyssey.
+        offset += distanceBetweenOdyssey;
+        // Set position of current odyssey with new XYZ.
+        currentOdyssey.position.set(placementXYZ.x, placementXYZ.y, placementXYZ.z);
+        // Add this Odyssey to circle group.
+        circle.add(currentOdyssey);
+    }
+    // Remove processed Odysseys from staked array.
+    stakedOdysseysObject.splice(0, amount);
+    // Increase Amount to place
+    amountOfStakedOdysseysInNextRound += amountOfStakedOdysseysInNextRound * 1.5;
+    // Increase radius
+    stakedCircleRadius += circleRadiusIncreaseValue * (ringCounter / 2);
+    // Increase the ringCounter.
+    ringCounter++;
+    // Return the circle group.
+    odysseyGroups.push(circle);
+};
+const ProcessRandomOdysseys = (listOfOddyseys)=>{
+    // Check if there are enough odyssey left. If not adapt the amount ot the amount that is left.
+    if (listOfOddyseys.length < amountOfRandomOdysseysInNextCircle) amountOfRandomOdysseysInNextCircle = listOfOddyseys.length;
+    // Define the distance between Odysseys based on current amount.
+    let amount = amountOfRandomOdysseysInNextCircle;
+    const distanceBetweenOdyssey = 360 / amount;
+    // The offset will be increased after setting the XYZ of a Odyssey.
+    let offset = 0;
+    // Create a ring to add Odysseys to.
+    let circle = new _three.Group();
+    circle.name = "circle" + ringCounter;
+    // Calculate the XYZ and place the Odyssey.
+    for(let i = 0; i < amountOfRandomOdysseysInNextCircle; i++){
+        // Set current Odyssey.
+        const currentOdyssey = listOfOddyseys[i];
+        // Calculate Radian
+        let radian = offset * (Math.PI / 180);
+        // new XYZ Vector3
+        const placementXYZ = new _three.Vector3;
+        // Calculate the XYZ.
+        placementXYZ.x = Math.cos(radian) * standardCircleRadius;
+        placementXYZ.y = -30 //( Math.random() * randomOdysseyMaxSpawnHeight ) - (randomOdysseyMaxSpawnHeight / 2);
+        ;
+        placementXYZ.z = Math.sin(radian) * standardCircleRadius;
+        // Increase the offset for the next Odyssye.
+        offset += distanceBetweenOdyssey;
+        // Set the position of the current Odyssey.
+        currentOdyssey.position.set(placementXYZ.x, placementXYZ.y, placementXYZ.z);
+        // Add the current Odyssey to the group.
+        circle.add(currentOdyssey);
+    }
+    // Remove the Odyssey from the array.
+    listOfOddyseys.splice(0, amount);
+    // Increase the amount to place in the next circle.
+    amountOfRandomOdysseysInNextCircle = amountOfRandomOdysseysInNextCircle * 1.5;
+    // Increas the circle radius for the next ring.
+    standardCircleRadius += circleRadiusIncreaseValue * (ringCounter / 2);
+    // Increasa the ring counter
+    ringCounter++;
+    // Add the circle to the total amount of rings array
+    odysseyGroups.push(circle);
+};
+// Shuffle an given array.
+const shuffleArray = (array)=>{
+    const shuffled = array.sort((a, b)=>0.5 - Math.random());
+    return shuffled;
+};
+
+},{"gsap":"fPSuC","three":"ktPTu","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"1OpXQ":[function(require,module,exports) {
+var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
+parcelHelpers.defineInteropFlag(exports);
+parcelHelpers.export(exports, "generateGalaxy", ()=>generateGalaxy);
+var _three = require("three");
+var _datGui = require("dat.gui");
+/**
+ * Build Galaxy
+ */ const gui = new _datGui.GUI();
+gui.hide();
+const parameters = {};
+parameters.count = 100000;
+parameters.size = 0.001;
+parameters.radius = 100;
+parameters.branches = 3;
+parameters.spin = 1.3;
+parameters.randomnes = 0.2;
+parameters.randomnesPower = 3;
+parameters.YHeight = 100;
+let pointsGeometry = null;
+let pointsMaterial = null;
+let points = null;
+const generateGalaxy = ()=>{
+    /**
+     * Clean previous renders of galaxy.
+     */ if (points !== null) {
+        pointsGeometry.dispose();
+        pointsMaterial.dispose();
+        scene.remove(points);
+    }
+    /**
+     * Geometry
+     */ pointsGeometry = new _three.BufferGeometry();
+    const position = new Float32Array(parameters.count * 3);
+    for(let i = 0; i < parameters.count; i++){
+        const i3 = i * 3;
+        const radius = Math.random() * parameters.radius;
+        const spinAngle = radius * parameters.spin;
+        const branchAngle = i % parameters.branches / parameters.branches * Math.PI * 2;
+        const randomX = Math.pow(Math.random(), parameters.randomnesPower) * (Math.random() < 0.5 ? 1 : -1);
+        const randomY = Math.pow(Math.random(), parameters.randomnesPower) * (Math.random() < 0.5 ? parameters.YHeight : -parameters.YHeight);
+        const randomZ = Math.pow(Math.random(), parameters.randomnesPower) * (Math.random() < 0.5 ? 1 : -1);
+        position[i3 + 0] = Math.cos(branchAngle + spinAngle) * radius + randomX;
+        position[i3 + 1] = randomY;
+        position[i3 + 2] = Math.sin(branchAngle + spinAngle) * radius + randomZ;
+    }
+    pointsGeometry.setAttribute("position", new _three.BufferAttribute(position, 3));
+    /**
+     * Material
+     */ pointsMaterial = new _three.PointsMaterial({
+        size: parameters.size,
+        sizeAttenuation: true,
+        depthWrite: false,
+        blending: _three.AdditiveBlending,
+        color: 0xFF5588,
+        transparent: true,
+        opacity: 0.5
+    });
+    /**
+     * Create stars in the universe.
+     */ points = new _three.Points(pointsGeometry, pointsMaterial);
+    return points;
+};
+gui.add(parameters, "count").min(100).max(1000000).step(100).onFinishChange(generateGalaxy);
+gui.add(parameters, "size").min(0.001).max(0.1).step(0.001).onFinishChange(generateGalaxy);
+gui.add(parameters, "radius").min(1).max(500).step(1).onFinishChange(generateGalaxy);
+gui.add(parameters, "branches").min(2).max(10).step(1).onFinishChange(generateGalaxy);
+gui.add(parameters, "spin").min(-3).max(3).step(0.1).onFinishChange(generateGalaxy);
+gui.add(parameters, "randomnes").min(0).max(2).step(0.001).onFinishChange(generateGalaxy);
+gui.add(parameters, "randomnesPower").min(1).max(10).step(0.001).onFinishChange(generateGalaxy);
+gui.add(parameters, "YHeight").min(1).max(150).step(1).onFinishChange(generateGalaxy);
+
+},{"three":"ktPTu","dat.gui":"k3xQk","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"k3xQk":[function(require,module,exports) {
 /**
  * dat-gui JavaScript Controller Library
  * https://github.com/dataarts/dat.gui
@@ -37005,1723 +41630,6 @@ var index = {
     GUI: GUI$1
 };
 exports.default = index;
-
-},{"@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"uTahW":[function(require,module,exports) {
-var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
-parcelHelpers.defineInteropFlag(exports);
-parcelHelpers.export(exports, "Odyssey", ()=>Odyssey);
-parcelHelpers.export(exports, "createOdyssey", ()=>createOdyssey);
-var _three = require("three");
-var _fontLoader = require("three/examples/jsm/loaders/FontLoader");
-var _curveModifierJs = require("three/examples/jsm/modifiers/CurveModifier.js");
-var _fontLoaderJs = require("three/examples/jsm/loaders/FontLoader.js");
-var _textGeometryJs = require("three/examples/jsm/geometries/TextGeometry.js");
-var _benderJs = require("./Bender.js");
-var _benderJsDefault = parcelHelpers.interopDefault(_benderJs);
-var _line2Js = require("three/examples/jsm/lines/Line2.js");
-var _lineMaterialJs = require("three/examples/jsm/lines/LineMaterial.js");
-var _lineGeometryJs = require("three/examples/jsm/lines/LineGeometry.js");
-/**
- * The Odyssey class extend from THREE.MESH.
- */ class Odyssey extends _three.Mesh {
-    constructor(geometry, material, number, wallet, name, url, nameRingMaterial){
-        // Reference THREE.Mesh
-        super(geometry, material);
-        this.material = material;
-        this.geometry = geometry;
-        this.number = number;
-        this.wallet = wallet;
-        this.name = name;
-        this.url = url;
-        this.isOdyssey = true;
-        this.nameRingMaterial = nameRingMaterial;
-    }
-    // Material for connections.
-    lineMaterial = new (0, _lineMaterialJs.LineMaterial)({
-        color: 0xdda4de,
-        linewidth: 2,
-        transparent: true,
-        opacity: 0.5
-    });
-    // Array to hold all connected Odysseys.
-    connectedOdysseys = [];
-    /**
-     * For dev only:
-     * Generate random ID's to link to other Odysseys.
-     */ // MaxAmount = amount of Odysseys in the world.
-    randomConnection = (maxAmount)=>{
-        const amountToGenerate = 10;
-        for(let i = 0; i < amountToGenerate; i++){
-            const object = {
-                id: Math.floor(Math.random() * maxAmount)
-            };
-            this.connectedOdysseys.push(object);
-        }
-    };
-    buildConnectionLines = (referenceArray, scene, activeLinesArray)=>{
-        const maxOdysseyConnectionLineHeight = 10;
-        const newActivelinesArray = [];
-        if (activeLinesArray) for(let i = 0; i < activeLinesArray.length; i++)scene.remove(activeLinesArray[i]);
-        for(let i1 = 0; i1 < this.connectedOdysseys.length; i1++){
-            // Get the connected Odessey from global reference.
-            const foundOdyssey = referenceArray.filter((planet)=>planet.number === this.connectedOdysseys[i1].id)[0];
-            // Process if found.
-            if (foundOdyssey) {
-                // Create random line hight and calculate middle position
-                //const randomLineHeight = (Math.random() * maxOdysseyConnectionLineHeight ) * (Math.random() > 0.5 ? 1 : -1 );
-                const randomLineHeight = -20; //(Math.random() * maxOdysseyConnectionLineHeight ) * -1;
-                let middlePosition = new _three.Vector3((this.position.x + foundOdyssey.position.x) / 2, randomLineHeight, (this.position.z + foundOdyssey.position.z) / 2);
-                // calculate start XYZ for the line.
-                //const direction = this.isObject3D.lookAt(foundOdyssey);
-                //console.log(foundOdyssey.position);
-                const direction = new _three.Vector3();
-                direction.subVectors(this.position, foundOdyssey.position).normalize();
-                const startVector = new _three.Vector3();
-                startVector.addVectors(this.position, direction.multiplyScalar(-0.7));
-                const newY = this.position.y - 0.8;
-                //const beginVector = new THREE.Vector3(this.position.x, newY, this.position.z)
-                startVector.y = newY;
-                const secondVector = new _three.Vector3(startVector.x, newY - 1, startVector.z);
-                // Create the curve                
-                const curve = new _three.CubicBezierCurve3(startVector, secondVector, middlePosition, foundOdyssey.position);
-                // Get XYZ along the curve.
-                const curvePoints = curve.getSpacedPoints(50);
-                // Prepare array of numbers for line geometry ( doesnt accept vectors)
-                const linePoints = [];
-                // Build the array for Line from curve Points.
-                for(let i2 = 0; i2 < curvePoints.length; i2++)linePoints.push(curvePoints[i2].x, curvePoints[i2].y, curvePoints[i2].z);
-                const lineGeometry = new (0, _lineGeometryJs.LineGeometry)();
-                lineGeometry.setPositions(linePoints);
-                this.lineMaterial.resolution.set(window.innerWidth, window.innerHeight);
-                const drawLine = new (0, _line2Js.Line2)(lineGeometry, this.lineMaterial);
-                // Add lines to array
-                newActivelinesArray.push(drawLine);
-                // Add line to the scene.
-                scene.add(drawLine);
-            }
-        }
-        return newActivelinesArray;
-    };
-}
-/**
-     * Build the curve and bend text for the animation.
-     * 
-     * @param {Vector3} position 
-     */ /**
- * Create a new Odyssey. Returns an Odyssey object.
- */ //Setup texture reflection for the glass effect of the Odyssey
-const environmentReflectionImage = new _three.TextureLoader().load("./images/small/BasicSkyboxHD.jpg");
-environmentReflectionImage.mapping = _three.EquirectangularRefractionMapping;
-// Setup Base geometry and material for the Odysseys.
-const avatarGeometry = new _three.CircleGeometry(0.8, 26); //Standard for all avatars.
-const odysseySphereGeometry = new _three.SphereGeometry(1, 16, 16);
-const odysseyMaterial = new _three.MeshPhysicalMaterial({
-    color: 0xFFFFFF,
-    envMap: environmentReflectionImage,
-    transmission: 1,
-    opacity: 0.3,
-    side: _three.BackSide,
-    ior: 1.5,
-    metalness: 0.3,
-    roughness: 0,
-    specularIntensity: 1,
-    transparent: true
-});
-// Setup ring around odyssey mesh
-const nameRingGeometry = new _three.CylinderGeometry(1.2, 1.2, 0.5, 22, 1, true);
-const createOdyssey = (id, wallet, name, url)=>{
-    //TEMP: Setup URL for temp avatars.
-    const standardTextures = [
-        "./images/small/temp1.jpg",
-        "./images/small/temp2.jpg",
-        "./images/small/temp3.jpg",
-        "./images/small/temp4.jpg",
-        "./images/small/temp5.jpg",
-        "./images/small/avatarTest.jpg"
-    ];
-    //TEMP: Load random texture from the standard textures array.
-    const randNum = Math.floor(Math.random() * standardTextures.length);
-    const randTexture = standardTextures[randNum];
-    const texture = new _three.TextureLoader().load(randTexture);
-    texture.wrapS = _three.RepeatWrapping;
-    const avatarMaterial = new _three.MeshBasicMaterial({
-        side: _three.DoubleSide,
-        map: texture
-    });
-    // Construct avatar Mesh.
-    const avatarMesh = new _three.Mesh(avatarGeometry, avatarMaterial);
-    // Create custom material for name ring.
-    const nameRingMaterial = new _three.MeshBasicMaterial({
-        transparent: true,
-        side: _three.DoubleSide
-    });
-    // Construct odyssey ring mesh.
-    const nameRingMesh = new _three.Mesh(nameRingGeometry, nameRingMaterial);
-    /** 
-     * Build text texture for around the odyssey
-     */ const drawCanvas = document.createElement("canvas");
-    const drawContent = drawCanvas.getContext("2d");
-    drawCanvas.width = 1000;
-    drawCanvas.height = 100;
-    drawContent.font = "Bold 40px Trebuchet MS";
-    drawContent.fillStyle = "rgba(0, 0, 0, 0.1)";
-    drawContent.fillRect(0, 0, drawCanvas.width, drawCanvas.height);
-    drawContent.fillStyle = "rgba(245, 199, 255, 0.9";
-    drawContent.fillText(name, 0, 60);
-    drawContent.strokeStyle = "rgba(124, 86, 133)";
-    drawContent.strokeText(name, 0, 60);
-    /*
-        Draw title twice.
-
-    drawContent.fillStyle = 'white';
-    drawContent.fillText(name, 500, 60);
-    drawContent.strokeStyle = 'black';
-    drawContent.strokeText(name, 500, 60);
-
-    */ const nameTexture = new _three.Texture(drawCanvas);
-    nameTexture.needsUpdate = true;
-    nameRingMesh.material.map = nameTexture;
-    nameRingMesh.material.map.wrapS = (0, _three.RepeatWrapping);
-    // Create new Odyssey from class.
-    const odyssey = new Odyssey(odysseySphereGeometry, odysseyMaterial, id, wallet, name, url, nameRingMaterial);
-    // Add the custom avatar image mesh to the odyssey.
-    odyssey.add(avatarMesh);
-    odyssey.add(nameRingMesh);
-    return odyssey;
-};
-
-},{"@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3","three":"ktPTu","three/examples/jsm/loaders/FontLoader":"h0CPK","three/examples/jsm/modifiers/CurveModifier.js":"iSJKe","three/examples/jsm/loaders/FontLoader.js":"h0CPK","three/examples/jsm/geometries/TextGeometry.js":"d5vi9","./Bender.js":"lG0tv","three/examples/jsm/lines/Line2.js":"kgvYG","three/examples/jsm/lines/LineMaterial.js":"insFK","three/examples/jsm/lines/LineGeometry.js":"5c0fE"}],"h0CPK":[function(require,module,exports) {
-var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
-parcelHelpers.defineInteropFlag(exports);
-parcelHelpers.export(exports, "FontLoader", ()=>FontLoader);
-parcelHelpers.export(exports, "Font", ()=>Font);
-var _three = require("three");
-class FontLoader extends (0, _three.Loader) {
-    constructor(manager){
-        super(manager);
-    }
-    load(url, onLoad, onProgress, onError) {
-        const scope = this;
-        const loader = new (0, _three.FileLoader)(this.manager);
-        loader.setPath(this.path);
-        loader.setRequestHeader(this.requestHeader);
-        loader.setWithCredentials(this.withCredentials);
-        loader.load(url, function(text) {
-            const font = scope.parse(JSON.parse(text));
-            if (onLoad) onLoad(font);
-        }, onProgress, onError);
-    }
-    parse(json) {
-        return new Font(json);
-    }
-}
-//
-class Font {
-    constructor(data){
-        this.isFont = true;
-        this.type = "Font";
-        this.data = data;
-    }
-    generateShapes(text, size = 100) {
-        const shapes = [];
-        const paths = createPaths(text, size, this.data);
-        for(let p = 0, pl = paths.length; p < pl; p++)shapes.push(...paths[p].toShapes());
-        return shapes;
-    }
-}
-function createPaths(text, size, data) {
-    const chars = Array.from(text);
-    const scale = size / data.resolution;
-    const line_height = (data.boundingBox.yMax - data.boundingBox.yMin + data.underlineThickness) * scale;
-    const paths = [];
-    let offsetX = 0, offsetY = 0;
-    for(let i = 0; i < chars.length; i++){
-        const char = chars[i];
-        if (char === "\n") {
-            offsetX = 0;
-            offsetY -= line_height;
-        } else {
-            const ret = createPath(char, scale, offsetX, offsetY, data);
-            offsetX += ret.offsetX;
-            paths.push(ret.path);
-        }
-    }
-    return paths;
-}
-function createPath(char, scale, offsetX, offsetY, data) {
-    const glyph = data.glyphs[char] || data.glyphs["?"];
-    if (!glyph) {
-        console.error('THREE.Font: character "' + char + '" does not exists in font family ' + data.familyName + ".");
-        return;
-    }
-    const path = new (0, _three.ShapePath)();
-    let x, y, cpx, cpy, cpx1, cpy1, cpx2, cpy2;
-    if (glyph.o) {
-        const outline = glyph._cachedOutline || (glyph._cachedOutline = glyph.o.split(" "));
-        for(let i = 0, l = outline.length; i < l;){
-            const action = outline[i++];
-            switch(action){
-                case "m":
-                    x = outline[i++] * scale + offsetX;
-                    y = outline[i++] * scale + offsetY;
-                    path.moveTo(x, y);
-                    break;
-                case "l":
-                    x = outline[i++] * scale + offsetX;
-                    y = outline[i++] * scale + offsetY;
-                    path.lineTo(x, y);
-                    break;
-                case "q":
-                    cpx = outline[i++] * scale + offsetX;
-                    cpy = outline[i++] * scale + offsetY;
-                    cpx1 = outline[i++] * scale + offsetX;
-                    cpy1 = outline[i++] * scale + offsetY;
-                    path.quadraticCurveTo(cpx1, cpy1, cpx, cpy);
-                    break;
-                case "b":
-                    cpx = outline[i++] * scale + offsetX;
-                    cpy = outline[i++] * scale + offsetY;
-                    cpx1 = outline[i++] * scale + offsetX;
-                    cpy1 = outline[i++] * scale + offsetY;
-                    cpx2 = outline[i++] * scale + offsetX;
-                    cpy2 = outline[i++] * scale + offsetY;
-                    path.bezierCurveTo(cpx1, cpy1, cpx2, cpy2, cpx, cpy);
-                    break;
-            }
-        }
-    }
-    return {
-        offsetX: glyph.ha * scale,
-        path: path
-    };
-}
-
-},{"three":"ktPTu","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"iSJKe":[function(require,module,exports) {
-// Original src: https://github.com/zz85/threejs-path-flow
-var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
-parcelHelpers.defineInteropFlag(exports);
-/**
- * Make a new DataTexture to store the descriptions of the curves.
- *
- * @param { number } numberOfCurves the number of curves needed to be described by this texture.
- */ parcelHelpers.export(exports, "initSplineTexture", ()=>initSplineTexture);
-/**
- * Write the curve description to the data texture
- *
- * @param { DataTexture } texture The DataTexture to write to
- * @param { Curve } splineCurve The curve to describe
- * @param { number } offset Which curve slot to write to
- */ parcelHelpers.export(exports, "updateSplineTexture", ()=>updateSplineTexture);
-/**
- * Create a new set of uniforms for describing the curve modifier
- *
- * @param { DataTexture } Texture which holds the curve description
- */ parcelHelpers.export(exports, "getUniforms", ()=>getUniforms);
-parcelHelpers.export(exports, "modifyShader", ()=>modifyShader);
-/**
- * A helper class for making meshes bend aroudn curves
- */ parcelHelpers.export(exports, "Flow", ()=>Flow);
-/**
- * A helper class for creating instanced versions of flow, where the instances are placed on the curve.
- */ parcelHelpers.export(exports, "InstancedFlow", ()=>InstancedFlow);
-var _three = require("three");
-const CHANNELS = 4;
-const TEXTURE_WIDTH = 1024;
-const TEXTURE_HEIGHT = 4;
-function initSplineTexture(numberOfCurves = 1) {
-    const dataArray = new Float32Array(TEXTURE_WIDTH * TEXTURE_HEIGHT * numberOfCurves * CHANNELS);
-    const dataTexture = new (0, _three.DataTexture)(dataArray, TEXTURE_WIDTH, TEXTURE_HEIGHT * numberOfCurves, (0, _three.RGBAFormat), (0, _three.FloatType));
-    dataTexture.wrapS = (0, _three.RepeatWrapping);
-    dataTexture.wrapY = (0, _three.RepeatWrapping);
-    dataTexture.magFilter = (0, _three.NearestFilter);
-    dataTexture.needsUpdate = true;
-    return dataTexture;
-}
-function updateSplineTexture(texture, splineCurve, offset = 0) {
-    const numberOfPoints = Math.floor(TEXTURE_WIDTH * (TEXTURE_HEIGHT / 4));
-    splineCurve.arcLengthDivisions = numberOfPoints / 2;
-    splineCurve.updateArcLengths();
-    const points = splineCurve.getSpacedPoints(numberOfPoints);
-    const frenetFrames = splineCurve.computeFrenetFrames(numberOfPoints, true);
-    for(let i = 0; i < numberOfPoints; i++){
-        const rowOffset = Math.floor(i / TEXTURE_WIDTH);
-        const rowIndex = i % TEXTURE_WIDTH;
-        let pt = points[i];
-        setTextureValue(texture, rowIndex, pt.x, pt.y, pt.z, 0 + rowOffset + TEXTURE_HEIGHT * offset);
-        pt = frenetFrames.tangents[i];
-        setTextureValue(texture, rowIndex, pt.x, pt.y, pt.z, 1 + rowOffset + TEXTURE_HEIGHT * offset);
-        pt = frenetFrames.normals[i];
-        setTextureValue(texture, rowIndex, pt.x, pt.y, pt.z, 2 + rowOffset + TEXTURE_HEIGHT * offset);
-        pt = frenetFrames.binormals[i];
-        setTextureValue(texture, rowIndex, pt.x, pt.y, pt.z, 3 + rowOffset + TEXTURE_HEIGHT * offset);
-    }
-    texture.needsUpdate = true;
-}
-function setTextureValue(texture, index, x, y, z, o) {
-    const image = texture.image;
-    const { data  } = image;
-    const i = CHANNELS * TEXTURE_WIDTH * o; // Row Offset
-    data[index * CHANNELS + i + 0] = x;
-    data[index * CHANNELS + i + 1] = y;
-    data[index * CHANNELS + i + 2] = z;
-    data[index * CHANNELS + i + 3] = 1;
-}
-function getUniforms(splineTexture) {
-    const uniforms = {
-        spineTexture: {
-            value: splineTexture
-        },
-        pathOffset: {
-            type: "f",
-            value: 0
-        },
-        pathSegment: {
-            type: "f",
-            value: 1
-        },
-        spineOffset: {
-            type: "f",
-            value: 161
-        },
-        spineLength: {
-            type: "f",
-            value: 400
-        },
-        flow: {
-            type: "i",
-            value: 1
-        }
-    };
-    return uniforms;
-}
-function modifyShader(material, uniforms, numberOfCurves = 1) {
-    if (material.__ok) return;
-    material.__ok = true;
-    material.onBeforeCompile = (shader)=>{
-        if (shader.__modified) return;
-        shader.__modified = true;
-        Object.assign(shader.uniforms, uniforms);
-        const vertexShader = `
-		uniform sampler2D spineTexture;
-		uniform float pathOffset;
-		uniform float pathSegment;
-		uniform float spineOffset;
-		uniform float spineLength;
-		uniform int flow;
-
-		float textureLayers = ${TEXTURE_HEIGHT * numberOfCurves}.;
-		float textureStacks = ${TEXTURE_HEIGHT / 4}.;
-
-		${shader.vertexShader}
-		`// chunk import moved in front of modified shader below
-        .replace("#include <beginnormal_vertex>", "")// vec3 transformedNormal declaration overriden below
-        .replace("#include <defaultnormal_vertex>", "")// vec3 transformed declaration overriden below
-        .replace("#include <begin_vertex>", "")// shader override
-        .replace(/void\s*main\s*\(\)\s*\{/, `
-void main() {
-#include <beginnormal_vertex>
-
-vec4 worldPos = modelMatrix * vec4(position, 1.);
-
-bool bend = flow > 0;
-float xWeight = bend ? 0. : 1.;
-
-#ifdef USE_INSTANCING
-float pathOffsetFromInstanceMatrix = instanceMatrix[3][2];
-float spineLengthFromInstanceMatrix = instanceMatrix[3][0];
-float spinePortion = bend ? (worldPos.x + spineOffset) / spineLengthFromInstanceMatrix : 0.;
-float mt = (spinePortion * pathSegment + pathOffset + pathOffsetFromInstanceMatrix)*textureStacks;
-#else
-float spinePortion = bend ? (worldPos.x + spineOffset) / spineLength : 0.;
-float mt = (spinePortion * pathSegment + pathOffset)*textureStacks;
-#endif
-
-mt = mod(mt, textureStacks);
-float rowOffset = floor(mt);
-
-#ifdef USE_INSTANCING
-rowOffset += instanceMatrix[3][1] * ${TEXTURE_HEIGHT}.;
-#endif
-
-vec3 spinePos = texture2D(spineTexture, vec2(mt, (0. + rowOffset + 0.5) / textureLayers)).xyz;
-vec3 a =        texture2D(spineTexture, vec2(mt, (1. + rowOffset + 0.5) / textureLayers)).xyz;
-vec3 b =        texture2D(spineTexture, vec2(mt, (2. + rowOffset + 0.5) / textureLayers)).xyz;
-vec3 c =        texture2D(spineTexture, vec2(mt, (3. + rowOffset + 0.5) / textureLayers)).xyz;
-mat3 basis = mat3(a, b, c);
-
-vec3 transformed = basis
-	* vec3(worldPos.x * xWeight, worldPos.y * 1., worldPos.z * 1.)
-	+ spinePos;
-
-vec3 transformedNormal = normalMatrix * (basis * objectNormal);
-			`).replace("#include <project_vertex>", `vec4 mvPosition = modelViewMatrix * vec4( transformed, 1.0 );
-				gl_Position = projectionMatrix * mvPosition;`);
-        shader.vertexShader = vertexShader;
-    };
-}
-class Flow {
-    /**
-	 * @param {Mesh} mesh The mesh to clone and modify to bend around the curve
-	 * @param {number} numberOfCurves The amount of space that should preallocated for additional curves
-	 */ constructor(mesh, numberOfCurves = 1){
-        const obj3D = mesh.clone();
-        const splineTexure = initSplineTexture(numberOfCurves);
-        const uniforms = getUniforms(splineTexure);
-        obj3D.traverse(function(child) {
-            if (child instanceof (0, _three.Mesh) || child instanceof (0, _three.InstancedMesh)) {
-                child.material = child.material.clone();
-                modifyShader(child.material, uniforms, numberOfCurves);
-            }
-        });
-        this.curveArray = new Array(numberOfCurves);
-        this.curveLengthArray = new Array(numberOfCurves);
-        this.object3D = obj3D;
-        this.splineTexure = splineTexure;
-        this.uniforms = uniforms;
-    }
-    updateCurve(index, curve) {
-        if (index >= this.curveArray.length) throw Error("Index out of range for Flow");
-        const curveLength = curve.getLength();
-        this.uniforms.spineLength.value = curveLength;
-        this.curveLengthArray[index] = curveLength;
-        this.curveArray[index] = curve;
-        updateSplineTexture(this.splineTexure, curve, index);
-    }
-    moveAlongCurve(amount) {
-        this.uniforms.pathOffset.value += amount;
-    }
-}
-const matrix = new (0, _three.Matrix4)();
-class InstancedFlow extends Flow {
-    /**
-	 *
-	 * @param {number} count The number of instanced elements
-	 * @param {number} curveCount The number of curves to preallocate for
-	 * @param {Geometry} geometry The geometry to use for the instanced mesh
-	 * @param {Material} material The material to use for the instanced mesh
-	 */ constructor(count, curveCount, geometry, material){
-        const mesh = new (0, _three.InstancedMesh)(geometry, material, count);
-        mesh.instanceMatrix.setUsage((0, _three.DynamicDrawUsage));
-        super(mesh, curveCount);
-        this.offsets = new Array(count).fill(0);
-        this.whichCurve = new Array(count).fill(0);
-    }
-    /**
-	 * The extra information about which curve and curve position is stored in the translation components of the matrix for the instanced objects
-	 * This writes that information to the matrix and marks it as needing update.
-	 *
-	 * @param {number} index of the instanced element to update
-	 */ writeChanges(index) {
-        matrix.makeTranslation(this.curveLengthArray[this.whichCurve[index]], this.whichCurve[index], this.offsets[index]);
-        this.object3D.setMatrixAt(index, matrix);
-        this.object3D.instanceMatrix.needsUpdate = true;
-    }
-    /**
-	 * Move an individual element along the curve by a specific amount
-	 *
-	 * @param {number} index Which element to update
-	 * @param {number} offset Move by how much
-	 */ moveIndividualAlongCurve(index, offset) {
-        this.offsets[index] += offset;
-        this.writeChanges(index);
-    }
-    /**
-	 * Select which curve to use for an element
-	 *
-	 * @param {number} index the index of the instanced element to update
-	 * @param {number} curveNo the index of the curve it should use
-	 */ setCurve(index, curveNo) {
-        if (isNaN(curveNo)) throw Error("curve index being set is Not a Number (NaN)");
-        this.whichCurve[index] = curveNo;
-        this.writeChanges(index);
-    }
-}
-
-},{"three":"ktPTu","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"d5vi9":[function(require,module,exports) {
-/**
- * Text = 3D Text
- *
- * parameters = {
- *  font: <THREE.Font>, // font
- *
- *  size: <float>, // size of the text
- *  height: <float>, // thickness to extrude text
- *  curveSegments: <int>, // number of points on the curves
- *
- *  bevelEnabled: <bool>, // turn on bevel
- *  bevelThickness: <float>, // how deep into text bevel goes
- *  bevelSize: <float>, // how far from text outline (including bevelOffset) is bevel
- *  bevelOffset: <float> // how far from text outline does bevel start
- * }
- */ var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
-parcelHelpers.defineInteropFlag(exports);
-parcelHelpers.export(exports, "TextGeometry", ()=>TextGeometry);
-var _three = require("three");
-class TextGeometry extends (0, _three.ExtrudeGeometry) {
-    constructor(text, parameters = {}){
-        const font = parameters.font;
-        if (font === undefined) super(); // generate default extrude geometry
-        else {
-            const shapes = font.generateShapes(text, parameters.size);
-            // translate parameters to ExtrudeGeometry API
-            parameters.depth = parameters.height !== undefined ? parameters.height : 50;
-            // defaults
-            if (parameters.bevelThickness === undefined) parameters.bevelThickness = 10;
-            if (parameters.bevelSize === undefined) parameters.bevelSize = 8;
-            if (parameters.bevelEnabled === undefined) parameters.bevelEnabled = false;
-            super(shapes, parameters);
-        }
-        this.type = "TextGeometry";
-    }
-}
-
-},{"three":"ktPTu","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"lG0tv":[function(require,module,exports) {
-//MIT License
-//Copyright (c) 2020-2021 Sean Bradley
-//https://github.com/Sean-Bradley/Bender/blob/main/LICENSE
-var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
-parcelHelpers.defineInteropFlag(exports);
-class Bender {
-    bend(geometry, axis, angle) {
-        let theta = 0;
-        if (angle !== 0) {
-            const v = geometry.attributes.position.array;
-            for(let i = 0; i < v.length; i += 3){
-                let x = v[i];
-                let y = v[i + 1];
-                let z = v[i + 2];
-                switch(axis){
-                    case "x":
-                        theta = z * angle;
-                        break;
-                    case "y":
-                        theta = x * angle;
-                        break;
-                    default:
-                        theta = x * angle;
-                        break;
-                }
-                let sinTheta = Math.sin(theta);
-                let cosTheta = Math.cos(theta);
-                switch(axis){
-                    case "x":
-                        v[i] = x;
-                        v[i + 1] = (y - 1.0 / angle) * cosTheta + 1.0 / angle;
-                        v[i + 2] = -(y - 1.0 / angle) * sinTheta;
-                        break;
-                    case "y":
-                        v[i] = -(z - 1.0 / angle) * sinTheta;
-                        v[i + 1] = y;
-                        v[i + 2] = (z - 1.0 / angle) * cosTheta + 1.0 / angle;
-                        break;
-                    default:
-                        v[i] = -(y - 1.0 / angle) * sinTheta;
-                        v[i + 1] = (y - 1.0 / angle) * cosTheta + 1.0 / angle;
-                        v[i + 2] = z;
-                        break;
-                }
-            }
-            geometry.attributes.position.needsUpdate = true;
-        }
-    }
-}
-exports.default = Bender;
-
-},{"@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"kgvYG":[function(require,module,exports) {
-var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
-parcelHelpers.defineInteropFlag(exports);
-parcelHelpers.export(exports, "Line2", ()=>Line2);
-var _lineSegments2Js = require("../lines/LineSegments2.js");
-var _lineGeometryJs = require("../lines/LineGeometry.js");
-var _lineMaterialJs = require("../lines/LineMaterial.js");
-class Line2 extends (0, _lineSegments2Js.LineSegments2) {
-    constructor(geometry = new (0, _lineGeometryJs.LineGeometry)(), material = new (0, _lineMaterialJs.LineMaterial)({
-        color: Math.random() * 0xffffff
-    })){
-        super(geometry, material);
-        this.isLine2 = true;
-        this.type = "Line2";
-    }
-}
-
-},{"../lines/LineSegments2.js":"9bg2f","../lines/LineGeometry.js":"5c0fE","../lines/LineMaterial.js":"insFK","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"9bg2f":[function(require,module,exports) {
-var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
-parcelHelpers.defineInteropFlag(exports);
-parcelHelpers.export(exports, "LineSegments2", ()=>LineSegments2);
-var _three = require("three");
-var _lineSegmentsGeometryJs = require("../lines/LineSegmentsGeometry.js");
-var _lineMaterialJs = require("../lines/LineMaterial.js");
-const _start = new (0, _three.Vector3)();
-const _end = new (0, _three.Vector3)();
-const _start4 = new (0, _three.Vector4)();
-const _end4 = new (0, _three.Vector4)();
-const _ssOrigin = new (0, _three.Vector4)();
-const _ssOrigin3 = new (0, _three.Vector3)();
-const _mvMatrix = new (0, _three.Matrix4)();
-const _line = new (0, _three.Line3)();
-const _closestPoint = new (0, _three.Vector3)();
-const _box = new (0, _three.Box3)();
-const _sphere = new (0, _three.Sphere)();
-const _clipToWorldVector = new (0, _three.Vector4)();
-let _ray, _instanceStart, _instanceEnd, _lineWidth;
-// Returns the margin required to expand by in world space given the distance from the camera,
-// line width, resolution, and camera projection
-function getWorldSpaceHalfWidth(camera, distance, resolution) {
-    // transform into clip space, adjust the x and y values by the pixel width offset, then
-    // transform back into world space to get world offset. Note clip space is [-1, 1] so full
-    // width does not need to be halved.
-    _clipToWorldVector.set(0, 0, -distance, 1.0).applyMatrix4(camera.projectionMatrix);
-    _clipToWorldVector.multiplyScalar(1.0 / _clipToWorldVector.w);
-    _clipToWorldVector.x = _lineWidth / resolution.width;
-    _clipToWorldVector.y = _lineWidth / resolution.height;
-    _clipToWorldVector.applyMatrix4(camera.projectionMatrixInverse);
-    _clipToWorldVector.multiplyScalar(1.0 / _clipToWorldVector.w);
-    return Math.abs(Math.max(_clipToWorldVector.x, _clipToWorldVector.y));
-}
-function raycastWorldUnits(lineSegments, intersects) {
-    for(let i = 0, l = _instanceStart.count; i < l; i++){
-        _line.start.fromBufferAttribute(_instanceStart, i);
-        _line.end.fromBufferAttribute(_instanceEnd, i);
-        const pointOnLine = new (0, _three.Vector3)();
-        const point = new (0, _three.Vector3)();
-        _ray.distanceSqToSegment(_line.start, _line.end, point, pointOnLine);
-        const isInside = point.distanceTo(pointOnLine) < _lineWidth * 0.5;
-        if (isInside) intersects.push({
-            point,
-            pointOnLine,
-            distance: _ray.origin.distanceTo(point),
-            object: lineSegments,
-            face: null,
-            faceIndex: i,
-            uv: null,
-            uv2: null
-        });
-    }
-}
-function raycastScreenSpace(lineSegments, camera, intersects) {
-    const projectionMatrix = camera.projectionMatrix;
-    const material = lineSegments.material;
-    const resolution = material.resolution;
-    const matrixWorld = lineSegments.matrixWorld;
-    const geometry = lineSegments.geometry;
-    const instanceStart = geometry.attributes.instanceStart;
-    const instanceEnd = geometry.attributes.instanceEnd;
-    const near = -camera.near;
-    //
-    // pick a point 1 unit out along the ray to avoid the ray origin
-    // sitting at the camera origin which will cause "w" to be 0 when
-    // applying the projection matrix.
-    _ray.at(1, _ssOrigin);
-    // ndc space [ - 1.0, 1.0 ]
-    _ssOrigin.w = 1;
-    _ssOrigin.applyMatrix4(camera.matrixWorldInverse);
-    _ssOrigin.applyMatrix4(projectionMatrix);
-    _ssOrigin.multiplyScalar(1 / _ssOrigin.w);
-    // screen space
-    _ssOrigin.x *= resolution.x / 2;
-    _ssOrigin.y *= resolution.y / 2;
-    _ssOrigin.z = 0;
-    _ssOrigin3.copy(_ssOrigin);
-    _mvMatrix.multiplyMatrices(camera.matrixWorldInverse, matrixWorld);
-    for(let i = 0, l = instanceStart.count; i < l; i++){
-        _start4.fromBufferAttribute(instanceStart, i);
-        _end4.fromBufferAttribute(instanceEnd, i);
-        _start4.w = 1;
-        _end4.w = 1;
-        // camera space
-        _start4.applyMatrix4(_mvMatrix);
-        _end4.applyMatrix4(_mvMatrix);
-        // skip the segment if it's entirely behind the camera
-        const isBehindCameraNear = _start4.z > near && _end4.z > near;
-        if (isBehindCameraNear) continue;
-        // trim the segment if it extends behind camera near
-        if (_start4.z > near) {
-            const deltaDist = _start4.z - _end4.z;
-            const t = (_start4.z - near) / deltaDist;
-            _start4.lerp(_end4, t);
-        } else if (_end4.z > near) {
-            const deltaDist1 = _end4.z - _start4.z;
-            const t1 = (_end4.z - near) / deltaDist1;
-            _end4.lerp(_start4, t1);
-        }
-        // clip space
-        _start4.applyMatrix4(projectionMatrix);
-        _end4.applyMatrix4(projectionMatrix);
-        // ndc space [ - 1.0, 1.0 ]
-        _start4.multiplyScalar(1 / _start4.w);
-        _end4.multiplyScalar(1 / _end4.w);
-        // screen space
-        _start4.x *= resolution.x / 2;
-        _start4.y *= resolution.y / 2;
-        _end4.x *= resolution.x / 2;
-        _end4.y *= resolution.y / 2;
-        // create 2d segment
-        _line.start.copy(_start4);
-        _line.start.z = 0;
-        _line.end.copy(_end4);
-        _line.end.z = 0;
-        // get closest point on ray to segment
-        const param = _line.closestPointToPointParameter(_ssOrigin3, true);
-        _line.at(param, _closestPoint);
-        // check if the intersection point is within clip space
-        const zPos = (0, _three.MathUtils).lerp(_start4.z, _end4.z, param);
-        const isInClipSpace = zPos >= -1 && zPos <= 1;
-        const isInside = _ssOrigin3.distanceTo(_closestPoint) < _lineWidth * 0.5;
-        if (isInClipSpace && isInside) {
-            _line.start.fromBufferAttribute(instanceStart, i);
-            _line.end.fromBufferAttribute(instanceEnd, i);
-            _line.start.applyMatrix4(matrixWorld);
-            _line.end.applyMatrix4(matrixWorld);
-            const pointOnLine = new (0, _three.Vector3)();
-            const point = new (0, _three.Vector3)();
-            _ray.distanceSqToSegment(_line.start, _line.end, point, pointOnLine);
-            intersects.push({
-                point: point,
-                pointOnLine: pointOnLine,
-                distance: _ray.origin.distanceTo(point),
-                object: lineSegments,
-                face: null,
-                faceIndex: i,
-                uv: null,
-                uv2: null
-            });
-        }
-    }
-}
-class LineSegments2 extends (0, _three.Mesh) {
-    constructor(geometry = new (0, _lineSegmentsGeometryJs.LineSegmentsGeometry)(), material = new (0, _lineMaterialJs.LineMaterial)({
-        color: Math.random() * 0xffffff
-    })){
-        super(geometry, material);
-        this.isLineSegments2 = true;
-        this.type = "LineSegments2";
-    }
-    // for backwards-compatibility, but could be a method of LineSegmentsGeometry...
-    computeLineDistances() {
-        const geometry = this.geometry;
-        const instanceStart = geometry.attributes.instanceStart;
-        const instanceEnd = geometry.attributes.instanceEnd;
-        const lineDistances = new Float32Array(2 * instanceStart.count);
-        for(let i = 0, j = 0, l = instanceStart.count; i < l; i++, j += 2){
-            _start.fromBufferAttribute(instanceStart, i);
-            _end.fromBufferAttribute(instanceEnd, i);
-            lineDistances[j] = j === 0 ? 0 : lineDistances[j - 1];
-            lineDistances[j + 1] = lineDistances[j] + _start.distanceTo(_end);
-        }
-        const instanceDistanceBuffer = new (0, _three.InstancedInterleavedBuffer)(lineDistances, 2, 1); // d0, d1
-        geometry.setAttribute("instanceDistanceStart", new (0, _three.InterleavedBufferAttribute)(instanceDistanceBuffer, 1, 0)); // d0
-        geometry.setAttribute("instanceDistanceEnd", new (0, _three.InterleavedBufferAttribute)(instanceDistanceBuffer, 1, 1)); // d1
-        return this;
-    }
-    raycast(raycaster, intersects) {
-        const worldUnits = this.material.worldUnits;
-        const camera = raycaster.camera;
-        if (camera === null && !worldUnits) console.error('LineSegments2: "Raycaster.camera" needs to be set in order to raycast against LineSegments2 while worldUnits is set to false.');
-        const threshold = raycaster.params.Line2 !== undefined ? raycaster.params.Line2.threshold || 0 : 0;
-        _ray = raycaster.ray;
-        const matrixWorld = this.matrixWorld;
-        const geometry = this.geometry;
-        const material = this.material;
-        _lineWidth = material.linewidth + threshold;
-        _instanceStart = geometry.attributes.instanceStart;
-        _instanceEnd = geometry.attributes.instanceEnd;
-        // check if we intersect the sphere bounds
-        if (geometry.boundingSphere === null) geometry.computeBoundingSphere();
-        _sphere.copy(geometry.boundingSphere).applyMatrix4(matrixWorld);
-        // increase the sphere bounds by the worst case line screen space width
-        let sphereMargin;
-        if (worldUnits) sphereMargin = _lineWidth * 0.5;
-        else {
-            const distanceToSphere = Math.max(camera.near, _sphere.distanceToPoint(_ray.origin));
-            sphereMargin = getWorldSpaceHalfWidth(camera, distanceToSphere, material.resolution);
-        }
-        _sphere.radius += sphereMargin;
-        if (_ray.intersectsSphere(_sphere) === false) return;
-        // check if we intersect the box bounds
-        if (geometry.boundingBox === null) geometry.computeBoundingBox();
-        _box.copy(geometry.boundingBox).applyMatrix4(matrixWorld);
-        // increase the box bounds by the worst case line width
-        let boxMargin;
-        if (worldUnits) boxMargin = _lineWidth * 0.5;
-        else {
-            const distanceToBox = Math.max(camera.near, _box.distanceToPoint(_ray.origin));
-            boxMargin = getWorldSpaceHalfWidth(camera, distanceToBox, material.resolution);
-        }
-        _box.expandByScalar(boxMargin);
-        if (_ray.intersectsBox(_box) === false) return;
-        if (worldUnits) raycastWorldUnits(this, intersects);
-        else raycastScreenSpace(this, camera, intersects);
-    }
-}
-
-},{"three":"ktPTu","../lines/LineSegmentsGeometry.js":"c91zC","../lines/LineMaterial.js":"insFK","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"c91zC":[function(require,module,exports) {
-var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
-parcelHelpers.defineInteropFlag(exports);
-parcelHelpers.export(exports, "LineSegmentsGeometry", ()=>LineSegmentsGeometry);
-var _three = require("three");
-const _box = new (0, _three.Box3)();
-const _vector = new (0, _three.Vector3)();
-class LineSegmentsGeometry extends (0, _three.InstancedBufferGeometry) {
-    constructor(){
-        super();
-        this.isLineSegmentsGeometry = true;
-        this.type = "LineSegmentsGeometry";
-        const positions = [
-            -1,
-            2,
-            0,
-            1,
-            2,
-            0,
-            -1,
-            1,
-            0,
-            1,
-            1,
-            0,
-            -1,
-            0,
-            0,
-            1,
-            0,
-            0,
-            -1,
-            -1,
-            0,
-            1,
-            -1,
-            0
-        ];
-        const uvs = [
-            -1,
-            2,
-            1,
-            2,
-            -1,
-            1,
-            1,
-            1,
-            -1,
-            -1,
-            1,
-            -1,
-            -1,
-            -2,
-            1,
-            -2
-        ];
-        const index = [
-            0,
-            2,
-            1,
-            2,
-            3,
-            1,
-            2,
-            4,
-            3,
-            4,
-            5,
-            3,
-            4,
-            6,
-            5,
-            6,
-            7,
-            5
-        ];
-        this.setIndex(index);
-        this.setAttribute("position", new (0, _three.Float32BufferAttribute)(positions, 3));
-        this.setAttribute("uv", new (0, _three.Float32BufferAttribute)(uvs, 2));
-    }
-    applyMatrix4(matrix) {
-        const start = this.attributes.instanceStart;
-        const end = this.attributes.instanceEnd;
-        if (start !== undefined) {
-            start.applyMatrix4(matrix);
-            end.applyMatrix4(matrix);
-            start.needsUpdate = true;
-        }
-        if (this.boundingBox !== null) this.computeBoundingBox();
-        if (this.boundingSphere !== null) this.computeBoundingSphere();
-        return this;
-    }
-    setPositions(array) {
-        let lineSegments;
-        if (array instanceof Float32Array) lineSegments = array;
-        else if (Array.isArray(array)) lineSegments = new Float32Array(array);
-        const instanceBuffer = new (0, _three.InstancedInterleavedBuffer)(lineSegments, 6, 1); // xyz, xyz
-        this.setAttribute("instanceStart", new (0, _three.InterleavedBufferAttribute)(instanceBuffer, 3, 0)); // xyz
-        this.setAttribute("instanceEnd", new (0, _three.InterleavedBufferAttribute)(instanceBuffer, 3, 3)); // xyz
-        //
-        this.computeBoundingBox();
-        this.computeBoundingSphere();
-        return this;
-    }
-    setColors(array) {
-        let colors;
-        if (array instanceof Float32Array) colors = array;
-        else if (Array.isArray(array)) colors = new Float32Array(array);
-        const instanceColorBuffer = new (0, _three.InstancedInterleavedBuffer)(colors, 6, 1); // rgb, rgb
-        this.setAttribute("instanceColorStart", new (0, _three.InterleavedBufferAttribute)(instanceColorBuffer, 3, 0)); // rgb
-        this.setAttribute("instanceColorEnd", new (0, _three.InterleavedBufferAttribute)(instanceColorBuffer, 3, 3)); // rgb
-        return this;
-    }
-    fromWireframeGeometry(geometry) {
-        this.setPositions(geometry.attributes.position.array);
-        return this;
-    }
-    fromEdgesGeometry(geometry) {
-        this.setPositions(geometry.attributes.position.array);
-        return this;
-    }
-    fromMesh(mesh) {
-        this.fromWireframeGeometry(new (0, _three.WireframeGeometry)(mesh.geometry));
-        // set colors, maybe
-        return this;
-    }
-    fromLineSegments(lineSegments) {
-        const geometry = lineSegments.geometry;
-        this.setPositions(geometry.attributes.position.array); // assumes non-indexed
-        // set colors, maybe
-        return this;
-    }
-    computeBoundingBox() {
-        if (this.boundingBox === null) this.boundingBox = new (0, _three.Box3)();
-        const start = this.attributes.instanceStart;
-        const end = this.attributes.instanceEnd;
-        if (start !== undefined && end !== undefined) {
-            this.boundingBox.setFromBufferAttribute(start);
-            _box.setFromBufferAttribute(end);
-            this.boundingBox.union(_box);
-        }
-    }
-    computeBoundingSphere() {
-        if (this.boundingSphere === null) this.boundingSphere = new (0, _three.Sphere)();
-        if (this.boundingBox === null) this.computeBoundingBox();
-        const start = this.attributes.instanceStart;
-        const end = this.attributes.instanceEnd;
-        if (start !== undefined && end !== undefined) {
-            const center = this.boundingSphere.center;
-            this.boundingBox.getCenter(center);
-            let maxRadiusSq = 0;
-            for(let i = 0, il = start.count; i < il; i++){
-                _vector.fromBufferAttribute(start, i);
-                maxRadiusSq = Math.max(maxRadiusSq, center.distanceToSquared(_vector));
-                _vector.fromBufferAttribute(end, i);
-                maxRadiusSq = Math.max(maxRadiusSq, center.distanceToSquared(_vector));
-            }
-            this.boundingSphere.radius = Math.sqrt(maxRadiusSq);
-            if (isNaN(this.boundingSphere.radius)) console.error("THREE.LineSegmentsGeometry.computeBoundingSphere(): Computed radius is NaN. The instanced position data is likely to have NaN values.", this);
-        }
-    }
-    toJSON() {
-    // todo
-    }
-    applyMatrix(matrix) {
-        console.warn("THREE.LineSegmentsGeometry: applyMatrix() has been renamed to applyMatrix4().");
-        return this.applyMatrix4(matrix);
-    }
-}
-
-},{"three":"ktPTu","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"insFK":[function(require,module,exports) {
-/**
- * parameters = {
- *  color: <hex>,
- *  linewidth: <float>,
- *  dashed: <boolean>,
- *  dashScale: <float>,
- *  dashSize: <float>,
- *  dashOffset: <float>,
- *  gapSize: <float>,
- *  resolution: <Vector2>, // to be set by renderer
- * }
- */ var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
-parcelHelpers.defineInteropFlag(exports);
-parcelHelpers.export(exports, "LineMaterial", ()=>LineMaterial);
-var _three = require("three");
-(0, _three.UniformsLib).line = {
-    worldUnits: {
-        value: 1
-    },
-    linewidth: {
-        value: 1
-    },
-    resolution: {
-        value: new (0, _three.Vector2)(1, 1)
-    },
-    dashOffset: {
-        value: 0
-    },
-    dashScale: {
-        value: 1
-    },
-    dashSize: {
-        value: 1
-    },
-    gapSize: {
-        value: 1
-    } // todo FIX - maybe change to totalSize
-};
-(0, _three.ShaderLib)["line"] = {
-    uniforms: (0, _three.UniformsUtils).merge([
-        (0, _three.UniformsLib).common,
-        (0, _three.UniformsLib).fog,
-        (0, _three.UniformsLib).line
-    ]),
-    vertexShader: /* glsl */ `
-		#include <common>
-		#include <color_pars_vertex>
-		#include <fog_pars_vertex>
-		#include <logdepthbuf_pars_vertex>
-		#include <clipping_planes_pars_vertex>
-
-		uniform float linewidth;
-		uniform vec2 resolution;
-
-		attribute vec3 instanceStart;
-		attribute vec3 instanceEnd;
-
-		attribute vec3 instanceColorStart;
-		attribute vec3 instanceColorEnd;
-
-		#ifdef WORLD_UNITS
-
-			varying vec4 worldPos;
-			varying vec3 worldStart;
-			varying vec3 worldEnd;
-
-			#ifdef USE_DASH
-
-				varying vec2 vUv;
-
-			#endif
-
-		#else
-
-			varying vec2 vUv;
-
-		#endif
-
-		#ifdef USE_DASH
-
-			uniform float dashScale;
-			attribute float instanceDistanceStart;
-			attribute float instanceDistanceEnd;
-			varying float vLineDistance;
-
-		#endif
-
-		void trimSegment( const in vec4 start, inout vec4 end ) {
-
-			// trim end segment so it terminates between the camera plane and the near plane
-
-			// conservative estimate of the near plane
-			float a = projectionMatrix[ 2 ][ 2 ]; // 3nd entry in 3th column
-			float b = projectionMatrix[ 3 ][ 2 ]; // 3nd entry in 4th column
-			float nearEstimate = - 0.5 * b / a;
-
-			float alpha = ( nearEstimate - start.z ) / ( end.z - start.z );
-
-			end.xyz = mix( start.xyz, end.xyz, alpha );
-
-		}
-
-		void main() {
-
-			#ifdef USE_COLOR
-
-				vColor.xyz = ( position.y < 0.5 ) ? instanceColorStart : instanceColorEnd;
-
-			#endif
-
-			#ifdef USE_DASH
-
-				vLineDistance = ( position.y < 0.5 ) ? dashScale * instanceDistanceStart : dashScale * instanceDistanceEnd;
-				vUv = uv;
-
-			#endif
-
-			float aspect = resolution.x / resolution.y;
-
-			// camera space
-			vec4 start = modelViewMatrix * vec4( instanceStart, 1.0 );
-			vec4 end = modelViewMatrix * vec4( instanceEnd, 1.0 );
-
-			#ifdef WORLD_UNITS
-
-				worldStart = start.xyz;
-				worldEnd = end.xyz;
-
-			#else
-
-				vUv = uv;
-
-			#endif
-
-			// special case for perspective projection, and segments that terminate either in, or behind, the camera plane
-			// clearly the gpu firmware has a way of addressing this issue when projecting into ndc space
-			// but we need to perform ndc-space calculations in the shader, so we must address this issue directly
-			// perhaps there is a more elegant solution -- WestLangley
-
-			bool perspective = ( projectionMatrix[ 2 ][ 3 ] == - 1.0 ); // 4th entry in the 3rd column
-
-			if ( perspective ) {
-
-				if ( start.z < 0.0 && end.z >= 0.0 ) {
-
-					trimSegment( start, end );
-
-				} else if ( end.z < 0.0 && start.z >= 0.0 ) {
-
-					trimSegment( end, start );
-
-				}
-
-			}
-
-			// clip space
-			vec4 clipStart = projectionMatrix * start;
-			vec4 clipEnd = projectionMatrix * end;
-
-			// ndc space
-			vec3 ndcStart = clipStart.xyz / clipStart.w;
-			vec3 ndcEnd = clipEnd.xyz / clipEnd.w;
-
-			// direction
-			vec2 dir = ndcEnd.xy - ndcStart.xy;
-
-			// account for clip-space aspect ratio
-			dir.x *= aspect;
-			dir = normalize( dir );
-
-			#ifdef WORLD_UNITS
-
-				// get the offset direction as perpendicular to the view vector
-				vec3 worldDir = normalize( end.xyz - start.xyz );
-				vec3 offset;
-				if ( position.y < 0.5 ) {
-
-					offset = normalize( cross( start.xyz, worldDir ) );
-
-				} else {
-
-					offset = normalize( cross( end.xyz, worldDir ) );
-
-				}
-
-				// sign flip
-				if ( position.x < 0.0 ) offset *= - 1.0;
-
-				float forwardOffset = dot( worldDir, vec3( 0.0, 0.0, 1.0 ) );
-
-				// don't extend the line if we're rendering dashes because we
-				// won't be rendering the endcaps
-				#ifndef USE_DASH
-
-					// extend the line bounds to encompass  endcaps
-					start.xyz += - worldDir * linewidth * 0.5;
-					end.xyz += worldDir * linewidth * 0.5;
-
-					// shift the position of the quad so it hugs the forward edge of the line
-					offset.xy -= dir * forwardOffset;
-					offset.z += 0.5;
-
-				#endif
-
-				// endcaps
-				if ( position.y > 1.0 || position.y < 0.0 ) {
-
-					offset.xy += dir * 2.0 * forwardOffset;
-
-				}
-
-				// adjust for linewidth
-				offset *= linewidth * 0.5;
-
-				// set the world position
-				worldPos = ( position.y < 0.5 ) ? start : end;
-				worldPos.xyz += offset;
-
-				// project the worldpos
-				vec4 clip = projectionMatrix * worldPos;
-
-				// shift the depth of the projected points so the line
-				// segments overlap neatly
-				vec3 clipPose = ( position.y < 0.5 ) ? ndcStart : ndcEnd;
-				clip.z = clipPose.z * clip.w;
-
-			#else
-
-				vec2 offset = vec2( dir.y, - dir.x );
-				// undo aspect ratio adjustment
-				dir.x /= aspect;
-				offset.x /= aspect;
-
-				// sign flip
-				if ( position.x < 0.0 ) offset *= - 1.0;
-
-				// endcaps
-				if ( position.y < 0.0 ) {
-
-					offset += - dir;
-
-				} else if ( position.y > 1.0 ) {
-
-					offset += dir;
-
-				}
-
-				// adjust for linewidth
-				offset *= linewidth;
-
-				// adjust for clip-space to screen-space conversion // maybe resolution should be based on viewport ...
-				offset /= resolution.y;
-
-				// select end
-				vec4 clip = ( position.y < 0.5 ) ? clipStart : clipEnd;
-
-				// back to clip space
-				offset *= clip.w;
-
-				clip.xy += offset;
-
-			#endif
-
-			gl_Position = clip;
-
-			vec4 mvPosition = ( position.y < 0.5 ) ? start : end; // this is an approximation
-
-			#include <logdepthbuf_vertex>
-			#include <clipping_planes_vertex>
-			#include <fog_vertex>
-
-		}
-		`,
-    fragmentShader: /* glsl */ `
-		uniform vec3 diffuse;
-		uniform float opacity;
-		uniform float linewidth;
-
-		#ifdef USE_DASH
-
-			uniform float dashOffset;
-			uniform float dashSize;
-			uniform float gapSize;
-
-		#endif
-
-		varying float vLineDistance;
-
-		#ifdef WORLD_UNITS
-
-			varying vec4 worldPos;
-			varying vec3 worldStart;
-			varying vec3 worldEnd;
-
-			#ifdef USE_DASH
-
-				varying vec2 vUv;
-
-			#endif
-
-		#else
-
-			varying vec2 vUv;
-
-		#endif
-
-		#include <common>
-		#include <color_pars_fragment>
-		#include <fog_pars_fragment>
-		#include <logdepthbuf_pars_fragment>
-		#include <clipping_planes_pars_fragment>
-
-		vec2 closestLineToLine(vec3 p1, vec3 p2, vec3 p3, vec3 p4) {
-
-			float mua;
-			float mub;
-
-			vec3 p13 = p1 - p3;
-			vec3 p43 = p4 - p3;
-
-			vec3 p21 = p2 - p1;
-
-			float d1343 = dot( p13, p43 );
-			float d4321 = dot( p43, p21 );
-			float d1321 = dot( p13, p21 );
-			float d4343 = dot( p43, p43 );
-			float d2121 = dot( p21, p21 );
-
-			float denom = d2121 * d4343 - d4321 * d4321;
-
-			float numer = d1343 * d4321 - d1321 * d4343;
-
-			mua = numer / denom;
-			mua = clamp( mua, 0.0, 1.0 );
-			mub = ( d1343 + d4321 * ( mua ) ) / d4343;
-			mub = clamp( mub, 0.0, 1.0 );
-
-			return vec2( mua, mub );
-
-		}
-
-		void main() {
-
-			#include <clipping_planes_fragment>
-
-			#ifdef USE_DASH
-
-				if ( vUv.y < - 1.0 || vUv.y > 1.0 ) discard; // discard endcaps
-
-				if ( mod( vLineDistance + dashOffset, dashSize + gapSize ) > dashSize ) discard; // todo - FIX
-
-			#endif
-
-			float alpha = opacity;
-
-			#ifdef WORLD_UNITS
-
-				// Find the closest points on the view ray and the line segment
-				vec3 rayEnd = normalize( worldPos.xyz ) * 1e5;
-				vec3 lineDir = worldEnd - worldStart;
-				vec2 params = closestLineToLine( worldStart, worldEnd, vec3( 0.0, 0.0, 0.0 ), rayEnd );
-
-				vec3 p1 = worldStart + lineDir * params.x;
-				vec3 p2 = rayEnd * params.y;
-				vec3 delta = p1 - p2;
-				float len = length( delta );
-				float norm = len / linewidth;
-
-				#ifndef USE_DASH
-
-					#ifdef USE_ALPHA_TO_COVERAGE
-
-						float dnorm = fwidth( norm );
-						alpha = 1.0 - smoothstep( 0.5 - dnorm, 0.5 + dnorm, norm );
-
-					#else
-
-						if ( norm > 0.5 ) {
-
-							discard;
-
-						}
-
-					#endif
-
-				#endif
-
-			#else
-
-				#ifdef USE_ALPHA_TO_COVERAGE
-
-					// artifacts appear on some hardware if a derivative is taken within a conditional
-					float a = vUv.x;
-					float b = ( vUv.y > 0.0 ) ? vUv.y - 1.0 : vUv.y + 1.0;
-					float len2 = a * a + b * b;
-					float dlen = fwidth( len2 );
-
-					if ( abs( vUv.y ) > 1.0 ) {
-
-						alpha = 1.0 - smoothstep( 1.0 - dlen, 1.0 + dlen, len2 );
-
-					}
-
-				#else
-
-					if ( abs( vUv.y ) > 1.0 ) {
-
-						float a = vUv.x;
-						float b = ( vUv.y > 0.0 ) ? vUv.y - 1.0 : vUv.y + 1.0;
-						float len2 = a * a + b * b;
-
-						if ( len2 > 1.0 ) discard;
-
-					}
-
-				#endif
-
-			#endif
-
-			vec4 diffuseColor = vec4( diffuse, alpha );
-
-			#include <logdepthbuf_fragment>
-			#include <color_fragment>
-
-			gl_FragColor = vec4( diffuseColor.rgb, alpha );
-
-			#include <tonemapping_fragment>
-			#include <encodings_fragment>
-			#include <fog_fragment>
-			#include <premultiplied_alpha_fragment>
-
-		}
-		`
-};
-class LineMaterial extends (0, _three.ShaderMaterial) {
-    constructor(parameters){
-        super({
-            type: "LineMaterial",
-            uniforms: (0, _three.UniformsUtils).clone((0, _three.ShaderLib)["line"].uniforms),
-            vertexShader: (0, _three.ShaderLib)["line"].vertexShader,
-            fragmentShader: (0, _three.ShaderLib)["line"].fragmentShader,
-            clipping: true // required for clipping support
-        });
-        this.isLineMaterial = true;
-        Object.defineProperties(this, {
-            color: {
-                enumerable: true,
-                get: function() {
-                    return this.uniforms.diffuse.value;
-                },
-                set: function(value) {
-                    this.uniforms.diffuse.value = value;
-                }
-            },
-            worldUnits: {
-                enumerable: true,
-                get: function() {
-                    return "WORLD_UNITS" in this.defines;
-                },
-                set: function(value) {
-                    if (value === true) this.defines.WORLD_UNITS = "";
-                    else delete this.defines.WORLD_UNITS;
-                }
-            },
-            linewidth: {
-                enumerable: true,
-                get: function() {
-                    return this.uniforms.linewidth.value;
-                },
-                set: function(value) {
-                    this.uniforms.linewidth.value = value;
-                }
-            },
-            dashed: {
-                enumerable: true,
-                get: function() {
-                    return Boolean("USE_DASH" in this.defines);
-                },
-                set (value) {
-                    if (Boolean(value) !== Boolean("USE_DASH" in this.defines)) this.needsUpdate = true;
-                    if (value === true) this.defines.USE_DASH = "";
-                    else delete this.defines.USE_DASH;
-                }
-            },
-            dashScale: {
-                enumerable: true,
-                get: function() {
-                    return this.uniforms.dashScale.value;
-                },
-                set: function(value) {
-                    this.uniforms.dashScale.value = value;
-                }
-            },
-            dashSize: {
-                enumerable: true,
-                get: function() {
-                    return this.uniforms.dashSize.value;
-                },
-                set: function(value) {
-                    this.uniforms.dashSize.value = value;
-                }
-            },
-            dashOffset: {
-                enumerable: true,
-                get: function() {
-                    return this.uniforms.dashOffset.value;
-                },
-                set: function(value) {
-                    this.uniforms.dashOffset.value = value;
-                }
-            },
-            gapSize: {
-                enumerable: true,
-                get: function() {
-                    return this.uniforms.gapSize.value;
-                },
-                set: function(value) {
-                    this.uniforms.gapSize.value = value;
-                }
-            },
-            opacity: {
-                enumerable: true,
-                get: function() {
-                    return this.uniforms.opacity.value;
-                },
-                set: function(value) {
-                    this.uniforms.opacity.value = value;
-                }
-            },
-            resolution: {
-                enumerable: true,
-                get: function() {
-                    return this.uniforms.resolution.value;
-                },
-                set: function(value) {
-                    this.uniforms.resolution.value.copy(value);
-                }
-            },
-            alphaToCoverage: {
-                enumerable: true,
-                get: function() {
-                    return Boolean("USE_ALPHA_TO_COVERAGE" in this.defines);
-                },
-                set: function(value) {
-                    if (Boolean(value) !== Boolean("USE_ALPHA_TO_COVERAGE" in this.defines)) this.needsUpdate = true;
-                    if (value === true) {
-                        this.defines.USE_ALPHA_TO_COVERAGE = "";
-                        this.extensions.derivatives = true;
-                    } else {
-                        delete this.defines.USE_ALPHA_TO_COVERAGE;
-                        this.extensions.derivatives = false;
-                    }
-                }
-            }
-        });
-        this.setValues(parameters);
-    }
-}
-
-},{"three":"ktPTu","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"5c0fE":[function(require,module,exports) {
-var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
-parcelHelpers.defineInteropFlag(exports);
-parcelHelpers.export(exports, "LineGeometry", ()=>LineGeometry);
-var _lineSegmentsGeometryJs = require("../lines/LineSegmentsGeometry.js");
-class LineGeometry extends (0, _lineSegmentsGeometryJs.LineSegmentsGeometry) {
-    constructor(){
-        super();
-        this.isLineGeometry = true;
-        this.type = "LineGeometry";
-    }
-    setPositions(array) {
-        // converts [ x1, y1, z1,  x2, y2, z2, ... ] to pairs format
-        const length = array.length - 3;
-        const points = new Float32Array(2 * length);
-        for(let i = 0; i < length; i += 3){
-            points[2 * i] = array[i];
-            points[2 * i + 1] = array[i + 1];
-            points[2 * i + 2] = array[i + 2];
-            points[2 * i + 3] = array[i + 3];
-            points[2 * i + 4] = array[i + 4];
-            points[2 * i + 5] = array[i + 5];
-        }
-        super.setPositions(points);
-        return this;
-    }
-    setColors(array) {
-        // converts [ r1, g1, b1,  r2, g2, b2, ... ] to pairs format
-        const length = array.length - 3;
-        const colors = new Float32Array(2 * length);
-        for(let i = 0; i < length; i += 3){
-            colors[2 * i] = array[i];
-            colors[2 * i + 1] = array[i + 1];
-            colors[2 * i + 2] = array[i + 2];
-            colors[2 * i + 3] = array[i + 3];
-            colors[2 * i + 4] = array[i + 4];
-            colors[2 * i + 5] = array[i + 5];
-        }
-        super.setColors(colors);
-        return this;
-    }
-    fromLine(line) {
-        const geometry = line.geometry;
-        this.setPositions(geometry.attributes.position.array); // assumes non-indexed
-        // set colors, maybe
-        return this;
-    }
-}
-
-},{"../lines/LineSegmentsGeometry.js":"c91zC","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"93XyA":[function(require,module,exports) {
-var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
-parcelHelpers.defineInteropFlag(exports);
-parcelHelpers.export(exports, "fadeOutScene", ()=>fadeOutScene);
-function fadeOutScene() {
-    // Add new DIV to the HTML for fadeOut
-    const fadeOutDiv = document.createElement("div");
-    fadeOutDiv.classList.add("fadeDiv");
-    // Setup elemt style.
-    fadeOutDiv.style.backgroundColor = "black";
-    fadeOutDiv.style.opacity = 0;
-    fadeOutDiv.style.position = "absolute";
-    fadeOutDiv.style.width = "100vw";
-    fadeOutDiv.style.height = "100vh";
-    document.body.appendChild(fadeOutDiv);
-    //Fade out  with interval
-    const divToFade = document.querySelector(".fadeDiv");
-    let fadeTimer = 0;
-    // Setup interval
-    const fadeOutTimer = setInterval(()=>{
-        // Check if timer is finished.
-        if (fadeTimer >= 1) clearInterval(fadeOutTimer);
-        fadeTimer += 0.01;
-        divToFade.style.opacity = fadeTimer;
-    }, 10);
-}
-
-},{"@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"bYvHP":[function(require,module,exports) {
-var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
-parcelHelpers.defineInteropFlag(exports);
-parcelHelpers.export(exports, "ActivateFirstPerson", ()=>ActivateFirstPerson);
-parcelHelpers.export(exports, "OnKeyDown", ()=>OnKeyDown);
-parcelHelpers.export(exports, "OnKeyUp", ()=>OnKeyUp);
-const ActivateFirstPerson = ()=>{
-    console.log("First Person is activated.");
-};
-const OnKeyDown = (event)=>{
-    // Check input codes.
-    //console.log("Pressed: " + event.code);
-    switch(event.code){
-        case "ArrowUp":
-        case "KeyW":
-            console.log("forward");
-            break;
-        case "ArrowDown":
-        case "KeyS":
-            console.log("backwards");
-            break;
-        case "ArrowLeft":
-        case "KeyA":
-            console.log("left");
-            break;
-        case "ArrowRight":
-        case "KeyD":
-            console.log("Right.");
-            break;
-        case "KeyE":
-            console.log("Upwards");
-            break;
-        case "KeyQ":
-            console.log("Downwards.");
-            break;
-    }
-};
-const OnKeyUp = (event)=>{
-    switch(event.code){
-        case "ArrowUp":
-        case "KeyW":
-            console.log("Stopped moving forward.");
-            break;
-        case "ArrowDown":
-        case "KeyS":
-            console.log("Stopped moving backwards.");
-            break;
-        case "ArrowLeft":
-        case "KeyA":
-            console.log("Stopped moving left.");
-            break;
-        case "ArrowRight":
-        case "KeyD":
-            console.log("Stopped moving right.");
-            break;
-        case "KeyE":
-            console.log("Stopped moving upwards.");
-            break;
-        case "KeyQ":
-            console.log("Stopped moving downwards.");
-    }
-};
 
 },{"@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}]},["cVgJb","ebWYT"], "ebWYT", "parcelRequire839b")
 

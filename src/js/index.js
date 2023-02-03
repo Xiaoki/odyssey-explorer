@@ -23,6 +23,7 @@ import { calculateMouseOverLocation,
 } from "./mouseOver.js";
 import { placeOdysseyInUniverse, drawConnectionsBetweenOdysseys } from "./buildUniverse.js"; 
 import { generateGalaxy } from "./galaxy.js";
+import { RepeatWrapping } from "three";
 
 
 
@@ -99,6 +100,37 @@ controls.zoomSpeed = 1;
 //const backgroundImage = new THREE.TextureLoader().load('./images/small/BasicSkyboxHD.jpg');
 //backgroundImage.mapping = THREE.EquirectangularReflectionMapping;
 //scene.background = backgroundImage;
+
+const backgroundImage = new THREE.TextureLoader().load('./images/Galaxy.Explorer.jpg');
+backgroundImage.mapping = THREE.EquirectangularReflectionMapping;
+backgroundImage.needsUpdate = true;
+//backgroundImage.encoding = THREE.sRGBEncoding;
+scene.background = backgroundImage;
+a=backgroundImage.wrapT = RepeatWrapping;
+
+/*
+CUSTOM ODYSSEY OPEN SOURCE Skybox
+*/
+/*
+const skyboxGeo = new THREE.BoxGeometry(500,500,500);
+
+
+const ft = new THREE.TextureLoader().load('./images/skybox_front.png')
+const bk = new THREE.TextureLoader().load('./images/skybox_back.png')
+const up = new THREE.TextureLoader().load('./images/skybox_up.png')
+const dn = new THREE.TextureLoader().load('./images/skybox_down.png')
+const rt = new THREE.TextureLoader().load('./images/skybox_right.png')
+const lf = new THREE.TextureLoader().load('./images/skybox_left.png')
+const skyboxTextures = [ft, bk, up, dn, rt, lf];
+
+const skyboxMaterialArray = skyboxTextures.map( texture => 
+  {
+      return new THREE.MeshBasicMaterial({ map: texture, side: THREE.BackSide });
+   });
+
+const skyboxMesh = new THREE.Mesh(skyboxGeo, skyboxMaterialArray);
+scene.add(skyboxMesh);
+*/
 
 
 /**
@@ -325,6 +357,7 @@ function animate(){
     const time = performance.now();
     lookAtCameraObjects();
 
+    backgroundImage.offset.y = Math.sin(0.001);
 
     /**
      * Removing this comment will animate all name rings on every odyssey.
