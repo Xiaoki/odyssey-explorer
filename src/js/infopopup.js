@@ -10,12 +10,13 @@ let previouslySelectedOdyssey
 let camera;
 let controls
 
+
 /**
  * Handle the incoming click.
  * @param {scene} mainScene 
  * @param {odyssey} targetOdyssey 
  */
-const HandleOdysseyClick = (mainScene, targetOdyssey, mainCamera, mainControls) => 
+const HandleOdysseyClick = (mainScene, targetOdyssey, mainCamera, mainControls, turnOfforOnControlsUpdate) => 
 {
     scene = mainScene; // the main scene object from index.js.
     camera = mainCamera; // the main camera object.
@@ -24,7 +25,7 @@ const HandleOdysseyClick = (mainScene, targetOdyssey, mainCamera, mainControls) 
     // if second click. Handle zoom and fade.
     if (previouslySelectedOdyssey == targetOdyssey) 
     {
-        HandleSecondClickOnOdyssey(previouslySelectedOdyssey);
+        HandleSecondClickOnOdyssey(previouslySelectedOdyssey, turnOfforOnControlsUpdate);
     }
 
     // if first click. Generate object placement.
@@ -69,7 +70,7 @@ const GenerateInfoObject = (odyssey) => {
     
 }
 
-const HandleSecondClickOnOdyssey = (odyssey) => 
+const HandleSecondClickOnOdyssey = (odyssey, turnOfforOnControlsUpdate) => 
 {
     
     // Start the fade out.
@@ -77,21 +78,28 @@ const HandleSecondClickOnOdyssey = (odyssey) =>
     
     // Start the zoom.
     gsap.to(camera.position, {
-        duration: 1,
+        duration: 1.5,
         x: odyssey.position.x,
         y: odyssey.position.y,
         z: odyssey.position.z,
         
         onStart: function() {
-            console.log(camera.position);
+            turnOfforOnControlsUpdate(true);
+            console.log(`Target is: `)
+            console.log(odyssey.position);
             controls.enabled = false;
             controls.autoRotate = false; 
             controls.enablePan = false;
         },
 
         onUpdate: function() {
-            console.log(camera.position);
+        },
+
+        onComplete: function() {
+            turnOfforOnControlsUpdate(false);
         }
+
+
     });
 
     // Make the Unity call

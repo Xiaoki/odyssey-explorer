@@ -191,7 +191,7 @@ function onMouseDown(event){
 
         // If clicked planet is same as current selected one return
         if(targetPlanet.object === selectedOdyssey){
-            HandleOdysseyClick(scene, selectedOdyssey, camera, controls); 
+            HandleOdysseyClick(scene, selectedOdyssey, camera, controls, turnOfforOnControlsUpdate); 
             return;
         }
         
@@ -237,13 +237,13 @@ function onMouseDown(event){
 
            onStart: function(){
                 transitionToPlanetFinished = false;
-                updateCameraRotation = true;
+                turnOfforOnControlsUpdate(true);
                 controls.enabled = false;
                 controls.autoRotate = false; 
                 controls.enablePan = false;
                 activeLinesArray = selectedOdyssey.buildConnectionLines(referenceListOfOdysseys, scene, activeLinesArray); 
                 renderOdysseyInformationPopup(selectedOdyssey); 
-                HandleOdysseyClick(scene, selectedOdyssey, camera, controls);             
+                HandleOdysseyClick(scene, selectedOdyssey, camera, controls, turnOfforOnControlsUpdate);             
            },
            onUpdate: function(){
                
@@ -251,7 +251,7 @@ function onMouseDown(event){
 
            },
            onComplete: function(){ 
-                updateCameraRotation = false;
+                turnOfforOnControlsUpdate(false);
                 controls.enabled = true;
                 controls.enablePan = true;
                 controls.autoRotate = true; 
@@ -352,6 +352,10 @@ Highlight3DModel.scale.set(1.2 , 1.2 , 1.2);
 // Build Connection lines for my center odyssey
 activeLinesArray = myOdyssey.buildConnectionLines(referenceListOfOdysseys, scene, activeLinesArray);
 
+const turnOfforOnControlsUpdate = (state) => {
+    updateCameraRotation = state;
+}
+
 // Animation
 function animate(){
 
@@ -369,6 +373,7 @@ function animate(){
         referenceListOfOdysseys[i].nameRingMaterial.map.offset.x = nameRingOffset;
     }*/
 
+ 
 
     // Update controls for auto-rotate.
     if (!updateCameraRotation) {
