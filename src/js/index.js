@@ -23,7 +23,7 @@ import { calculateMouseOverLocation,
 } from "./mouseOver.js";
 import { placeOdysseyInUniverse, drawConnectionsBetweenOdysseys } from "./buildUniverse.js"; 
 import { generateGalaxy } from "./galaxy.js";
-import { RepeatWrapping } from "three";
+import { HandleOdysseyClick } from "./infopopup.js";
 
 
 
@@ -106,7 +106,7 @@ backgroundImage.mapping = THREE.EquirectangularReflectionMapping;
 backgroundImage.needsUpdate = true;
 //backgroundImage.encoding = THREE.sRGBEncoding;
 scene.background = backgroundImage;
-a=backgroundImage.wrapT = RepeatWrapping;
+
 
 /*
 CUSTOM ODYSSEY OPEN SOURCE Skybox
@@ -191,6 +191,7 @@ function onMouseDown(event){
 
         // If clicked planet is same as current selected one return
         if(targetPlanet.object === selectedOdyssey){
+            HandleOdysseyClick(scene, selectedOdyssey, camera, controls); 
             return;
         }
         
@@ -241,7 +242,8 @@ function onMouseDown(event){
                 controls.autoRotate = false; 
                 controls.enablePan = false;
                 activeLinesArray = selectedOdyssey.buildConnectionLines(referenceListOfOdysseys, scene, activeLinesArray); 
-                renderOdysseyInformationPopup(selectedOdyssey);              
+                renderOdysseyInformationPopup(selectedOdyssey); 
+                HandleOdysseyClick(scene, selectedOdyssey, camera, controls);             
            },
            onUpdate: function(){
                
@@ -357,7 +359,6 @@ function animate(){
     const time = performance.now();
     lookAtCameraObjects();
 
-    backgroundImage.offset.y = Math.sin(0.001);
 
     /**
      * Removing this comment will animate all name rings on every odyssey.

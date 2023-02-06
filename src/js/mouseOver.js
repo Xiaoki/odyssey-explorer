@@ -226,7 +226,7 @@
         {
             nameObject.scale.set(1.2, 1.2, 1.2);
             offsetNameLocationVertical = 6;
-            console.log(`Main`);
+            
 
         } else if (rayDistance < 45) {
             nameObject.scale.set(1.2, 1.2, 1.2);
@@ -265,7 +265,7 @@
 
     const renderOdysseyInformationPopup = (odyssey) => 
     {   
-
+        
         /*
         if(!infoObjectMesh.visible)
         {
