@@ -313,6 +313,7 @@ class Odyssey extends THREE.Mesh {
         const lineGeometry = new LineGeometry();
         lineGeometry.setPositions(arrayOfPoints);
 
+
         let materialToUseForLine = lineMaterialToUse;
         materialToUseForLine.resolution.set(window.innerWidth, window.innerHeight);              
         const drawLine = new Line2(lineGeometry, materialToUseForLine);
@@ -473,6 +474,7 @@ const createOdyssey = (id, wallet, name, url) =>
     // Add the custom avatar image mesh to the odyssey.
     odyssey.add(avatarMesh);
     //odyssey.add(nameRingMesh);
+
 
     return odyssey;
 };

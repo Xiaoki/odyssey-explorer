@@ -11,7 +11,7 @@
 
     let activeOdyssey, highlightTarget;
     let font;
-    let odysseyName;
+    let odysseyNameObject;
     let cameraObject;
     let rayDistance;
 
@@ -154,14 +154,15 @@
                     Highlight3DModel.scale.set(3,3,3);
                 }
 
-                if (odysseyName) {
-                    scene.remove(odysseyName);
+                if (odysseyNameObject) {
+                    scene.remove(odysseyNameObject);
                 }
                 
-                odysseyName = generateOdysseyName(highlightTarget.name);
-                handleNamePlacement(odysseyName, camera);
+                odysseyNameObject = generateOdysseyName(highlightTarget.name);
+                handleNamePlacement(odysseyNameObject, camera);
+                
 
-                scene.add(odysseyName);
+                scene.add(odysseyNameObject);
 
 
             }
@@ -253,28 +254,14 @@
         
     }
 
+
     const HighlightHandleLookAt = () => 
     {
-        if(odysseyName) 
+        if(odysseyNameObject) 
         {
-            odysseyName.lookAt(cameraObject.position);
+            odysseyNameObject.lookAt(cameraObject.position);
         }
         
-    }
-
-
-    const renderOdysseyInformationPopup = (odyssey) => 
-    {   
-        
-        /*
-        if(!infoObjectMesh.visible)
-        {
-            infoObjectMesh.visible = true;
-        }
-
-        // added a small offset +0.01 to prevent conflict with avatar image on the exact same position and orientation
-        infoObjectMesh.position.set(odyssey.position.x , odyssey.position.y, odyssey.position.z);
-        */
     }
 
 
@@ -316,6 +303,6 @@
 
 
 
-    export {HighlightHandleLookAt, load3DHighlight, doHighlightRayTrace, calculateMouseOverLocation, highlightTarget, setActiveOdyssey, renderOdysseyInformationPopup};
+    export {HighlightHandleLookAt, load3DHighlight, doHighlightRayTrace, calculateMouseOverLocation, highlightTarget, setActiveOdyssey, renderOdysseyInformationPopup, font, odysseyNameObject};
 
 

@@ -549,6 +549,7 @@ var _firstpersonlogicJs = require("./firstpersonlogic.js");
 var _mouseOverJs = require("./mouseOver.js");
 var _buildUniverseJs = require("./buildUniverse.js");
 var _galaxyJs = require("./galaxy.js");
+var _infopopupJs = require("./infopopup.js");
 (0, _firstpersonlogicJs.ActivateFirstPerson)();
 /**
  * For Dev Only
@@ -567,6 +568,7 @@ let updateCameraRotation = false;
 let transitionToPlanetFinished = true;
 let activeLinesArray = [];
 let leftMouseButtonIsDown = false;
+let activeInfoObject;
 let meshArray = [];
 // Scene setup
 canvas = document.querySelector(".webgl");
@@ -608,7 +610,6 @@ backgroundImage.mapping = _three.EquirectangularReflectionMapping;
 backgroundImage.needsUpdate = true;
 //backgroundImage.encoding = THREE.sRGBEncoding;
 scene.background = backgroundImage;
-a = backgroundImage.wrapT = (0, _three.RepeatWrapping);
 /*
 CUSTOM ODYSSEY OPEN SOURCE Skybox
 */ /*
@@ -658,7 +659,10 @@ function onMouseDown(event) {
         // Only react to first raycast hit
         const targetPlanet = castRay[0];
         // If clicked planet is same as current selected one return
-        if (targetPlanet.object === selectedOdyssey) return;
+        if (targetPlanet.object === selectedOdyssey) {
+            (0, _infopopupJs.HandleOdysseyClick)(scene, selectedOdyssey, camera, controls, turnOfforOnControlsUpdate, activeInfoObject);
+            return;
+        }
         selectedOdyssey = targetPlanet.object;
         console.log(selectedOdyssey);
         let targetVector = new _three.Vector3();
@@ -689,18 +693,24 @@ function onMouseDown(event) {
             z: targetLocation.z,
             onStart: function() {
                 transitionToPlanetFinished = false;
-                updateCameraRotation = true;
+                turnOfforOnControlsUpdate(true);
                 controls.enabled = false;
                 controls.autoRotate = false;
                 controls.enablePan = false;
                 activeLinesArray = selectedOdyssey.buildConnectionLines(referenceListOfOdysseys, scene, activeLinesArray);
-                (0, _mouseOverJs.renderOdysseyInformationPopup)(selectedOdyssey);
+                activeInfoObject = (0, _infopopupJs.HandleOdysseyClick)(scene, selectedOdyssey, camera, controls, turnOfforOnControlsUpdate, activeInfoObject);
+                if (activeInfoObject) {
+                    // hide mouseOver on the selected ojbect.
+                    Highlight3DModel.visible = false;
+                    (0, _mouseOverJs.odysseyNameObject).visible = false;
+                    scene.add(activeInfoObject);
+                }
             },
             onUpdate: function() {
                 camera.quaternion.copy(startOrientation).slerp(targetOrientation, this.progress());
             },
             onComplete: function() {
-                updateCameraRotation = false;
+                turnOfforOnControlsUpdate(false);
                 controls.enabled = true;
                 controls.enablePan = true;
                 controls.autoRotate = true;
@@ -761,12 +771,14 @@ Highlight3DModel.visible = false;
 Highlight3DModel.scale.set(1.2, 1.2, 1.2);
 // Build Connection lines for my center odyssey
 activeLinesArray = myOdyssey.buildConnectionLines(referenceListOfOdysseys, scene, activeLinesArray);
+const turnOfforOnControlsUpdate = (state)=>{
+    updateCameraRotation = state;
+};
 // Animation
 function animate() {
     // Time reference.
     const time = performance.now();
     lookAtCameraObjects();
-    backgroundImage.offset.y = Math.sin(0.001);
     /**
      * Removing this comment will animate all name rings on every odyssey.
      */ /* nameRingOffset += Math.sin(0.001);
@@ -798,7 +810,7 @@ document.addEventListener("keydown", (0, _firstpersonlogicJs.OnKeyDown));
 document.addEventListener("keyup", (0, _firstpersonlogicJs.OnKeyUp));
 animate();
 
-},{"gsap":"fPSuC","three":"ktPTu","three/examples/jsm/controls/OrbitControls":"7mqRv","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3","./odyssey.js":"uTahW","./firstpersonlogic.js":"bYvHP","./mouseOver.js":"9P9c0","./buildUniverse.js":"2Qgse","./galaxy.js":"1OpXQ"}],"fPSuC":[function(require,module,exports) {
+},{"gsap":"fPSuC","three":"ktPTu","three/examples/jsm/controls/OrbitControls":"7mqRv","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3","./odyssey.js":"uTahW","./firstpersonlogic.js":"bYvHP","./mouseOver.js":"9P9c0","./buildUniverse.js":"2Qgse","./galaxy.js":"1OpXQ","./infopopup.js":"fPPWE"}],"fPSuC":[function(require,module,exports) {
 var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
 parcelHelpers.defineInteropFlag(exports);
 parcelHelpers.export(exports, "gsap", ()=>gsapWithCSS);
@@ -36479,6 +36491,8 @@ parcelHelpers.export(exports, "calculateMouseOverLocation", ()=>calculateMouseOv
 parcelHelpers.export(exports, "highlightTarget", ()=>highlightTarget);
 parcelHelpers.export(exports, "setActiveOdyssey", ()=>setActiveOdyssey);
 parcelHelpers.export(exports, "renderOdysseyInformationPopup", ()=>renderOdysseyInformationPopup);
+parcelHelpers.export(exports, "font", ()=>font);
+parcelHelpers.export(exports, "odysseyNameObject", ()=>odysseyNameObject);
 var _three = require("three");
 var _gltfloaderJs = require("three/examples/jsm/loaders/GLTFLoader.js");
 var _fontLoaderJs = require("three/examples/jsm/loaders/FontLoader.js");
@@ -36487,7 +36501,7 @@ var _textGeometryJs = require("three/examples/jsm/geometries/TextGeometry.js");
      * Important variables.
      */ let activeOdyssey, highlightTarget;
 let font;
-let odysseyName;
+let odysseyNameObject;
 let cameraObject;
 let rayDistance;
 /*
@@ -36578,10 +36592,10 @@ const doHighlightRayTrace = (pointer, camera, referenceListOfOdysseys, scene, Hi
             // if it is the center odyssey ( your own. Set bigger highlight);
             const pos3D = highlightTarget.position;
             if (highlightTarget.name == "My Odyssey" || pos3D.x === 0 && pos3D.y === 0 && pos3D.z === 0) Highlight3DModel.scale.set(3, 3, 3);
-            if (odysseyName) scene.remove(odysseyName);
-            odysseyName = generateOdysseyName(highlightTarget.name);
-            handleNamePlacement(odysseyName, camera);
-            scene.add(odysseyName);
+            if (odysseyNameObject) scene.remove(odysseyNameObject);
+            odysseyNameObject = generateOdysseyName(highlightTarget.name);
+            handleNamePlacement(odysseyNameObject, camera);
+            scene.add(odysseyNameObject);
         }
     }
 };
@@ -36623,7 +36637,6 @@ const handleNamePlacement = (nameObject)=>{
     if (highlightTarget.position.x == 0 && highlightTarget.position.y == 0 && highlightTarget.position.z == 0) {
         nameObject.scale.set(1.2, 1.2, 1.2);
         offsetNameLocationVertical = 6;
-        console.log(`Main`);
     } else if (rayDistance < 45) {
         nameObject.scale.set(1.2, 1.2, 1.2);
         offsetNameLocationVertical = 3;
@@ -36642,18 +36655,8 @@ const handleNamePlacement = (nameObject)=>{
     HighlightHandleLookAt();
 };
 const HighlightHandleLookAt = ()=>{
-    if (odysseyName) odysseyName.lookAt(cameraObject.position);
+    if (odysseyNameObject) odysseyNameObject.lookAt(cameraObject.position);
 };
-const renderOdysseyInformationPopup = (odyssey)=>{
-/*
-        if(!infoObjectMesh.visible)
-        {
-            infoObjectMesh.visible = true;
-        }
-
-        // added a small offset +0.01 to prevent conflict with avatar image on the exact same position and orientation
-        infoObjectMesh.position.set(odyssey.position.x , odyssey.position.y, odyssey.position.z);
-        */ };
 /**
      * Prepare 3D highlight.
      */ const highlighd3DMaterial = new _three.MeshBasicMaterial({
@@ -41643,6 +41646,178 @@ var index = {
     GUI: GUI$1
 };
 exports.default = index;
+
+},{"@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"fPPWE":[function(require,module,exports) {
+var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
+parcelHelpers.defineInteropFlag(exports);
+parcelHelpers.export(exports, "HandleOdysseyClick", ()=>HandleOdysseyClick);
+var _three = require("three");
+var _line2Js = require("three/examples/jsm/lines/Line2.js");
+var _lineMaterialJs = require("three/examples/jsm/lines/LineMaterial.js");
+var _lineGeometryJs = require("three/examples/jsm/lines/LineGeometry.js");
+var _transitions = require("./transitions");
+var _gsap = require("gsap");
+var _gsapDefault = parcelHelpers.interopDefault(_gsap);
+var _mouseOver = require("./mouseOver");
+var _textGeometryJs = require("three/examples/jsm/geometries/TextGeometry.js");
+let scene;
+let previouslySelectedOdyssey;
+let camera;
+let controls;
+// Line Geometry for info popup
+const infoLineMaterial = new (0, _lineMaterialJs.LineMaterial)({
+    color: 0xFFFFFF,
+    linewidth: 1,
+    transparent: true,
+    opacity: 0.8
+});
+/**
+ * Handle the incoming click.
+ * @param {scene} mainScene 
+ * @param {odyssey} targetOdyssey 
+ */ const HandleOdysseyClick = (mainScene, targetOdyssey, mainCamera, mainControls, turnOfforOnControlsUpdate, activeInfoObject)=>{
+    scene = mainScene; // the main scene object from index.js.
+    camera = mainCamera; // the main camera object.
+    controls = mainControls;
+    // if second click. Handle zoom and fade.
+    if (previouslySelectedOdyssey == targetOdyssey) HandleSecondClickOnOdyssey(previouslySelectedOdyssey, turnOfforOnControlsUpdate);
+    // if first click. Generate object placement.
+    if (!previouslySelectedOdyssey || previouslySelectedOdyssey != targetOdyssey) {
+        previouslySelectedOdyssey = targetOdyssey;
+        if (activeInfoObject) {
+            activeInfoObject.removeFromParent();
+            console.log(activeInfoObject);
+        }
+        return GenerateInfoObject(targetOdyssey);
+    }
+};
+const GenerateInfoObject = (odyssey)=>{
+    /* 
+
+    1. Calculate lookAt rotation, then move 2 units to the right on the X + Z axis. = Startpoint
+    2. Move up the Y access by 4 and increase X + Z axis by 2 = Second point.
+    3. Move sideways by 1 down the x + Z factor = third pooint
+
+    4. Draw Line and prepare for add.
+
+    5. Draw Odyssey name 1 unity down the X + Z factor to start place naming. 
+
+    */ // Group to hold all drawn objects.
+    const infoObjectGroup = new _three.Group();
+    // Build up the line shape.
+    const lineVectors = [];
+    const firstPoint = new (0, _three.Vector3)(1.2, 0, 0);
+    const secondPoint = new (0, _three.Vector3)(1.7, 0, 0);
+    const thirdPoint = new (0, _three.Vector3)(2.3, 2, 0);
+    const fourthPoint = new (0, _three.Vector3)(2.8, 2, 0);
+    lineVectors.push(firstPoint, secondPoint, thirdPoint, fourthPoint);
+    // LineGeo does not take Vectors. Convert to array with numbers.
+    const pointsArray = [];
+    for(let i = 0; i < lineVectors.length; i++)pointsArray.push(lineVectors[i].x, lineVectors[i].y, lineVectors[i].z);
+    // Create Line geometry.
+    const infoLineGeometry = new (0, _lineGeometryJs.LineGeometry)();
+    infoLineGeometry.setPositions(pointsArray);
+    infoLineMaterial.resolution.set(window.innerWidth, window.innerHeight); // LineMaterial requires this otherwise its a big blob.
+    // Construct the line mesh and add to group.
+    const infoLine = new (0, _line2Js.Line2)(infoLineGeometry, infoLineMaterial);
+    infoLine.computeLineDistances();
+    infoLine.scale.set(1, 1, 1);
+    infoObjectGroup.add(infoLine);
+    // Generate Name of the Odyssey.
+    const nameObject = generateTheNameObject(odyssey.name, 0.3);
+    const subtitleObject = generateTheNameObject(`Click to enter`, 0.2);
+    nameObject.position.set(3, 2, 0);
+    subtitleObject.position.set(3, 1.6, 0);
+    infoObjectGroup.add(nameObject);
+    infoObjectGroup.add(subtitleObject);
+    // Place the grup at the center of the selected Odyssey.
+    if (odyssey.position.x == 0 || odyssey.position.y == 0 || odyssey.position.z == 0) {
+        console.log(`triggered`);
+        infoObjectGroup.position.set(odyssey.position.x + 2, odyssey.position.y, odyssey.position.z);
+    } else infoObjectGroup.position.set(odyssey.position.x, odyssey.position.y, odyssey.position.z);
+    // Return the build info object.
+    return infoObjectGroup;
+// Testing Object.
+/* for (let i = 0; i < lineVectors.length; i++)
+    { 
+        const tempBoxMesh = new THREE.Mesh(tempBoxGeometry, tempBoxMaterial);
+        tempBoxMesh.position.set(lineVectors[i].x, lineVectors[i].y, lineVectors[i].z);
+        scene.add(tempBoxMesh);
+    }
+    */ };
+const HandleSecondClickOnOdyssey = (odyssey, turnOfforOnControlsUpdate)=>{
+    // Start the fade out.
+    (0, _transitions.fadeOutScene)();
+    // Start the zoom.
+    (0, _gsapDefault.default).to(camera.position, {
+        duration: 1.5,
+        x: odyssey.position.x,
+        y: odyssey.position.y,
+        z: odyssey.position.z,
+        onStart: function() {
+            turnOfforOnControlsUpdate(true);
+            console.log(`Target is: `);
+            console.log(odyssey.position);
+            controls.enabled = false;
+            controls.autoRotate = false;
+            controls.enablePan = false;
+        },
+        onUpdate: function() {},
+        onComplete: function() {
+            turnOfforOnControlsUpdate(false);
+        }
+    });
+// Make the Unity call
+};
+const generateTheNameObject = (textToGenerate, textSize)=>{
+    const print = textToGenerate;
+    const size = textSize;
+    const textGeometry = new (0, _textGeometryJs.TextGeometry)(print, {
+        font: (0, _mouseOver.font),
+        size: size,
+        height: 0.02,
+        curveSegments: 12,
+        bevelEnabled: false,
+        bevelThickness: 0.03,
+        bevelSize: 0.02,
+        bevelOffset: 0,
+        bevelSegments: 1
+    });
+    const textMaterial = new _three.MeshBasicMaterial({
+        color: 0xFFFFFF,
+        transparent: true,
+        opacity: 0.7
+    });
+    const text = new _three.Mesh(textGeometry, textMaterial);
+    return text;
+};
+
+},{"three":"ktPTu","three/examples/jsm/lines/Line2.js":"kgvYG","three/examples/jsm/lines/LineMaterial.js":"insFK","three/examples/jsm/lines/LineGeometry.js":"5c0fE","./transitions":"93XyA","gsap":"fPSuC","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3","./mouseOver":"9P9c0","three/examples/jsm/geometries/TextGeometry.js":"d5vi9"}],"93XyA":[function(require,module,exports) {
+var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
+parcelHelpers.defineInteropFlag(exports);
+parcelHelpers.export(exports, "fadeOutScene", ()=>fadeOutScene);
+function fadeOutScene() {
+    // Add new DIV to the HTML for fadeOut
+    const fadeOutDiv = document.createElement("div");
+    fadeOutDiv.classList.add("fadeDiv");
+    // Setup elemt style.
+    fadeOutDiv.style.backgroundColor = "black";
+    fadeOutDiv.style.opacity = 0;
+    fadeOutDiv.style.position = "absolute";
+    fadeOutDiv.style.width = "100vw";
+    fadeOutDiv.style.height = "100vh";
+    document.body.appendChild(fadeOutDiv);
+    //Fade out  with interval
+    const divToFade = document.querySelector(".fadeDiv");
+    let fadeTimer = 0;
+    // Setup interval
+    const fadeOutTimer = setInterval(()=>{
+        // Check if timer is finished.
+        if (fadeTimer >= 1) clearInterval(fadeOutTimer);
+        fadeTimer += 0.01;
+        divToFade.style.opacity = fadeTimer;
+    }, 10);
+}
 
 },{"@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}]},["cVgJb","ebWYT"], "ebWYT", "parcelRequire839b")
 

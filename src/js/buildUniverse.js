@@ -202,6 +202,7 @@ const ProcessRandomOdysseys = (listOfOddyseys) =>
         placementXYZ.y = -30 //( Math.random() * randomOdysseyMaxSpawnHeight ) - (randomOdysseyMaxSpawnHeight / 2);
         placementXYZ.z = Math.sin(radian) * standardCircleRadius;
 
+        
         // Increase the offset for the next Odyssye.
         offset += distanceBetweenOdyssey;
 

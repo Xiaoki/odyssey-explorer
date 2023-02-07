@@ -15,15 +15,14 @@ import {createOdyssey, buildConnectionLines} from "./odyssey.js";
 import { ActivateFirstPerson, OnKeyDown, OnKeyUp } from './firstpersonlogic.js';
 import { calculateMouseOverLocation, 
     doHighlightRayTrace, 
-    renderOdysseyInformationPopup,
     setActiveOdyssey,
-    renderOdysseyInformationPopup,
     load3DHighlight,
     HighlightHandleLookAt,
+    odysseyNameObject,
 } from "./mouseOver.js";
 import { placeOdysseyInUniverse, drawConnectionsBetweenOdysseys } from "./buildUniverse.js"; 
 import { generateGalaxy } from "./galaxy.js";
-import { HandleOdysseyClick } from "./infopopup.js";
+import { HandleOdysseyClick,  } from "./infopopup.js";
 
 
 
@@ -41,6 +40,7 @@ let planetsMaxVerticalSpawnHeight = 100;
 const minimalDistanceToPlanetForCamera = 12;
 
 
+
 /**
  * Setup the scene.
  */
@@ -55,6 +55,7 @@ let updateCameraRotation = false;
 let transitionToPlanetFinished = true;
 let activeLinesArray = [];
 let leftMouseButtonIsDown = false;
+let activeInfoObject;
 
 
 
@@ -191,7 +192,7 @@ function onMouseDown(event){
 
         // If clicked planet is same as current selected one return
         if(targetPlanet.object === selectedOdyssey){
-            HandleOdysseyClick(scene, selectedOdyssey, camera, controls, turnOfforOnControlsUpdate); 
+            HandleOdysseyClick(scene, selectedOdyssey, camera, controls, turnOfforOnControlsUpdate, activeInfoObject); 
             return;
         }
         
@@ -242,8 +243,15 @@ function onMouseDown(event){
                 controls.autoRotate = false; 
                 controls.enablePan = false;
                 activeLinesArray = selectedOdyssey.buildConnectionLines(referenceListOfOdysseys, scene, activeLinesArray); 
-                renderOdysseyInformationPopup(selectedOdyssey); 
-                HandleOdysseyClick(scene, selectedOdyssey, camera, controls, turnOfforOnControlsUpdate);             
+                activeInfoObject =  HandleOdysseyClick(scene, selectedOdyssey, camera, controls, turnOfforOnControlsUpdate, activeInfoObject); 
+                if(activeInfoObject) 
+                {
+                    // hide mouseOver on the selected ojbect.
+                    Highlight3DModel.visible = false;
+                    odysseyNameObject.visible = false;;
+                    scene.add(activeInfoObject);
+                } 
+                        
            },
            onUpdate: function(){
                
@@ -256,7 +264,10 @@ function onMouseDown(event){
                 controls.enablePan = true;
                 controls.autoRotate = true; 
                 controls.target = targetPlanetLocation; 
-                transitionToPlanetFinished = true;  
+                transitionToPlanetFinished = true;
+     
+                
+
                 
            }
        });
@@ -362,6 +373,7 @@ function animate(){
     // Time reference.
     const time = performance.now();
     lookAtCameraObjects();
+
 
 
     /**
