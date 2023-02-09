@@ -264,9 +264,7 @@ function onMouseDown(event){
                 controls.enablePan = true;
                 controls.autoRotate = true; 
                 controls.target = targetPlanetLocation; 
-                transitionToPlanetFinished = true;
-     
-                
+                transitionToPlanetFinished = true;             
 
                 
            }

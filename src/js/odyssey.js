@@ -32,11 +32,13 @@ class Odyssey extends THREE.Mesh {
     }
 
     // Material for connections.
-    lineMaterial = new LineMaterial({ color: 0xECA400, linewidth: 2, transparent: true, opacity: 0.8}); // before was 0xdda4de
-    mutualLineMaterial = new LineMaterial({color: 0x01FFB3, linewidth: 2, transparent: true, opacity: 0.8})
+    lineMaterial = new LineMaterial({ color: 0xFCF200, linewidth: 2, transparent: true, opacity: 0.8}); // before was 0xdda4de
+    mutualLineMaterial = new LineMaterial({color: 0x01FFB3, linewidth: 2, transparent: true, opacity: 0.8,})
     iStakedInMaterial = new LineMaterial({ color: 0x0abaff, linewidth: 2, transparent: true, opacity: 0.8})
     secondaryConnectionMaterial = new LineMaterial({color: 0xFFFFFF, linewidth: 1, transparent: true, opacity: 0.2 })
-    generalLineMaterial = new LineMaterial({ color: 0x01FFB3, linewidth: 2, transparent: true, opacity: 0.8});
+    generalLineMaterial = new LineMaterial({ color: 0x01FFB3, linewidth: 2, transparent: true, opacity: 0.8})
+
+
 
     // Array to hold all connected Odysseys.
     allRandomNumbers = [];

@@ -17,6 +17,7 @@ let controls
 const infoLineMaterial = new LineMaterial({color: 0xFFFFFF, linewidth: 1, transparent: true, opacity: 0.8});
 
 
+
 /**
  * Handle the incoming click.
  * @param {scene} mainScene 
@@ -74,9 +75,9 @@ const GenerateInfoObject = (odyssey) => {
     // Build up the line shape.
     const lineVectors = [];
     const firstPoint = new Vector3(1.2, 0, 0);
-    const secondPoint = new Vector3(1.7, 0 ,0);
-    const thirdPoint = new Vector3(2.3, 2, 0)
-    const fourthPoint = new Vector3(2.8, 2, 0);
+    const secondPoint = new Vector3(1.6, 0 ,0);
+    const thirdPoint = new Vector3(1.9, 2, 0)
+    const fourthPoint = new Vector3(2.2, 2, 0);
 
     
 
@@ -94,6 +95,16 @@ const GenerateInfoObject = (odyssey) => {
 	infoLineGeometry.setPositions(pointsArray);
     infoLineMaterial.resolution.set(window.innerWidth, window.innerHeight); // LineMaterial requires this otherwise its a big blob.
 
+    // Create underline for call to action.
+    const underLinePoints = [2.5, 2, 0, 5, 2, 0 ] // Array with vectors as numbers because LineGeometry doesnt accept vectors.
+    const underLineGeometry = new LineGeometry();
+    underLineGeometry.setPositions(underLinePoints);
+    const underlineMesh = new Line2(underLineGeometry, infoLineMaterial);
+    underlineMesh.computeLineDistances();
+    underlineMesh.scale.set(1,1,1);
+
+    infoObjectGroup.add(underlineMesh);
+
     // Construct the line mesh and add to group.
     const infoLine = new Line2( infoLineGeometry, infoLineMaterial );
 	infoLine.computeLineDistances();
@@ -103,11 +114,42 @@ const GenerateInfoObject = (odyssey) => {
     // Generate Name of the Odyssey.
     const nameObject = generateTheNameObject(odyssey.name, 0.3);
     const subtitleObject = generateTheNameObject(`Click to enter`, 0.2)
-    nameObject.position.set(3, 2, 0);
-    subtitleObject.position.set(3,1.6,0);
+    const connectedTitle = generateTheNameObject(`Connections:`, 0.15);
+    const momStakedTitle = generateTheNameObject(`MOM Staked:`, 0.15);
 
+    // Calculate and generate total connections.
+    let amountOfConnections = odyssey.iStakedInConnections.length + odyssey.mutualStakedConnections.length + odyssey.mutualStakedConnections.length;
+    amountOfConnections = amountOfConnections.toString();
+    const amountOfConnectionsObject = generateTheNameObject(amountOfConnections, 0.15);
+
+    // Generate total amount staked text
+    let totalAmountStaked = odyssey.momStaked;
+
+    // Safety check if staked moms is valid if not make it 0.
+    if ( totalAmountStaked ) {
+        totalAmountStaked = totalAmountStaked.toString();
+    } else {
+        totalAmountStaked = 0;
+        totalAmountStaked = totalAmountStaked.toString();
+    }  
+    const totalAmountStakedObject = generateTheNameObject(totalAmountStaked, 0.15);
+
+
+    // Set position of all Object in the group.
+    nameObject.position.set(2.5, 2.6, 0);
+    subtitleObject.position.set(2.53,2.2,0);
+    connectedTitle.position.set(2.5, 1.7, 0)
+    momStakedTitle.position.set(2.5, 1.4, 0);
+    amountOfConnectionsObject.position.set(4.1, 1.7, 0);
+    totalAmountStakedObject.position.set(4.1, 1.4, 0);
+
+    // Add objects to the group.
     infoObjectGroup.add(nameObject);
-    infoObjectGroup.add(subtitleObject)
+    infoObjectGroup.add(subtitleObject);
+    infoObjectGroup.add(connectedTitle);
+    infoObjectGroup.add(momStakedTitle);
+    infoObjectGroup.add(amountOfConnectionsObject);
+    infoObjectGroup.add(totalAmountStakedObject);
    
 
     // Place the grup at the center of the selected Odyssey.
@@ -118,6 +160,10 @@ const GenerateInfoObject = (odyssey) => {
         infoObjectGroup.position.set(odyssey.position.x, odyssey.position.y, odyssey.position.z);
     }
     
+    // Calculate the Y rotation to start looking towards the direction of the camera.
+   
+    
+
 
     // Return the build info object.
     return infoObjectGroup

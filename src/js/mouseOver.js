@@ -43,7 +43,7 @@
     */
 
     // Material for 3D highlight mesh.
-    const mat3DHighlight = new THREE.MeshBasicMaterial({color: 0x01FFB3, transparent: true, opacity: 0.8})
+    const mat3DHighlight = new THREE.MeshBasicMaterial({color: 0x9EEEFF, transparent: true, opacity: 0.8})
 
     /*
     const DrawNameOneCanvas = (name) =>
@@ -209,7 +209,7 @@
                 - textGeometry.boundingBox.max.y * 0.5,
                 - textGeometry.boundingBox.max.z * 0.5
             )
-            const textMaterial = new THREE.MeshBasicMaterial({ color: 0x01FFB3, });
+            const textMaterial = new THREE.MeshBasicMaterial({ color: 0x9EEEFF, });
             const text = new THREE.Mesh(textGeometry, textMaterial);
             return text;
         } 
