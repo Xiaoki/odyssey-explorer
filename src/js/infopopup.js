@@ -16,8 +16,6 @@ let controls
 // Line Geometry for info popup
 const infoLineMaterial = new LineMaterial({color: 0xFFFFFF, linewidth: 1, transparent: true, opacity: 0.8});
 
-
-
 /**
  * Handle the incoming click.
  * @param {scene} mainScene 
@@ -56,19 +54,6 @@ const HandleOdysseyClick = (mainScene, targetOdyssey, mainCamera, mainControls, 
 
 const GenerateInfoObject = (odyssey) => {
     
-
-    /* 
-
-    1. Calculate lookAt rotation, then move 2 units to the right on the X + Z axis. = Startpoint
-    2. Move up the Y access by 4 and increase X + Z axis by 2 = Second point.
-    3. Move sideways by 1 down the x + Z factor = third pooint
-
-    4. Draw Line and prepare for add.
-
-    5. Draw Odyssey name 1 unity down the X + Z factor to start place naming. 
-
-    */
-
     // Group to hold all drawn objects.
     const infoObjectGroup = new THREE.Group();
 
@@ -102,8 +87,17 @@ const GenerateInfoObject = (odyssey) => {
     const underlineMesh = new Line2(underLineGeometry, infoLineMaterial);
     underlineMesh.computeLineDistances();
     underlineMesh.scale.set(1,1,1);
-
     infoObjectGroup.add(underlineMesh);
+
+    // Create arrow head
+    const arrowPoints = [1.2, -0.15 , 0, 1.05, 0, 0, 1.2, 0.15, 0] // Array with vectors as numbers because LineGeometry doesn't accept vectors.
+    const arrowHeadGeometry = new LineGeometry();
+    arrowHeadGeometry.setPositions(arrowPoints);
+    const arrowHeadMesh = new Line2(arrowHeadGeometry, infoLineMaterial);
+    arrowHeadMesh.computeLineDistances();
+    arrowHeadMesh.scale.set(1,1,1);
+    infoObjectGroup.add(arrowHeadMesh);
+
 
     // Construct the line mesh and add to group.
     const infoLine = new Line2( infoLineGeometry, infoLineMaterial );
@@ -162,21 +156,11 @@ const GenerateInfoObject = (odyssey) => {
     
     // Calculate the Y rotation to start looking towards the direction of the camera.
    
-    
 
 
     // Return the build info object.
     return infoObjectGroup
 
-    // Testing Object.
-    /* for (let i = 0; i < lineVectors.length; i++)
-    { 
-        const tempBoxMesh = new THREE.Mesh(tempBoxGeometry, tempBoxMaterial);
-        tempBoxMesh.position.set(lineVectors[i].x, lineVectors[i].y, lineVectors[i].z);
-        scene.add(tempBoxMesh);
-    }
-    */
-    
     
     
 }
@@ -213,7 +197,7 @@ const HandleSecondClickOnOdyssey = (odyssey, turnOfforOnControlsUpdate) =>
 
     });
 
-    // Make the Unity call
+    // Forward user to Unity endpoint.
     
 }
 

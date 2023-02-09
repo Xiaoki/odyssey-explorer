@@ -16,67 +16,8 @@
     let rayDistance;
 
 
-    /*
-    // Construct the highlight object
-    const mouseOverGeo = new THREE.PlaneGeometry(1,1);
-    const mouseOverTexture = new THREE.TextureLoader().load('./images/test3.png');
-    const mouseOverMat = new THREE.MeshBasicMaterial({color: 0xFFFFFF, transparent: true, map: mouseOverTexture});
-    const mouseOverMesh = new THREE.Mesh(mouseOverGeo, mouseOverMat);
-    */
-
-    /*
-    // Construct the information object to display Odyssey info.
-    const infoObjectGeo = new THREE.PlaneGeometry(3,3);
-    const infoObjectTexture = new THREE.TextureLoader().load('./images/Nearby.png');
-    const infoObjectMat = new THREE.MeshBasicMaterial({ side: THREE.DoubleSide, transparent: true, map: infoObjectTexture});
-    const infoObjectMesh = new THREE.Mesh(infoObjectGeo, infoObjectMat);
-    infoObjectMesh.visible = false;
-    */
-
-    /*
-    // Construct name sign
-    const namePlaneGeo = new THREE.PlaneGeometry(1, 0.5);
-    const namePlaneMat = new THREE.MeshStandardMaterial({transparent: true, side: THREE.DoubleSide});
-    const namePlaneMesh = new THREE.Mesh(namePlaneGeo, namePlaneMat);
-    mouseOverMesh.add(namePlaneMesh);
-    namePlaneMesh.position.set(0,-0.6,0); //Local position. Is attached to mouseOverMesh.
-    */
-
     // Material for 3D highlight mesh.
     const mat3DHighlight = new THREE.MeshBasicMaterial({color: 0x9EEEFF, transparent: true, opacity: 0.8})
-
-    /*
-    const DrawNameOneCanvas = (name) =>
-    {
-        // Draw name texture
-        const odysseyNameCanvas = document.createElement('canvas');
-        const odysseyNameContent = odysseyNameCanvas.getContext('2d');
-        odysseyNameCanvas.width = 400;
-        odysseyNameCanvas.height = 120;
-        odysseyNameContent.font = "Bold 40px Trebuchet MS";
-
-
-        // fill it.
-        odysseyNameContent.fillStyle = "rgba(0, 0, 0, 0";
-        odysseyNameContent.fillRect(0, 0, odysseyNameContent.width, odysseyNameContent.height);
-
-        // Write name
-        odysseyNameContent.textBaseline = "middle";
-        odysseyNameContent.textAlign = "center";
-        odysseyNameContent.fillStyle = "rgba(1, 255, 179, 1";
-        odysseyNameContent.fillText(name, 200, 30);
-
-
-        const odysseyNameTexture= new THREE.Texture(odysseyNameCanvas);
-        odysseyNameTexture.needsUpdate = true;
-
-        namePlaneMesh.material.map = odysseyNameTexture;
-        //namePlaneMesh.material.map.wrapS = THREE.RepeatWrapping;
-    }
-    */
-
-
-
 
     // Const Variables for Development.
     const mouseOverDistancefromCamera = 5;

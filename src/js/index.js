@@ -21,7 +21,6 @@ import { calculateMouseOverLocation,
     odysseyNameObject,
 } from "./mouseOver.js";
 import { placeOdysseyInUniverse, drawConnectionsBetweenOdysseys } from "./buildUniverse.js"; 
-import { generateGalaxy } from "./galaxy.js";
 import { HandleOdysseyClick,  } from "./infopopup.js";
 
 

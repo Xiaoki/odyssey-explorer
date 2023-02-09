@@ -158,84 +158,10 @@ class Odyssey extends THREE.Mesh {
                 } else {
                     materialToUseForLine = this.lineMaterial;
                 }
-                //TEMP OVERULE LINE COLORS:
-               //  materialToUseForLine = this.generalLineMaterial;
-
+            
+                // Draw the actual line.
                 this.drawLine(this.position, foundOdyssey.position, scene, newActivelinesArray, materialToUseForLine );
                 
-                /*
-                
-                // Create random line hight and calculate middle position
-                //const randomLineHeight = (Math.random() * maxOdysseyConnectionLineHeight ) * (Math.random() > 0.5 ? 1 : -1 );
-                //const randomLineHeight = -10 //(Math.random() * maxOdysseyConnectionLineHeight ) * -1;
-                const middlePointCurve = calculateLineMiddlePointDepth(this.position, foundOdyssey.position);
-                //const middlePointCurve = -10
-
-                let middlePosition = new THREE.Vector3((this.position.x + foundOdyssey.position.x) /2, middlePointCurve, (this.position.z + foundOdyssey.position.z) /2);
-                
-                // calculate start XYZ for the line.
-                //const direction = this.isObject3D.lookAt(foundOdyssey);
-
-                //console.log(foundOdyssey.position);
-                const direction = new THREE.Vector3();
-                direction.subVectors(this.position, foundOdyssey.position ).normalize();
-                const startVector = new THREE.Vector3();
-                startVector.addVectors(this.position, direction.multiplyScalar(-0.7));
-
-                const newY = this.position.y - 0.8;
-                //const beginVector = new THREE.Vector3(this.position.x, newY, this.position.z)
-                startVector.y = newY;
-                const secondVector = new THREE.Vector3(startVector.x, newY - 1, startVector.z);
-                
-
-
-                // Create the curve                
-                const curve = new THREE.CubicBezierCurve3(
-                    startVector,
-                    secondVector,
-                    middlePosition,
-                    foundOdyssey.position,
-                );    
-
-                // Get XYZ along the curve.
-                const curvePoints = curve.getSpacedPoints(50);
-        
-
-                // Prepare array of numbers for line geometry ( doesnt accept vectors)
-                const linePoints = [];
-                
-
-                // Build the array for Line from curve Points.
-                for (let i = 0; i < curvePoints.length; i++) 
-                {
-                    linePoints.push(curvePoints[i].x, curvePoints[i].y, curvePoints[i].z);
-                }
-                
-                const lineGeometry = new LineGeometry();
-                lineGeometry.setPositions(linePoints);
-
-                let materialToUseForLine = this.lineMaterial;
-
-                // Filter what type for color:
-                if(this.mutualStakedConnections.includes(foundOdyssey.number))
-                {
-                    materialToUseForLine = this.mutualLineMaterial;
-                } else if(this.iStakedInConnections.includes(foundOdyssey.number))
-                {
-                    materialToUseForLine = this.iStakedInMaterial;
-                }
-                //TEMP OVERULE LINE COLORS:
-                materialToUseForLine = this.generalLineMaterial;
-
-                // If staked in me use standard material
-                materialToUseForLine.resolution.set(window.innerWidth, window.innerHeight);              
-                const drawLine = new Line2(lineGeometry,materialToUseForLine);
-                
-                // Add lines to array
-                newActivelinesArray.push(drawLine);
-                // Add line to the scene.
-                scene.add(drawLine);
-                */
             } 
             
 
@@ -418,58 +344,13 @@ const createOdyssey = (id, wallet, name, url) =>
     // Construct avatar Mesh.
     const avatarMesh = new THREE.Mesh(avatarGeometry, avatarMaterial);
     
-    /**
-     * Create the name ring around the Odyssey. Removed.
-     */
-
     
     // Create custom material for name ring.
     const nameRingMaterial = new THREE.MeshBasicMaterial({transparent: true, side: THREE.DoubleSide});
 
     // Construct odyssey ring mesh.
     const nameRingMesh = new THREE.Mesh(nameRingGeometry, nameRingMaterial);
-
-
-    
-    //Build text texture for around the odyssey
-     
-    /*
-    
-    const drawCanvas = document.createElement('canvas');
-    const drawContent = drawCanvas.getContext('2d');
-    drawCanvas.width = 1000;
-    drawCanvas.height = 100;
-    drawContent.font = "Bold 40px Trebuchet MS";
-    
-    
-    drawContent.fillStyle = "rgba(0, 0, 0, 0.1)";
-    drawContent.fillRect(0, 0, drawCanvas.width, drawCanvas.height);
-
-    // Draw the title once.
-    drawContent.fillStyle = "rgba(245, 199, 255, 0.9";
-    drawContent.fillText(name, 0, 60);
-    drawContent.strokeStyle = "rgba(124, 86, 133)";
-    drawContent.strokeText(name, 0, 60);
-
-    // Draw the name a second time.
-    drawContent.fillStyle = "rgba(245, 199, 255, 0.9";;
-    drawContent.fillText(name, 500, 60);
-    drawContent.strokeStyle = "rgba(124, 86, 133)";
-    drawContent.strokeText(name, 500, 60);
-
-   
-
-
-
-    const nameTexture = new THREE.Texture(drawCanvas);
-    nameTexture.needsUpdate = true;
-
-    nameRingMesh.material.map = nameTexture;
-    nameRingMesh.material.map.wrapS = RepeatWrapping;
-
-     */
  
-
     // Create new Odyssey from class.
     const odyssey = new Odyssey(odysseySphereGeometry, odysseyMaterial, id, wallet, name, url, nameRingMaterial)
     
